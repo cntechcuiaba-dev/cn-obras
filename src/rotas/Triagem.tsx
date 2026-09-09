@@ -1,4 +1,5 @@
 import { FormEvent, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Inbox, MapPin, User } from "lucide-react";
 import {
   useAbertas,
@@ -14,7 +15,11 @@ import { Prioridade } from "../lib/labels";
 
 export default function Triagem() {
   const abertas = useAbertas();
-  const [selecionada, setSelecionada] = useState<string | null>(null);
+  // Vindo do painel ("Triar agora"), a demanda já chega escolhida.
+  const [params] = useSearchParams();
+  const [selecionada, setSelecionada] = useState<string | null>(
+    params.get("demanda"),
+  );
 
   return (
     <div>

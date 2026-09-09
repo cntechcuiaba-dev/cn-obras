@@ -34,7 +34,17 @@ export default function Painel() {
           {!DEMO && dados.papel === "executor" && <BootstrapLideranca />}
         </>
       ) : (
-        <ItemPrincipal item={item} onAbrir={() => navigate(`/demanda/${item._id}`)} />
+        <ItemPrincipal
+          item={item}
+          onAgir={() =>
+            navigate(
+              // [RF14f] a ação leva ao lugar onde ela é executável
+              item.acao.destino === "triagem"
+                ? `/triagem?demanda=${item._id}`
+                : `/demanda/${item._id}`,
+            )
+          }
+        />
       )}
 
       {/* [RF14e] no máximo três, linha simples: título e data. Sem cor, sem selo. */}
@@ -121,10 +131,10 @@ function BootstrapLideranca() {
 
 function ItemPrincipal({
   item,
-  onAbrir,
+  onAgir,
 }: {
   item: NonNullable<ReturnType<typeof useProximoMovimento>>["item"];
-  onAbrir: () => void;
+  onAgir: () => void;
 }) {
   if (!item) return null;
   const prazo = rotuloPrazo(item.prazo);
@@ -164,7 +174,7 @@ function ItemPrincipal({
       </div>
 
       {/* [RF14f] todo item tem ação executável */}
-      <button className="btn-primary mt-6 w-full sm:w-auto" onClick={onAbrir}>
+      <button className="btn-primary mt-6 w-full sm:w-auto" onClick={onAgir}>
         {item.acao.rotulo}
         <ArrowRight className="h-4 w-4" />
       </button>

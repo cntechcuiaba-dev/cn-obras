@@ -141,6 +141,18 @@ export default function DetalheDemanda() {
           </p>
         )}
 
+        {/* Demanda ainda não triada: a ação executável é triar, e só a liderança faz. */}
+        {d.status === "aberta" && dados.papel === "lideranca" && (
+          <div className="mt-5 border-t border-border pt-5">
+            <button
+              className="btn-primary"
+              onClick={() => navigate(`/triagem?demanda=${d._id}`)}
+            >
+              Triar esta demanda
+            </button>
+          </div>
+        )}
+
         {/* Ações de execução */}
         {podeAgir && d.status !== "concluida" && d.status !== "cancelada" && (
           <div className="mt-5 flex flex-wrap gap-2 border-t border-border pt-5">
