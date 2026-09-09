@@ -9,6 +9,7 @@ import {
   MessageCircle,
   Copy,
   Target,
+  SlidersHorizontal,
 } from "lucide-react";
 import {
   useDetalhe,
@@ -16,10 +17,13 @@ import {
   useMudarStatus,
   useAnexarFoto,
   useGerarUrl,
+  useAtualizar,
+  useExecutores,
 } from "../lib/dados";
 import { DEMO } from "../lib/env";
+import { DemandaView } from "../lib/tipos";
 import { Carregando, StatusChip, PrazoBadge, PrioridadeChip } from "../components/ui";
-import { MOTIVO_IMPEDIMENTO, MotivoImpedimento } from "../lib/labels";
+import { MOTIVO_IMPEDIMENTO, MotivoImpedimento, Prioridade } from "../lib/labels";
 import { formatarData, formatarDataHora, linkWhatsapp, preencherModelo } from "../lib/format";
 
 export default function DetalheDemanda() {
@@ -35,6 +39,7 @@ export default function DetalheDemanda() {
 
   const [motivo, setMotivo] = useState<MotivoImpedimento>("aguardando_material");
   const [mostrarPausa, setMostrarPausa] = useState(false);
+  const [mostrarAjuste, setMostrarAjuste] = useState(false);
   const [mostrarConclusao, setMostrarConclusao] = useState(false);
   const [confirmado, setConfirmado] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -160,6 +165,30 @@ export default function DetalheDemanda() {
             </button>
           </div>
         )}
+
+        {/* RF08: liderança ajusta prazo, prioridade e responsável a qualquer momento.
+            É também o que dá conteúdo ao movimento "Programar manutenção" (RF18b). */}
+        {dados.papel === "lideranca" &&
+          d.status !== "concluida" &&
+          d.status !== "cancelada" &&
+          d.status !== "aberta" && (
+            <div className="mt-5 border-t border-border pt-5">
+              <button
+                className="btn-ghost"
+                onClick={() => setMostrarAjuste((v) => !v)}
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                {d.origemRecorrenciaId ? "Programar manutenção" : "Ajustar planejamento"}
+              </button>
+              {mostrarAjuste && (
+                <PainelAjuste
+                  demanda={d}
+                  onPronto={() => setMostrarAjuste(false)}
+                  onErro={setErro}
+                />
+              )}
+            </div>
+          )}
 
         {/* Ações de execução */}
         {podeAgir && d.status !== "concluida" && d.status !== "cancelada" && (
@@ -320,6 +349,92 @@ export default function DetalheDemanda() {
           ))}
         </ol>
       </div>
+    </div>
+  );
+}
+
+// RF08: ajuste do planejamento pela liderança — prazo, prioridade e responsável.
+function PainelAjuste({
+  demanda,
+  onPronto,
+  onErro,
+}: {
+  demanda: DemandaView;
+  onPronto: () => void;
+  onErro: (m: string | null) => void;
+}) {
+  const atualizar = useAtualizar();
+  const executores = useExecutores();
+
+  const [prazo, setPrazo] = useState(
+    demanda.prazo ? new Date(demanda.prazo).toISOString().slice(0, 10) : "",
+  );
+  const [prioridade, setPrioridade] = useState<Prioridade>(
+    demanda.prioridade ?? "media",
+  );
+  const [responsavelId, setResponsavelId] = useState(demanda.responsavelId ?? "");
+  const [salvando, setSalvando] = useState(false);
+
+  async function salvar() {
+    onErro(null);
+    setSalvando(true);
+    try {
+      await atualizar({
+        demandaId: demanda._id,
+        prazo: prazo ? new Date(`${prazo}T23:59:59`).getTime() : undefined,
+        prioridade,
+        responsavelId: responsavelId || undefined,
+      });
+      onPronto();
+    } catch (err) {
+      onErro(err instanceof Error ? err.message : "Erro ao ajustar.");
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  return (
+    <div className="mt-4 rounded border border-border p-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <label className="block">
+          <span className="label">Prazo</span>
+          <input
+            type="date"
+            className="input"
+            value={prazo}
+            onChange={(e) => setPrazo(e.target.value)}
+          />
+        </label>
+        <label className="block">
+          <span className="label">Prioridade</span>
+          <select
+            className="input"
+            value={prioridade}
+            onChange={(e) => setPrioridade(e.target.value as Prioridade)}
+          >
+            <option value="baixa">Baixa</option>
+            <option value="media">Média</option>
+            <option value="alta">Alta</option>
+          </select>
+        </label>
+        <label className="block">
+          <span className="label">Responsável</span>
+          <select
+            className="input"
+            value={responsavelId}
+            onChange={(e) => setResponsavelId(e.target.value)}
+          >
+            {(executores ?? []).map((u) => (
+              <option key={u._id} value={u._id}>
+                {u.nome}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <button className="btn-primary mt-4" disabled={salvando} onClick={salvar}>
+        {salvando ? "Salvando…" : "Salvar planejamento"}
+      </button>
     </div>
   );
 }

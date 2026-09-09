@@ -289,6 +289,12 @@ export function useTriar(): Fn {
   return useMutation(api.triagem.triar);
 }
 
+// RF08: liderança ajusta prazo, prioridade e responsável a qualquer momento.
+export function useAtualizar(): Fn {
+  if (DEMO) return async () => undefined;
+  return useMutation(api.triagem.atualizar);
+}
+
 export function useCancelar(): Fn {
   if (DEMO) {
     const { acoes } = useDemo();

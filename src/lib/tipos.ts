@@ -13,6 +13,9 @@ export interface DemandaView {
   localNome?: string | null;
   responsavelNome?: string | null;
   equipeNomes?: string[];
+  origemRecorrenciaId?: string;
+  responsavelId?: string;
+  equipeIds?: string[];
   solicitanteNome?: string;
   solicitanteWhatsapp?: string;
   localTextoOriginal?: string;

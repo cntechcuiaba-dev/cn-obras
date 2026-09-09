@@ -141,7 +141,11 @@ export const gerarRecorrenciasDoDia = internalMutation({
       // próxima geração um intervalo inteiro para frente.
       if (agora < proximaGeracao) continue;
 
-      const previstaEm = new Date(proximaManutencao).toLocaleDateString("pt-BR");
+      // O Convex roda em UTC e o app é lido no Brasil: sem fixar o fuso, o mesmo
+      // instante vira um dia no histórico e outro no cabeçalho da tela.
+      const previstaEm = new Date(proximaManutencao).toLocaleDateString("pt-BR", {
+        timeZone: "America/Sao_Paulo",
+      });
 
       // RF31: nasce pelo dono único do estado, com evento visível (não silencioso).
       await criarDemanda(
