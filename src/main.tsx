@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { ClerkProvider, useAuth } from "@clerk/clerk-react";
+import { ptBR } from "@clerk/localizations";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { convex } from "./lib/convex";
 import { DEMO } from "./lib/env";
@@ -35,7 +36,7 @@ if (DEMO) {
 
   root.render(
     <React.StrictMode>
-      <ClerkProvider publishableKey={chaveClerk} proxyUrl={proxyUrlClerk}>
+      <ClerkProvider publishableKey={chaveClerk} proxyUrl={proxyUrlClerk} localization={ptBR}>
         <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
           <BrowserRouter>
             <App />

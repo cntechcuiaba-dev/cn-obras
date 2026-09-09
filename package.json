@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.14.0",
+    "@clerk/localizations": "^4.16.0",
     "convex": "^1.17.0",
     "lucide-react": "^0.456.0",
     "react": "^18.3.1",
