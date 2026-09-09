@@ -1,7 +1,7 @@
 import { query } from "./_generated/server";
 import { Doc } from "./_generated/dataModel";
 import { getUsuarioAtual } from "./lib/auth";
-import { pontuar, frase, bloqueio, acaoDe } from "./lib/movimento";
+import { pontuar, frase, bloqueio, acaoDe, aguardaAprovacao } from "./lib/movimento";
 
 // [E3] Painel de UM movimento. Substitui o RF14 original (grupos + contadores),
 // revogado pela Emenda 01.
@@ -81,6 +81,45 @@ export const proximoMovimento = query({
       prazo: x.d.prazo,
     }));
 
+    // [E1] avisos pendentes: o envio é manual, o lembrete não. Só somem quando
+    // marcados como enviados.
+    const avisosPendentes = await ctx.db
+      .query("avisos")
+      .withIndex("by_responsavel_pendente", (q) =>
+        q.eq("responsavelId", usuario._id).eq("enviadoEm", undefined),
+      )
+      .collect();
+
+    const avisos = await Promise.all(
+      avisosPendentes.map(async (a) => {
+        const d = await ctx.db.get(a.demandaId);
+        return {
+          _id: a._id,
+          demandaId: a.demandaId,
+          mensagem: a.mensagem,
+          gatilho: a.gatilho,
+          demandaTitulo: d?.titulo ?? "",
+          whatsapp: d?.solicitanteWhatsapp ?? "",
+        };
+      }),
+    );
+
+    // [E2] orçamento recebido e não aprovado é movimento da liderança.
+    const aprovacoes =
+      usuario.papel === "lideranca"
+        ? await Promise.all(
+            todas
+              .filter((d) => aguardaAprovacao(d))
+              .map(async (d) => ({
+                _id: d._id,
+                titulo: d.titulo,
+                fornecedor: d.orcamento!.fornecedor,
+                valorRecebido: d.orcamento!.valorRecebido!,
+                ...(await enriquecer(d)),
+              })),
+          )
+        : [];
+
     const bloqueadosSaida = await Promise.all(
       bloqueados.map(async ({ d, b }) => ({
         _id: d._id,
@@ -94,7 +133,14 @@ export const proximoMovimento = query({
       })),
     );
 
-    return { item, proximos, bloqueados: bloqueadosSaida, papel: usuario.papel };
+    return {
+      item,
+      proximos,
+      bloqueados: bloqueadosSaida,
+      avisos,
+      aprovacoes,
+      papel: usuario.papel,
+    };
   },
 });
 

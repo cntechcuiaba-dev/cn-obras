@@ -24,6 +24,19 @@ export interface DemandaView {
   impedimentoDesde?: number;
   concluidaEm?: number;
   resultadoConfirmado?: boolean;
+  // [E2] compromisso embutido e fato realizado
+  orcamento?: {
+    fornecedor: string;
+    solicitadoEm: number;
+    cobrarEm: number;
+    responsavelCobrancaId: string;
+    cobrancasFeitas: number;
+    valorRecebido?: number;
+    recebidoEm?: number;
+    aprovadoEm?: number;
+    aprovadoPorId?: string;
+  };
+  custo?: { valor: number; origem: string; lancadoEm: number };
   riscoSinalizadoEm?: number;
   risco?: "vencida" | "vencendo" | "em_dia" | "sem_prazo";
 }

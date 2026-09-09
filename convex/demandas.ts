@@ -4,6 +4,7 @@ import { Doc, Id } from "./_generated/dataModel";
 import { requireRole, getUsuarioAtual, podeAcessarDemanda } from "./lib/auth";
 import { registrarHistorico } from "./lib/historico";
 import { criarDemanda, transicionar } from "./lib/estado";
+import { gerarAvisoSeInteressaAoSolicitante } from "./avisos";
 import { nivelRisco, isAtiva, DIAS_VENCENDO, DIA_MS } from "./lib/risco";
 
 // ---------- Upload de fotos ----------
@@ -165,7 +166,28 @@ export const mudarStatus = mutation({
         v.literal("aguardando_decisao"),
       ),
     ),
+    // [E2] os quatro campos do orçamento vêm JUNTOS ou não vêm — compromisso sem
+    // data e sem dono é o que produz demanda parada dez dias que ninguém explica.
+    orcamento: v.optional(
+      v.object({
+        fornecedor: v.string(),
+        solicitadoEm: v.number(),
+        cobrarEm: v.number(),
+        responsavelCobrancaId: v.id("usuarios"),
+      }),
+    ),
     resultadoConfirmado: v.optional(v.boolean()),
+    // [E2] custo realizado — zero é resposta válida, vazio não é
+    custo: v.optional(
+      v.object({
+        valor: v.number(),
+        origem: v.union(
+          v.literal("estoque"),
+          v.literal("compra_direta"),
+          v.literal("orcamento"),
+        ),
+      }),
+    ),
   },
   handler: async (ctx, args) => {
     const usuario = await requireRole(ctx, ["executor", "lideranca"]);
@@ -189,6 +211,33 @@ export const mudarStatus = mutation({
       campos.motivoImpedimento = args.motivoImpedimento;
       campos.impedimentoDesde = agora;
       desc = `Status: Aguardando — ${DESC_MOTIVO[args.motivoImpedimento]}`;
+
+      // [E2] orçamento é compromisso embutido: sem os quatro campos, não entra.
+      if (args.motivoImpedimento === "aguardando_orcamento") {
+        if (!args.orcamento) {
+          throw new Error(
+            "Para aguardar orçamento, informe fornecedor, data de solicitação, " +
+              "data de cobrança e responsável pela cobrança.",
+          );
+        }
+        if (!args.orcamento.fornecedor.trim()) {
+          throw new Error("Informe o fornecedor do orçamento.");
+        }
+        if (args.orcamento.cobrarEm < args.orcamento.solicitadoEm) {
+          throw new Error("A data de cobrança não pode ser anterior à solicitação.");
+        }
+        const cobrador = await ctx.db.get(args.orcamento.responsavelCobrancaId);
+        if (!cobrador) throw new Error("Responsável pela cobrança não encontrado.");
+
+        campos.orcamento = {
+          fornecedor: args.orcamento.fornecedor.trim(),
+          solicitadoEm: args.orcamento.solicitadoEm,
+          cobrarEm: args.orcamento.cobrarEm,
+          responsavelCobrancaId: args.orcamento.responsavelCobrancaId,
+          cobrancasFeitas: 0,
+        };
+        desc += ` · ${campos.orcamento.fornecedor}, cobrar em ${formatarDataBR(args.orcamento.cobrarEm)}`;
+      }
     } else if (args.novoStatus === "em_execucao") {
       campos.motivoImpedimento = undefined; // retomou: some o impedimento
       campos.impedimentoDesde = undefined;
@@ -201,6 +250,20 @@ export const mudarStatus = mutation({
             "Se não foi, mantenha em execução ou registre um impedimento.",
         );
       }
+      // [E2] passou por material ou orçamento => não conclui sem valor lançado.
+      // Zero é resposta válida; vazio não é.
+      const gastou = await passouPorGasto(ctx, args.demandaId);
+      if (gastou && d.custo === undefined && args.custo === undefined) {
+        throw new Error(
+          "Esta demanda passou por material ou orçamento. Lance o valor gasto " +
+            "antes de concluir — zero é resposta válida, vazio não é.",
+        );
+      }
+      if (args.custo) {
+        if (args.custo.valor < 0) throw new Error("O valor não pode ser negativo.");
+        campos.custo = { ...args.custo, lancadoEm: agora };
+      }
+
       campos.concluidaEm = agora;
       campos.resultadoConfirmado = true;
       campos.motivoImpedimento = undefined;
@@ -215,7 +278,16 @@ export const mudarStatus = mutation({
       descricao: desc,
       porClerkId: usuario.clerkId,
       campos,
+      // marca a parada de forma consultável (ver passouPorGasto)
+      tipo:
+        args.novoStatus === "aguardando" && args.motivoImpedimento
+          ? TIPO_IMPEDIMENTO(args.motivoImpedimento)
+          : undefined,
     });
+
+    // [E1] o envio ao solicitante é manual, o lembrete não: toda mudança que
+    // interessa a ele vira aviso pendente no painel de quem é responsável.
+    await gerarAvisoSeInteressaAoSolicitante(ctx, args.demandaId, args.novoStatus);
   },
 });
 
@@ -249,7 +321,8 @@ export const anexarFoto = mutation({
 
 // Momento da última mudança de status da demanda, lido do histórico. Sinalizar
 // risco não conta como progresso — senão o próprio aviso silenciaria o próximo.
-const TIPOS_DE_PROGRESSO = ["criada", "triada", "status_alterado", "atualizada"];
+// Foto e aviso também não são mudança de status.
+const TIPOS_SEM_PROGRESSO = ["risco_sinalizado", "foto", "cobranca_devida"];
 
 async function ultimaMudancaDeStatus(
   ctx: MutationCtx,
@@ -261,11 +334,34 @@ async function ultimaMudancaDeStatus(
     .collect();
 
   const progressos = eventos
-    .filter((e) => TIPOS_DE_PROGRESSO.includes(e.tipo))
+    .filter((e) => !TIPOS_SEM_PROGRESSO.includes(e.tipo))
     .map((e) => e._creationTime);
 
   return progressos.length ? Math.max(...progressos) : null;
 }
+
+// [E2] A demanda passou por material ou orçamento em algum momento? A parada é
+// marcada no histórico com tipo legível por máquina, então isto é consulta —
+// não busca por texto, que quebraria ao mudar uma palavra da descrição.
+export const TIPO_IMPEDIMENTO = (motivo: string) => `impedimento_${motivo}`;
+const TIPOS_DE_GASTO = [
+  TIPO_IMPEDIMENTO("aguardando_material"),
+  TIPO_IMPEDIMENTO("aguardando_orcamento"),
+];
+
+async function passouPorGasto(
+  ctx: MutationCtx,
+  demandaId: Id<"demandas">,
+): Promise<boolean> {
+  const eventos = await ctx.db
+    .query("historicoDemanda")
+    .withIndex("by_demanda", (q) => q.eq("demandaId", demandaId))
+    .collect();
+  return eventos.some((e) => TIPOS_DE_GASTO.includes(e.tipo));
+}
+
+const formatarDataBR = (ts: number) =>
+  new Date(ts).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
 
 export const avaliarRiscosDoDia = internalMutation({
   args: {},

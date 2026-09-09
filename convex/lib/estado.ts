@@ -25,6 +25,10 @@ export interface Transicao {
   porClerkId?: string; // ausente = gerado pelo sistema (cron)
   // campos que acompanham a transição (prazo, motivo, custo, etc.)
   campos?: Partial<Doc<"demandas">>;
+  // tipo do evento no histórico. Permite marcar a parada de forma legível por
+  // máquina (ex.: "impedimento_aguardando_material"), para que "passou por
+  // material/orçamento" seja uma consulta, não uma busca por texto.
+  tipo?: string;
 }
 
 export async function transicionar(ctx: MutationCtx, t: Transicao): Promise<void> {
@@ -41,7 +45,7 @@ export async function transicionar(ctx: MutationCtx, t: Transicao): Promise<void
 
   await registrarHistorico(ctx, {
     demandaId: t.demandaId,
-    tipo: "status_alterado",
+    tipo: t.tipo ?? "status_alterado",
     descricao: t.descricao,
     criadoPorClerkId: t.porClerkId,
   });

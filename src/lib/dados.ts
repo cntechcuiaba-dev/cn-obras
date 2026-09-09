@@ -58,10 +58,27 @@ export interface LinhaBloqueada {
   localNome: string | null;
   responsavelNome: string | null;
 }
+export interface AvisoPendente {
+  _id: string;
+  demandaId: string;
+  mensagem: string;
+  gatilho: string;
+  demandaTitulo: string;
+  whatsapp: string;
+}
+export interface AprovacaoPendente {
+  _id: string;
+  titulo: string;
+  fornecedor: string;
+  valorRecebido: number;
+  localNome: string | null;
+}
 interface MovimentoRet {
   item: ItemMovimento | null;
   proximos: { _id: string; titulo: string; prazo?: number }[];
   bloqueados: LinhaBloqueada[];
+  avisos: AvisoPendente[];
+  aprovacoes: AprovacaoPendente[];
   papel: string;
 }
 interface DetalheRet {
@@ -166,6 +183,8 @@ export function useProximoMovimento(): MovimentoRet | undefined {
           .slice(1, 4)
           .map((x) => ({ _id: x.d._id, titulo: x.d.titulo, prazo: x.d.prazo })),
         bloqueados,
+        avisos: [],
+        aprovacoes: [],
         papel,
       };
     }, [demandas, papel]);
@@ -308,6 +327,31 @@ export function useTriar(): Fn {
 export function useAtualizar(): Fn {
   if (DEMO) return async () => undefined;
   return useMutation(api.triagem.atualizar);
+}
+
+export function useMarcarAvisoEnviado(): Fn {
+  if (DEMO) return async () => undefined;
+  return useMutation(api.avisos.marcarEnviado);
+}
+
+export function useAprovarOrcamento(): Fn {
+  if (DEMO) return async () => undefined;
+  return useMutation(api.orcamento.aprovar);
+}
+
+export function useRegistrarValorRecebido(): Fn {
+  if (DEMO) return async () => undefined;
+  return useMutation(api.orcamento.registrarValorRecebido);
+}
+
+export function useRegistrarCobranca(): Fn {
+  if (DEMO) return async () => undefined;
+  return useMutation(api.orcamento.registrarCobranca);
+}
+
+export function useRegistrarConsumo(): Fn {
+  if (DEMO) return async () => undefined;
+  return useMutation(api.orcamento.registrarConsumo);
 }
 
 export function useCancelar(): Fn {

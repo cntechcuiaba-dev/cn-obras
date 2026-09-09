@@ -1,12 +1,21 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation } from "convex/react";
-import { CheckCircle2, MapPin, User, Lock, ArrowRight, ShieldCheck } from "lucide-react";
+import {
+  CheckCircle2, MapPin, User, Lock, ArrowRight, ShieldCheck,
+  MessageCircle, BadgeCheck, Check,
+} from "lucide-react";
 import { api } from "../../convex/_generated/api";
-import { useProximoMovimento } from "../lib/dados";
+import {
+  useProximoMovimento,
+  useMarcarAvisoEnviado,
+  useAprovarOrcamento,
+  type AvisoPendente,
+  type AprovacaoPendente,
+} from "../lib/dados";
 import { DEMO } from "../lib/env";
 import { Carregando } from "../components/ui";
-import { formatarData, rotuloPrazo } from "../lib/format";
+import { formatarData, rotuloPrazo, linkWhatsapp } from "../lib/format";
 
 // [E3 / RF14a-i] Um movimento. Sem grupos, sem contadores, sem badges numéricos.
 
@@ -16,7 +25,7 @@ export default function Painel() {
 
   if (dados === undefined) return <Carregando />;
 
-  const { item, proximos, bloqueados } = dados;
+  const { item, proximos, bloqueados, avisos, aprovacoes } = dados;
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -69,6 +78,36 @@ export default function Painel() {
         </section>
       )}
 
+      {/* [E1] O envio é manual, o lembrete não. Só sai quando marcado enviado. */}
+      {avisos.length > 0 && (
+        <section className="mt-8">
+          <h2 className="flex items-center gap-1.5 text-label uppercase text-text-2">
+            <MessageCircle className="h-3.5 w-3.5" />
+            Avisar o solicitante
+          </h2>
+          <div className="mt-2 space-y-2">
+            {avisos.map((a) => (
+              <AvisoPendenteCard key={a._id} aviso={a} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* [E2] Orçamento recebido espera decisão da liderança. */}
+      {aprovacoes.length > 0 && (
+        <section className="mt-8">
+          <h2 className="flex items-center gap-1.5 text-label uppercase text-text-2">
+            <BadgeCheck className="h-3.5 w-3.5" />
+            Orçamentos para aprovar
+          </h2>
+          <div className="mt-2 space-y-2">
+            {aprovacoes.map((a) => (
+              <AprovacaoCard key={a._id} aprovacao={a} />
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* [RF14b] Bloqueado sai do painel: seção separada, com quem destrava. */}
       {bloqueados.length > 0 && (
         <section className="mt-8">
@@ -95,6 +134,84 @@ export default function Painel() {
           </div>
         </section>
       )}
+    </div>
+  );
+}
+
+// [E1] A mensagem já vem montada; o botão abre o WhatsApp. O aviso só sai do
+// painel quando alguém confirma que enviou — senão o retorno ao solicitante
+// volta a depender de memória, que foi a ressalva da auditoria.
+function AvisoPendenteCard({ aviso }: { aviso: AvisoPendente }) {
+  const marcar = useMarcarAvisoEnviado();
+  const [erro, setErro] = useState<string | null>(null);
+  const link = linkWhatsapp(aviso.whatsapp, aviso.mensagem);
+
+  return (
+    <div className="card px-4 py-3">
+      <p className="text-sm font-medium">{aviso.demandaTitulo}</p>
+      <p className="mt-1 rounded bg-surface-raise px-3 py-2 text-xs text-text-2">
+        {aviso.mensagem}
+      </p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <a className="btn-primary" href={link} target="_blank" rel="noreferrer">
+          <MessageCircle className="h-4 w-4" /> Abrir WhatsApp
+        </a>
+        <button
+          className="btn-ghost"
+          onClick={async () => {
+            try {
+              await marcar({ avisoId: aviso._id });
+            } catch (e) {
+              setErro(e instanceof Error ? e.message : "Erro.");
+            }
+          }}
+        >
+          <Check className="h-4 w-4" /> Já enviei
+        </button>
+      </div>
+      {erro && <p className="mt-2 text-xs text-pri-alta">{erro}</p>}
+    </div>
+  );
+}
+
+// [E2] Sem alçada por valor: todo orçamento recebido passa pela liderança.
+function AprovacaoCard({ aprovacao }: { aprovacao: AprovacaoPendente }) {
+  const aprovar = useAprovarOrcamento();
+  const navigate = useNavigate();
+  const [erro, setErro] = useState<string | null>(null);
+
+  return (
+    <div className="card flex flex-wrap items-center gap-3 px-4 py-3">
+      <div className="min-w-0 flex-1">
+        <button
+          className="truncate text-sm font-medium hover:text-accent"
+          onClick={() => navigate(`/demanda/${aprovacao._id}`)}
+        >
+          {aprovacao.titulo}
+        </button>
+        <p className="mt-0.5 text-xs text-text-2">
+          {aprovacao.fornecedor} ·{" "}
+          <span className="font-mono tnum font-semibold text-text-1">
+            {aprovacao.valorRecebido.toLocaleString("pt-BR", {
+              style: "currency",
+              currency: "BRL",
+            })}
+          </span>
+        </p>
+        {erro && <p className="mt-1 text-xs text-pri-alta">{erro}</p>}
+      </div>
+      <button
+        className="btn-primary"
+        onClick={async () => {
+          try {
+            await aprovar({ demandaId: aprovacao._id });
+          } catch (e) {
+            setErro(e instanceof Error ? e.message : "Erro.");
+          }
+        }}
+      >
+        Aprovar
+      </button>
     </div>
   );
 }

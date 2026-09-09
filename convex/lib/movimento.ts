@@ -106,8 +106,15 @@ export interface Bloqueio {
   condicaoRetorno: string;
 }
 
-export function bloqueio(d: Doc<"demandas">): Bloqueio | null {
+export function bloqueio(d: Doc<"demandas">, agora = Date.now()): Bloqueio | null {
   if (d.status !== "aguardando" || !d.motivoImpedimento) return null;
+
+  // [E2] "O sistema cobra, não avisa." Chegada a data de cobrança, a demanda
+  // deixa de estar travada com o fornecedor e volta a ser movimento de quem
+  // cobra. Enquanto a data não chega, ela fica fora do painel — de propósito.
+  if (d.motivoImpedimento === "aguardando_orcamento" && d.orcamento) {
+    if (agora >= d.orcamento.cobrarEm) return null;
+  }
 
   switch (d.motivoImpedimento) {
     case "aguardando_aprovacao":
@@ -135,7 +142,23 @@ export function bloqueio(d: Doc<"demandas">): Bloqueio | null {
 // [RF14f] Nenhum item entra no painel sem ação executável — o rótulo sai do estado.
 // [RF18b] Manutenção recorrente recém-gerada é movimento de PROGRAMAR, não de
 // executar: ela nasce triada e com antecedência justamente para dar tempo disso.
-export function acaoDe(d: Doc<"demandas">): { rotulo: string; destino: string } | null {
+export function acaoDe(
+  d: Doc<"demandas">,
+  agora = Date.now(),
+): { rotulo: string; destino: string } | null {
+  // [E2] orçamento cuja data de cobrança chegou é movimento de cobrar
+  if (
+    d.status === "aguardando" &&
+    d.motivoImpedimento === "aguardando_orcamento" &&
+    d.orcamento &&
+    agora >= d.orcamento.cobrarEm
+  ) {
+    return {
+      rotulo: `Cobrar o orçamento de ${d.orcamento.fornecedor}`,
+      destino: "detalhe",
+    };
+  }
+
   switch (d.status) {
     case "aberta":
       return { rotulo: "Triar agora", destino: "triagem" };
@@ -148,4 +171,13 @@ export function acaoDe(d: Doc<"demandas">): { rotulo: string; destino: string } 
     default:
       return null;
   }
+}
+
+// [E2] Orçamento recebido e ainda não aprovado é movimento da LIDERANÇA.
+export function aguardaAprovacao(d: Doc<"demandas">): boolean {
+  return (
+    d.orcamento !== undefined &&
+    d.orcamento.valorRecebido !== undefined &&
+    d.orcamento.aprovadoEm === undefined
+  );
 }

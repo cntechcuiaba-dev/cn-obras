@@ -19,9 +19,14 @@ import {
   useGerarUrl,
   useAtualizar,
   useExecutores,
+  useRegistrarValorRecebido,
+  useRegistrarCobranca,
+  useAprovarOrcamento,
 } from "../lib/dados";
 import { DEMO } from "../lib/env";
 import { DemandaView } from "../lib/tipos";
+
+type OrigemCusto = "estoque" | "compra_direta" | "orcamento";
 import { Carregando, StatusChip, PrazoBadge, PrioridadeChip } from "../components/ui";
 import { MOTIVO_IMPEDIMENTO, MotivoImpedimento, Prioridade } from "../lib/labels";
 import { formatarData, formatarDataHora, linkWhatsapp, preencherModelo } from "../lib/format";
@@ -44,6 +49,19 @@ export default function DetalheDemanda() {
   const [confirmado, setConfirmado] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
+  // [E2] estado dos formulários de orçamento e custo
+  const hoje = new Date().toISOString().slice(0, 10);
+  const emTresDias = new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 10);
+  const [orc, setOrc] = useState({
+    fornecedor: "",
+    solicitadoEm: hoje,
+    cobrarEm: emTresDias,
+    responsavelCobrancaId: "",
+  });
+  const [custoValor, setCustoValor] = useState("");
+  const [custoOrigem, setCustoOrigem] = useState<OrigemCusto>("compra_direta");
+  const executores = useExecutores();
+
   if (dados === undefined) return <Carregando />;
   if (dados === null)
     return (
@@ -52,6 +70,16 @@ export default function DetalheDemanda() {
 
   const d = dados.demanda;
   const podeAgir = dados.podeExecutar || dados.papel === "lideranca";
+
+  // [E2] a parada por material/orçamento fica marcada no histórico com tipo
+  // legível por máquina — é dele que sai a exigência de lançar o valor.
+  const precisaLancarCusto =
+    d.custo === undefined &&
+    dados.historico.some(
+      (h) =>
+        h.tipo === "impedimento_aguardando_material" ||
+        h.tipo === "impedimento_aguardando_orcamento",
+    );
 
   async function acao(fn: () => Promise<unknown>) {
     setErro(null);
@@ -148,6 +176,25 @@ export default function DetalheDemanda() {
           </p>
         )}
 
+        {/* [E2] o compromisso do orçamento, visível: fornecedor, quando cobrar,
+            quantas cobranças já foram, valor e aprovação */}
+        {d.orcamento && (
+          <BlocoOrcamento demanda={d} podeAgir={podeAgir} papel={dados.papel} onErro={setErro} />
+        )}
+
+        {d.custo && (
+          <p className="mt-3 rounded bg-surface-raise px-3 py-2 text-sm">
+            <span className="font-semibold">Custo lançado: </span>
+            <span className="font-mono tnum">
+              {d.custo.valor.toLocaleString("pt-BR", {
+                style: "currency",
+                currency: "BRL",
+              })}
+            </span>{" "}
+            <span className="text-text-2">({d.custo.origem.replace("_", " ")})</span>
+          </p>
+        )}
+
         {erro && (
           <p className="mt-3 rounded bg-pri-alta-bg px-3 py-2 text-sm text-pri-alta">
             {erro}
@@ -232,7 +279,7 @@ export default function DetalheDemanda() {
           </div>
         )}
 
-        {/* Painel pausa: motivo obrigatório */}
+        {/* Painel pausa: motivo obrigatório; orçamento exige os quatro campos */}
         {mostrarPausa && (
           <div className="mt-4 rounded border border-border p-4">
             <span className="label">Motivo do impedimento</span>
@@ -247,6 +294,62 @@ export default function DetalheDemanda() {
                 </option>
               ))}
             </select>
+
+            {/* [E2] compromisso sem data e sem dono é o que produz demanda
+                parada dez dias que ninguém explica */}
+            {motivo === "aguardando_orcamento" && (
+              <div className="mt-4 grid grid-cols-1 gap-3 rounded bg-surface-raise p-3 sm:grid-cols-2">
+                <label className="block sm:col-span-2">
+                  <span className="label">Fornecedor</span>
+                  <input
+                    className="input"
+                    value={orc.fornecedor}
+                    onChange={(e) => setOrc({ ...orc, fornecedor: e.target.value })}
+                    placeholder="Quem vai orçar"
+                  />
+                </label>
+                <label className="block">
+                  <span className="label">Solicitado em</span>
+                  <input
+                    type="date"
+                    className="input"
+                    value={orc.solicitadoEm}
+                    onChange={(e) => setOrc({ ...orc, solicitadoEm: e.target.value })}
+                  />
+                </label>
+                <label className="block">
+                  <span className="label">Cobrar em</span>
+                  <input
+                    type="date"
+                    className="input"
+                    value={orc.cobrarEm}
+                    onChange={(e) => setOrc({ ...orc, cobrarEm: e.target.value })}
+                  />
+                </label>
+                <label className="block sm:col-span-2">
+                  <span className="label">Responsável pela cobrança</span>
+                  <select
+                    className="input"
+                    value={orc.responsavelCobrancaId}
+                    onChange={(e) =>
+                      setOrc({ ...orc, responsavelCobrancaId: e.target.value })
+                    }
+                  >
+                    <option value="">Selecione</option>
+                    {(executores ?? []).map((u) => (
+                      <option key={u._id} value={u._id}>
+                        {u.nome}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <p className="text-xs text-text-2 sm:col-span-2">
+                  Na data de cobrança o sistema devolve esta demanda ao painel de quem
+                  cobra — ele cobra, não avisa.
+                </p>
+              </div>
+            )}
+
             <button
               className="btn-primary mt-3"
               onClick={() =>
@@ -256,6 +359,15 @@ export default function DetalheDemanda() {
                     demandaId: d._id as any,
                     novoStatus: "aguardando",
                     motivoImpedimento: motivo,
+                    orcamento:
+                      motivo === "aguardando_orcamento"
+                        ? {
+                            fornecedor: orc.fornecedor,
+                            solicitadoEm: new Date(`${orc.solicitadoEm}T12:00:00`).getTime(),
+                            cobrarEm: new Date(`${orc.cobrarEm}T12:00:00`).getTime(),
+                            responsavelCobrancaId: orc.responsavelCobrancaId,
+                          }
+                        : undefined,
                   }),
                 )
               }
@@ -280,9 +392,44 @@ export default function DetalheDemanda() {
                 {d.resultadoEsperado ? `: "${d.resultadoEsperado}"` : "."}
               </span>
             </label>
+            {/* [E2] passou por material ou orçamento => valor obrigatório.
+                Zero é resposta válida; vazio não é. */}
+            {precisaLancarCusto && (
+              <div className="mt-4 grid grid-cols-1 gap-3 rounded bg-surface-raise p-3 sm:grid-cols-2">
+                <label className="block">
+                  <span className="label">Valor gasto (R$)</span>
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    className="input"
+                    value={custoValor}
+                    onChange={(e) => setCustoValor(e.target.value)}
+                    placeholder="0,00"
+                  />
+                </label>
+                <label className="block">
+                  <span className="label">Origem</span>
+                  <select
+                    className="input"
+                    value={custoOrigem}
+                    onChange={(e) => setCustoOrigem(e.target.value as OrigemCusto)}
+                  >
+                    <option value="estoque">Estoque da igreja</option>
+                    <option value="compra_direta">Compra direta</option>
+                    <option value="orcamento">Orçamento</option>
+                  </select>
+                </label>
+                <p className="text-xs text-text-2 sm:col-span-2">
+                  Esta demanda passou por material ou orçamento. Zero é resposta válida —
+                  vazio não é.
+                </p>
+              </div>
+            )}
+
             <button
               className="btn-primary mt-3"
-              disabled={!confirmado}
+              disabled={!confirmado || (precisaLancarCusto && custoValor === "")}
               onClick={() =>
                 acao(() =>
                   mudarStatus({
@@ -290,6 +437,9 @@ export default function DetalheDemanda() {
                     demandaId: d._id as any,
                     novoStatus: "concluida",
                     resultadoConfirmado: true,
+                    custo: precisaLancarCusto
+                      ? { valor: Number(custoValor), origem: custoOrigem }
+                      : undefined,
                   }),
                 )
               }
@@ -349,6 +499,113 @@ export default function DetalheDemanda() {
           ))}
         </ol>
       </div>
+    </div>
+  );
+}
+
+// [E2] O compromisso do orçamento na tela: quem, quando cobrar, quantas cobranças,
+// quanto veio e se foi aprovado.
+function BlocoOrcamento({
+  demanda,
+  podeAgir,
+  papel,
+  onErro,
+}: {
+  demanda: DemandaView;
+  podeAgir: boolean;
+  papel: string;
+  onErro: (m: string | null) => void;
+}) {
+  const o = demanda.orcamento!;
+  const registrarValor = useRegistrarValorRecebido();
+  const registrarCobranca = useRegistrarCobranca();
+  const aprovar = useAprovarOrcamento();
+  const [valor, setValor] = useState("");
+
+  const cobrancaDevida = Date.now() >= o.cobrarEm && o.valorRecebido === undefined;
+  const brl = (v: number) =>
+    v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  async function tentar(fn: () => Promise<unknown>) {
+    onErro(null);
+    try {
+      await fn();
+    } catch (e) {
+      onErro(e instanceof Error ? e.message : "Erro.");
+    }
+  }
+
+  return (
+    <div className="mt-4 rounded border border-border p-4">
+      <p className="text-label uppercase text-text-2">Orçamento</p>
+      <p className="mt-1 text-sm">
+        <span className="font-semibold">{o.fornecedor}</span> · solicitado em{" "}
+        {formatarData(o.solicitadoEm)} · cobrar em {formatarData(o.cobrarEm)}
+        {o.cobrancasFeitas > 0 && ` · ${o.cobrancasFeitas} cobrança(s) feita(s)`}
+      </p>
+
+      {o.valorRecebido !== undefined && (
+        <p className="mt-2 text-sm">
+          Valor recebido:{" "}
+          <span className="font-mono tnum font-semibold">{brl(o.valorRecebido)}</span>
+          {o.aprovadoEm ? (
+            <span className="ml-2 text-st-concluida">· aprovado</span>
+          ) : (
+            <span className="ml-2 text-st-execucao">· aguardando aprovação</span>
+          )}
+        </p>
+      )}
+
+      {podeAgir && o.valorRecebido === undefined && (
+        <div className="mt-3 flex flex-wrap items-end gap-2">
+          <label className="block">
+            <span className="label">Valor recebido (R$)</span>
+            <input
+              type="number"
+              min={0}
+              step="0.01"
+              className="input max-w-[160px]"
+              value={valor}
+              onChange={(e) => setValor(e.target.value)}
+            />
+          </label>
+          <button
+            className="btn-primary"
+            disabled={valor === ""}
+            onClick={() =>
+              tentar(() =>
+                registrarValor({ demandaId: demanda._id, valor: Number(valor) }),
+              )
+            }
+          >
+            Registrar orçamento
+          </button>
+          {cobrancaDevida && (
+            <button
+              className="btn-ghost"
+              onClick={() =>
+                tentar(() =>
+                  registrarCobranca({
+                    demandaId: demanda._id,
+                    proximaCobrancaEm: Date.now() + 3 * 86_400_000,
+                  }),
+                )
+              }
+            >
+              Cobrei — reagendar em 3 dias
+            </button>
+          )}
+        </div>
+      )}
+
+      {papel === "lideranca" && o.valorRecebido !== undefined && !o.aprovadoEm && (
+        <button
+          className="btn-primary mt-3"
+          onClick={() => tentar(() => aprovar({ demandaId: demanda._id }))}
+        >
+          Aprovar orçamento
+        </button>
+      )}
     </div>
   );
 }
