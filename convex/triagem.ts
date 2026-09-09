@@ -2,6 +2,7 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { prioridadeDemanda } from "./schema";
 import { requireRole } from "./lib/auth";
+import { transicionar } from "./lib/estado";
 import { registrarHistorico } from "./lib/historico";
 
 // RF05: lista as demandas "aberta" aguardando triagem.
@@ -27,7 +28,10 @@ export const triar = mutation({
     localId: v.id("locais"),
     prioridade: prioridadeDemanda,
     prazo: v.number(),
+    // [E4] dono único do próximo movimento
     responsavelId: v.id("usuarios"),
+    // [E4] quem executa junto — tem acesso, não recebe o movimento
+    equipeIds: v.optional(v.array(v.id("usuarios"))),
     resultadoEsperado: v.string(),
   },
   handler: async (ctx, args) => {
@@ -42,24 +46,34 @@ export const triar = mutation({
       throw new Error("Defina o resultado esperado (o que caracteriza a demanda como resolvida).");
     }
 
-    const executor = await ctx.db.get(args.responsavelId);
-    if (!executor) throw new Error("Executor não encontrado.");
+    const responsavel = await ctx.db.get(args.responsavelId);
+    if (!responsavel) throw new Error("Responsável não encontrado.");
 
-    await ctx.db.patch(args.demandaId, {
-      status: "triada",
-      categoriaId: args.categoriaId,
-      localId: args.localId,
-      prioridade: args.prioridade,
-      prazo: args.prazo,
-      responsavelId: args.responsavelId,
-      resultadoEsperado: resultado,
-    });
+    // [E4] o responsável não se repete na equipe — o movimento tem dono único.
+    const equipe = (args.equipeIds ?? []).filter((id) => id !== args.responsavelId);
 
-    await registrarHistorico(ctx, {
+    const nomesEquipe = (
+      await Promise.all(equipe.map((id) => ctx.db.get(id)))
+    )
+      .map((u) => u?.nome)
+      .filter(Boolean);
+
+    await transicionar(ctx, {
       demandaId: args.demandaId,
-      tipo: "triada",
-      descricao: `Triada · prioridade ${args.prioridade} · atribuída a ${executor.nome}`,
-      criadoPorClerkId: usuario.clerkId,
+      para: "triada",
+      descricao:
+        `Triada · prioridade ${args.prioridade} · atribuída a ${responsavel.nome}` +
+        (nomesEquipe.length ? ` · equipe: ${nomesEquipe.join(", ")}` : ""),
+      porClerkId: usuario.clerkId,
+      campos: {
+        categoriaId: args.categoriaId,
+        localId: args.localId,
+        prioridade: args.prioridade,
+        prazo: args.prazo,
+        responsavelId: args.responsavelId,
+        equipeIds: equipe.length ? equipe : undefined,
+        resultadoEsperado: resultado,
+      },
     });
   },
 });
@@ -69,6 +83,7 @@ export const atualizar = mutation({
   args: {
     demandaId: v.id("demandas"),
     responsavelId: v.optional(v.id("usuarios")),
+    equipeIds: v.optional(v.array(v.id("usuarios"))),
     prazo: v.optional(v.number()),
     prioridade: v.optional(prioridadeDemanda),
     resultadoEsperado: v.optional(v.string()),
@@ -84,6 +99,13 @@ export const atualizar = mutation({
       const ex = await ctx.db.get(args.responsavelId);
       patch.responsavelId = args.responsavelId;
       mudancas.push(`reatribuída a ${ex?.nome ?? "?"}`);
+    }
+    if (args.equipeIds) {
+      // [E4] responsável nunca duplica na equipe
+      const alvo = args.responsavelId ?? d.responsavelId;
+      const equipe = args.equipeIds.filter((id) => id !== alvo);
+      patch.equipeIds = equipe.length ? equipe : undefined;
+      mudancas.push("equipe atualizada");
     }
     if (args.prazo !== undefined && args.prazo !== d.prazo) {
       patch.prazo = args.prazo;
@@ -117,17 +139,13 @@ export const cancelar = mutation({
     const usuario = await requireRole(ctx, ["lideranca"]);
     const d = await ctx.db.get(args.demandaId);
     if (!d) throw new Error("Demanda não encontrada.");
-    if (d.status === "concluida") throw new Error("Demanda concluída não pode ser cancelada.");
 
-    await ctx.db.patch(args.demandaId, {
-      status: "cancelada",
-      riscoSinalizadoEm: undefined,
-    });
-    await registrarHistorico(ctx, {
+    await transicionar(ctx, {
       demandaId: args.demandaId,
-      tipo: "cancelada",
+      para: "cancelada",
       descricao: args.motivo?.trim() ? `Cancelada — ${args.motivo.trim()}` : "Cancelada",
-      criadoPorClerkId: usuario.clerkId,
+      porClerkId: usuario.clerkId,
+      campos: { riscoSinalizadoEm: undefined },
     });
   },
 });

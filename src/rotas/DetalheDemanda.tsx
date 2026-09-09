@@ -115,7 +115,10 @@ export default function DetalheDemanda() {
           {(d.localNome || d.localTextoOriginal) && (
             <Meta>{d.localNome ?? d.localTextoOriginal}</Meta>
           )}
-          {d.responsavelNome && <Meta>Executor: {d.responsavelNome}</Meta>}
+          {d.responsavelNome && <Meta>Responsável: {d.responsavelNome}</Meta>}
+          {d.equipeNomes && d.equipeNomes.length > 0 && (
+            <Meta>Equipe: {d.equipeNomes.join(", ")}</Meta>
+          )}
         </div>
 
         {d.resultadoEsperado && (

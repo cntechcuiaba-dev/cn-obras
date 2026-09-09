@@ -99,6 +99,7 @@ function FormularioTriagem({
   const [prioridade, setPrioridade] = useState<Prioridade>("media");
   const [prazo, setPrazo] = useState("");
   const [responsavelId, setResponsavelId] = useState("");
+  const [equipeIds, setEquipeIds] = useState<string[]>([]);
   const [resultadoEsperado, setResultadoEsperado] = useState("");
   const [erro, setErro] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
@@ -119,6 +120,8 @@ function FormularioTriagem({
         prazo: new Date(`${prazo}T23:59:59`).getTime(),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         responsavelId: responsavelId as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        equipeIds: (equipeIds.length ? equipeIds : undefined) as any,
         resultadoEsperado,
       });
       onPronto();
@@ -189,7 +192,7 @@ function FormularioTriagem({
       </div>
 
       <label className="block">
-        <span className="label">Executor responsável</span>
+        <span className="label">Responsável</span>
         <select
           className="input"
           value={responsavelId}
@@ -203,7 +206,45 @@ function FormularioTriagem({
             </option>
           ))}
         </select>
+        <span className="mt-1 block text-xs text-text-2">
+          Dono único do próximo movimento — é no painel dele que a demanda aparece.
+        </span>
       </label>
+
+      {/* [E4] equipe executa junto, mas não recebe o movimento */}
+      <div>
+        <span className="label">Equipe (opcional)</span>
+        <div className="flex flex-wrap gap-2">
+          {(executores ?? [])
+            .filter((u) => u._id !== responsavelId)
+            .map((u) => {
+              const marcado = equipeIds.includes(u._id);
+              return (
+                <button
+                  key={u._id}
+                  type="button"
+                  onClick={() =>
+                    setEquipeIds((atual) =>
+                      marcado
+                        ? atual.filter((id) => id !== u._id)
+                        : [...atual, u._id],
+                    )
+                  }
+                  className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
+                    marcado
+                      ? "border-accent bg-accent-subtle text-accent-active"
+                      : "border-border text-text-2 hover:border-border-strong"
+                  }`}
+                >
+                  {u.nome}
+                </button>
+              );
+            })}
+        </div>
+        <span className="mt-1 block text-xs text-text-2">
+          Executam junto e têm acesso, mas o movimento continua com o responsável.
+        </span>
+      </div>
 
       <label className="block">
         <span className="label">Resultado esperado</span>

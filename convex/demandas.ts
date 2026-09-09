@@ -1,8 +1,9 @@
 import { mutation, query, internalMutation, QueryCtx } from "./_generated/server";
 import { v } from "convex/values";
 import { Doc } from "./_generated/dataModel";
-import { requireRole, getUsuarioAtual } from "./lib/auth";
+import { requireRole, getUsuarioAtual, podeAcessarDemanda } from "./lib/auth";
 import { registrarHistorico } from "./lib/historico";
+import { criarDemanda, transicionar } from "./lib/estado";
 import { nivelRisco, isAtiva } from "./lib/risco";
 
 // ---------- Upload de fotos ----------
@@ -50,21 +51,19 @@ export const abrirDemanda = mutation({
       throw new Error("Informe um WhatsApp válido com DDD.");
     }
 
-    const demandaId = await ctx.db.insert("demandas", {
-      titulo,
-      descricao,
-      solicitanteNome: nome,
-      solicitanteWhatsapp: whatsappDigitos,
-      localTextoOriginal: local,
-      anexosAbertura: args.anexosAbertura,
-      status: "aberta",
-    });
-
-    await registrarHistorico(ctx, {
-      demandaId,
-      tipo: "criada",
-      descricao: "Demanda aberta pelo formulário público",
-    });
+    const demandaId = await criarDemanda(
+      ctx,
+      {
+        titulo,
+        descricao,
+        solicitanteNome: nome,
+        solicitanteWhatsapp: whatsappDigitos,
+        localTextoOriginal: local,
+        anexosAbertura: args.anexosAbertura,
+      },
+      "aberta",
+      "Demanda aberta pelo formulário público",
+    );
 
     // Identificador amigável exibido ao solicitante (RF04).
     return { demandaId, protocolo: `CN-${demandaId.slice(-6).toUpperCase()}` };
@@ -79,11 +78,19 @@ async function comContexto(ctx: QueryCtx, d: Doc<"demandas">, agora: number) {
     d.localId ? ctx.db.get(d.localId) : Promise.resolve(null),
     d.responsavelId ? ctx.db.get(d.responsavelId) : Promise.resolve(null),
   ]);
+  // [E4] nomes da equipe, para a tela mostrar quem executa junto
+  const equipeNomes = (
+    await Promise.all((d.equipeIds ?? []).map((id) => ctx.db.get(id)))
+  )
+    .map((u) => u?.nome)
+    .filter((n): n is string => Boolean(n));
+
   return {
     ...d,
     categoriaNome: categoria?.nome ?? null,
     localNome: local?.nome ?? null,
     responsavelNome: executor?.nome ?? null,
+    equipeNomes,
     risco: nivelRisco(d.prazo, agora),
   };
 }
@@ -97,7 +104,8 @@ export const detalheDemanda = query({
     const usuario = await getUsuarioAtual(ctx);
     const d = await ctx.db.get(args.demandaId);
     if (!d) throw new Error("Demanda não encontrada.");
-    if (usuario.papel !== "lideranca" && d.responsavelId !== usuario._id) {
+    // [E4 / RF13] responsável OU integrante da equipe
+    if (!podeAcessarDemanda(d, usuario)) {
       throw new Error("Sem permissão para ver esta demanda.");
     }
 
@@ -124,7 +132,7 @@ export const detalheDemanda = query({
         .slice()
         .sort((a, b) => a._creationTime - b._creationTime),
       fotos: fotos.filter((f) => f.url),
-      podeExecutar: d.responsavelId === usuario._id,
+      podeExecutar: podeAcessarDemanda(d, usuario),
       papel: usuario.papel,
     };
   },
@@ -163,16 +171,14 @@ export const mudarStatus = mutation({
     const usuario = await requireRole(ctx, ["executor", "lideranca"]);
     const d = await ctx.db.get(args.demandaId);
     if (!d) throw new Error("Demanda não encontrada.");
-    if (usuario.papel !== "lideranca" && d.responsavelId !== usuario._id) {
+    // [E4] responsável ou equipe podem atualizar status; a equipe executa junto.
+    if (!podeAcessarDemanda(d, usuario)) {
       throw new Error("Você só pode atualizar demandas atribuídas a você.");
     }
 
     const agora = Date.now();
     // Progresso limpa a sinalização de risco (RF30 poderá re-sinalizar se travar de novo).
-    const patch: Partial<Doc<"demandas">> = {
-      status: args.novoStatus,
-      riscoSinalizadoEm: undefined,
-    };
+    const campos: Partial<Doc<"demandas">> = { riscoSinalizadoEm: undefined };
     let desc = "";
 
     if (args.novoStatus === "aguardando") {
@@ -180,12 +186,12 @@ export const mudarStatus = mutation({
       if (!args.motivoImpedimento) {
         throw new Error("Informe o motivo do impedimento ao pausar a demanda.");
       }
-      patch.motivoImpedimento = args.motivoImpedimento;
-      patch.impedimentoDesde = agora;
+      campos.motivoImpedimento = args.motivoImpedimento;
+      campos.impedimentoDesde = agora;
       desc = `Status: Aguardando — ${DESC_MOTIVO[args.motivoImpedimento]}`;
     } else if (args.novoStatus === "em_execucao") {
-      patch.motivoImpedimento = undefined; // retomou: some o impedimento
-      patch.impedimentoDesde = undefined;
+      campos.motivoImpedimento = undefined; // retomou: some o impedimento
+      campos.impedimentoDesde = undefined;
       desc = "Status: Em execução";
     } else {
       // concluida — P10: exige confirmar que o resultado esperado foi atingido.
@@ -195,19 +201,20 @@ export const mudarStatus = mutation({
             "Se não foi, mantenha em execução ou registre um impedimento.",
         );
       }
-      patch.concluidaEm = agora;
-      patch.resultadoConfirmado = true;
-      patch.motivoImpedimento = undefined;
-      patch.impedimentoDesde = undefined;
+      campos.concluidaEm = agora;
+      campos.resultadoConfirmado = true;
+      campos.motivoImpedimento = undefined;
+      campos.impedimentoDesde = undefined;
       desc = "Status: Concluída — resultado confirmado";
     }
 
-    await ctx.db.patch(args.demandaId, patch);
-    await registrarHistorico(ctx, {
+    // O status é escrito só aqui dentro de estado.ts — dono único da máquina.
+    await transicionar(ctx, {
       demandaId: args.demandaId,
-      tipo: "status_alterado",
+      para: args.novoStatus,
       descricao: desc,
-      criadoPorClerkId: usuario.clerkId,
+      porClerkId: usuario.clerkId,
+      campos,
     });
   },
 });
@@ -224,7 +231,8 @@ export const anexarFoto = mutation({
     const usuario = await getUsuarioAtual(ctx);
     const d = await ctx.db.get(args.demandaId);
     if (!d) throw new Error("Demanda não encontrada.");
-    if (usuario.papel !== "lideranca" && d.responsavelId !== usuario._id) {
+    // [E4] a equipe executa junto: pode anexar foto
+    if (!podeAcessarDemanda(d, usuario)) {
       throw new Error("Sem permissão para anexar fotos nesta demanda.");
     }
     await registrarHistorico(ctx, {

@@ -2,7 +2,7 @@ import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { periodicidade } from "./schema";
 import { requireRole } from "./lib/auth";
-import { registrarHistorico } from "./lib/historico";
+import { criarDemanda } from "./lib/estado";
 import { DIA_MS } from "./lib/risco";
 
 const INTERVALO_DIAS: Record<string, number> = {
@@ -119,30 +119,28 @@ export const gerarRecorrenciasDoDia = internalMutation({
         r.ultimaGeracaoEm === undefined || agora - r.ultimaGeracaoEm >= intervalo;
       if (!venceu) continue;
 
-      const demandaId = await ctx.db.insert("demandas", {
-        titulo: r.titulo,
-        descricao: r.descricao,
-        solicitanteNome: "Sistema (recorrência)",
-        solicitanteWhatsapp: "",
-        localTextoOriginal: "",
-        status: "triada",
-        categoriaId: r.categoriaId,
-        localId: r.localId,
-        prioridade: "media",
-        prazo: agora + r.prazoDias * DIA_MS,
-        responsavelId: r.executorPadraoId,
-        resultadoEsperado: `Manutenção recorrente "${r.titulo}" realizada conforme rotina.`,
-        origemRecorrenciaId: r._id,
-      });
+      // RF31: nasce pelo dono único do estado, com evento visível (não silencioso).
+      await criarDemanda(
+        ctx,
+        {
+          titulo: r.titulo,
+          descricao: r.descricao,
+          solicitanteNome: "Sistema (recorrência)",
+          solicitanteWhatsapp: "",
+          localTextoOriginal: "",
+          categoriaId: r.categoriaId,
+          localId: r.localId,
+          prioridade: "media",
+          prazo: agora + r.prazoDias * DIA_MS,
+          responsavelId: r.executorPadraoId,
+          resultadoEsperado: `Manutenção recorrente "${r.titulo}" realizada conforme rotina.`,
+          origemRecorrenciaId: r._id,
+        },
+        "triada",
+        `Gerada automaticamente pela recorrência "${r.titulo}"`,
+      );
 
       await ctx.db.patch(r._id, { ultimaGeracaoEm: agora });
-
-      // RF31: evento visível (não silencioso) para o executor responsável.
-      await registrarHistorico(ctx, {
-        demandaId,
-        tipo: "criada",
-        descricao: `Gerada automaticamente pela recorrência "${r.titulo}"`,
-      });
       geradas++;
     }
     return { geradas };

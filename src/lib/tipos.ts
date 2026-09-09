@@ -12,6 +12,7 @@ export interface DemandaView {
   categoriaNome?: string | null;
   localNome?: string | null;
   responsavelNome?: string | null;
+  equipeNomes?: string[];
   solicitanteNome?: string;
   solicitanteWhatsapp?: string;
   localTextoOriginal?: string;

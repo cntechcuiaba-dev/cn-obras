@@ -24,6 +24,17 @@ export async function getUsuarioAtual(ctx: Ctx): Promise<Doc<"usuarios">> {
   return usuario;
 }
 
+// [E4 / RF09, RF13] Acesso à demanda: liderança vê tudo; executor vê onde é
+// responsável OU integra a equipe. A equipe executa junto, mas não recebe o movimento.
+export function podeAcessarDemanda(
+  d: Doc<"demandas">,
+  usuario: Doc<"usuarios">,
+): boolean {
+  if (usuario.papel === "lideranca") return true;
+  if (d.responsavelId === usuario._id) return true;
+  return (d.equipeIds ?? []).includes(usuario._id);
+}
+
 export async function requireRole(
   ctx: Ctx,
   papeis: Papel[],
