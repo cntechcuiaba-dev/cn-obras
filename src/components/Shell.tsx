@@ -20,14 +20,20 @@ interface Item {
   icone: LucideIcon;
 }
 
+// [RF14i] O painel é a inicial dos dois papéis; "Todas as demandas" é consulta,
+// aberta por escolha.
 const LINKS: Record<Papel, Item[]> = {
   lideranca: [
-    { to: "/", label: "Prazos", icone: LayoutDashboard },
+    { to: "/", label: "Painel", icone: LayoutDashboard },
     { to: "/triagem", label: "Triagem", icone: Inbox },
+    { to: "/demandas", label: "Todas", icone: ListChecks },
     { to: "/recorrencias", label: "Recorrências", icone: Repeat },
     { to: "/inteligencia", label: "Aprendizado", icone: LineChart },
   ],
-  executor: [{ to: "/", label: "Minhas Demandas", icone: ListChecks }],
+  executor: [
+    { to: "/", label: "Painel", icone: LayoutDashboard },
+    { to: "/demandas", label: "Todas", icone: ListChecks },
+  ],
 };
 
 export function Shell({

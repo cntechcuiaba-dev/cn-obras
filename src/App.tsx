@@ -16,9 +16,9 @@ import { Carregando } from "./components/ui";
 import { Papel, UsuarioAtual } from "./lib/auth-types";
 import FormularioPublico from "./rotas/FormularioPublico";
 import Login from "./rotas/Login";
-import PainelPrazos from "./rotas/PainelPrazos";
+import Painel from "./rotas/Painel";
+import TodasDemandas from "./rotas/TodasDemandas";
 import Triagem from "./rotas/Triagem";
-import MinhasDemandas from "./rotas/MinhasDemandas";
 import DetalheDemanda from "./rotas/DetalheDemanda";
 import Recorrencias from "./rotas/Recorrencias";
 import Inteligencia from "./rotas/Inteligencia";
@@ -42,15 +42,15 @@ export default function App() {
 function RotasApp({ papel }: { papel: Papel }) {
   return (
     <Routes>
-      {papel === "lideranca" ? (
+      {/* [RF14i] o painel de um movimento é a inicial dos dois papéis */}
+      <Route path="/" element={<Painel />} />
+      <Route path="/demandas" element={<TodasDemandas />} />
+      {papel === "lideranca" && (
         <>
-          <Route path="/" element={<PainelPrazos />} />
           <Route path="/triagem" element={<Triagem />} />
           <Route path="/recorrencias" element={<Recorrencias />} />
           <Route path="/inteligencia" element={<Inteligencia />} />
         </>
-      ) : (
-        <Route path="/" element={<MinhasDemandas />} />
       )}
       <Route path="/demanda/:id" element={<DetalheDemanda />} />
       <Route path="*" element={<Navigate to="/" replace />} />

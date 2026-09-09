@@ -3,11 +3,7 @@ import { v } from "convex/values";
 import { Doc } from "./_generated/dataModel";
 import { requireRole, getUsuarioAtual } from "./lib/auth";
 import { registrarHistorico } from "./lib/historico";
-import {
-  nivelRisco,
-  compararPorRiscoEPrioridade,
-  isAtiva,
-} from "./lib/risco";
+import { nivelRisco, isAtiva } from "./lib/risco";
 
 // ---------- Upload de fotos ----------
 
@@ -92,73 +88,6 @@ async function comContexto(ctx: QueryCtx, d: Doc<"demandas">, agora: number) {
   };
 }
 export type DemandaComContexto = Awaited<ReturnType<typeof comContexto>>;
-
-// ---------- Painel de Prazos (RF14–RF16, liderança) ----------
-
-export const painelPrazos = query({
-  args: {
-    categoriaId: v.optional(v.id("categorias")),
-    responsavelId: v.optional(v.id("usuarios")),
-  },
-  handler: async (ctx, args) => {
-    await requireRole(ctx, ["lideranca"]);
-    const agora = Date.now();
-
-    let ativos = (await ctx.db.query("demandas").collect()).filter((d) =>
-      isAtiva(d.status),
-    );
-    if (args.categoriaId) ativos = ativos.filter((d) => d.categoriaId === args.categoriaId);
-    if (args.responsavelId) ativos = ativos.filter((d) => d.responsavelId === args.responsavelId);
-
-    ativos.sort((a, b) => compararPorRiscoEPrioridade(a, b, agora));
-    const enriquecidos = await Promise.all(ativos.map((d) => comContexto(ctx, d, agora)));
-
-    const vencidas = enriquecidos.filter((d) => d.risco === "vencida");
-    const vencendo = enriquecidos.filter((d) => d.risco === "vencendo");
-    const emExecucao = enriquecidos.filter(
-      (d) => d.status === "em_execucao" && d.risco === "em_dia",
-    );
-
-    return {
-      vencidas,
-      vencendo,
-      emExecucao,
-      contadores: {
-        vencidas: vencidas.length,
-        vencendo: vencendo.length,
-        emExecucao: emExecucao.length,
-      },
-    };
-  },
-});
-
-// ---------- Minhas Demandas (RF09, executor) ----------
-
-export const minhasDemandas = query({
-  args: {},
-  handler: async (ctx) => {
-    const usuario = await requireRole(ctx, ["executor", "lideranca"]);
-    const agora = Date.now();
-
-    const minhas = await ctx.db
-      .query("demandas")
-      .withIndex("by_responsavel", (q) => q.eq("responsavelId", usuario._id))
-      .collect();
-
-    minhas.sort((a, b) => compararPorRiscoEPrioridade(a, b, agora));
-    const enriquecidos = await Promise.all(minhas.map((d) => comContexto(ctx, d, agora)));
-
-    const porStatus = (s: Doc<"demandas">["status"]) =>
-      enriquecidos.filter((d) => d.status === s);
-
-    return {
-      em_execucao: porStatus("em_execucao"),
-      aguardando: porStatus("aguardando"),
-      triada: porStatus("triada"),
-      concluida: porStatus("concluida"),
-    };
-  },
-});
 
 // ---------- Detalhe (RF25, liderança ou executor dono — RF13) ----------
 

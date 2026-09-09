@@ -9,12 +9,15 @@ import { DEMO } from "./env";
 import { useDemo } from "../demo/DemoProvider";
 import { DemoRecorrencia, EXECUTOR_DEMO, CATEGORIAS, LOCAIS, EXECUTORES, MODELOS } from "../demo/dados-demo";
 import { DemandaView, EventoHistorico } from "./tipos";
+import { StatusDemanda } from "./labels";
 import {
   nivelRisco,
   compararPorRiscoEPrioridade,
   isAtiva,
   DIA_MS,
 } from "./risco-cliente";
+// Mesma fórmula usada pelo backend (RF14c: uma única fórmula).
+import { pontuar, frase, bloqueio, acaoDe } from "../../convex/lib/movimento";
 
 type Cadastro = { _id: string; nome: string };
 type Modelo = { _id: string; nome: string; tipo: string; texto: string };
@@ -25,17 +28,38 @@ type LinhaAprend = {
   tempoMedioDias: number | null;
 };
 
-interface PainelRet {
-  vencidas: DemandaView[];
-  vencendo: DemandaView[];
-  emExecucao: DemandaView[];
-  contadores: { vencidas: number; vencendo: number; emExecucao: number };
+// [E3] Painel de um movimento. A fórmula é importada do backend para não existirem
+// duas versões dela (RF14c fala em fórmula única).
+export interface ItemMovimento {
+  _id: string;
+  titulo: string;
+  descricao: string;
+  status: StatusDemanda;
+  prazo?: number;
+  localTextoOriginal?: string;
+  solicitanteNome?: string;
+  porque: string;
+  acao: { rotulo: string; destino: string };
+  categoriaNome: string | null;
+  localNome: string | null;
+  responsavelNome: string | null;
 }
-interface MinhasRet {
-  em_execucao: DemandaView[];
-  aguardando: DemandaView[];
-  triada: DemandaView[];
-  concluida: DemandaView[];
+export interface LinhaBloqueada {
+  _id: string;
+  titulo: string;
+  prazo?: number;
+  motivo?: string;
+  impedimentoDesde?: number;
+  quemDestrava: string;
+  condicaoRetorno: string;
+  localNome: string | null;
+  responsavelNome: string | null;
+}
+interface MovimentoRet {
+  item: ItemMovimento | null;
+  proximos: { _id: string; titulo: string; prazo?: number }[];
+  bloqueados: LinhaBloqueada[];
+  papel: string;
 }
 interface DetalheRet {
   demanda: DemandaView;
@@ -75,57 +99,90 @@ export function useModelos(): Modelo[] | undefined {
   return asType<Modelo[] | undefined>(useQuery(api.cadastros.listarModelos, {}));
 }
 
-export function usePainelPrazos(filtros: {
-  categoriaId?: string;
-  responsavelId?: string;
-}): PainelRet | undefined {
+// [E3 / RF14a-i] Painel de um movimento.
+export function useProximoMovimento(): MovimentoRet | undefined {
   if (DEMO) {
-    const { demandas } = useDemo();
-    return useMemo<PainelRet>(() => {
+    const { demandas, papel } = useDemo();
+    return useMemo<MovimentoRet>(() => {
       const agora = Date.now();
-      let ativos = demandas.filter((d) => isAtiva(d.status));
-      if (filtros.categoriaId) ativos = ativos.filter((d) => d.categoriaId === filtros.categoriaId);
-      if (filtros.responsavelId) ativos = ativos.filter((d) => d.responsavelId === filtros.responsavelId);
-      const ord = [...ativos]
-        .sort((a, b) => compararPorRiscoEPrioridade(a, b, agora))
-        .map((d) => ({ ...d, risco: nivelRisco(d.prazo, agora) }));
-      const vencidas = ord.filter((d) => d.risco === "vencida");
-      const vencendo = ord.filter((d) => d.risco === "vencendo");
-      const emExecucao = ord.filter((d) => d.status === "em_execucao" && d.risco === "em_dia");
+      const minhas = demandas.filter((d) => {
+        if (d.status === "concluida" || d.status === "cancelada") return false;
+        const souResponsavel = d.responsavelId === EXECUTOR_DEMO;
+        if (papel === "lideranca") return d.status === "aberta" || souResponsavel;
+        return souResponsavel;
+      });
+
+      const acionaveis: typeof minhas = [];
+      const bloqueados: MovimentoRet["bloqueados"] = [];
+      for (const d of minhas) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const b = bloqueio(d as any);
+        if (b) {
+          bloqueados.push({
+            _id: d._id,
+            titulo: d.titulo,
+            prazo: d.prazo,
+            motivo: d.motivoImpedimento,
+            impedimentoDesde: d.impedimentoDesde,
+            quemDestrava: b.quemDestrava,
+            condicaoRetorno: b.condicaoRetorno,
+            localNome: d.localNome ?? null,
+            responsavelNome: d.responsavelNome ?? null,
+          });
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } else if (acaoDe(d as any)) {
+          acionaveis.push(d);
+        }
+      }
+
+      const ordenadas = acionaveis
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .map((d) => ({ d, ...pontuar(d as any, agora) }))
+        .sort((a, b) => b.pontos - a.pontos);
+
+      const p = ordenadas[0];
       return {
-        vencidas,
-        vencendo,
-        emExecucao,
-        contadores: {
-          vencidas: vencidas.length,
-          vencendo: vencendo.length,
-          emExecucao: emExecucao.length,
-        },
+        item: p
+          ? {
+              _id: p.d._id,
+              titulo: p.d.titulo,
+              descricao: p.d.descricao,
+              status: p.d.status,
+              prazo: p.d.prazo,
+              localTextoOriginal: p.d.localTextoOriginal,
+              solicitanteNome: p.d.solicitanteNome,
+              porque: frase(p.fatores),
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              acao: acaoDe(p.d as any)!,
+              categoriaNome: p.d.categoriaNome ?? null,
+              localNome: p.d.localNome ?? null,
+              responsavelNome: p.d.responsavelNome ?? null,
+            }
+          : null,
+        proximos: ordenadas
+          .slice(1, 4)
+          .map((x) => ({ _id: x.d._id, titulo: x.d.titulo, prazo: x.d.prazo })),
+        bloqueados,
+        papel,
       };
-    }, [demandas, filtros.categoriaId, filtros.responsavelId]);
+    }, [demandas, papel]);
   }
-  return asType<PainelRet | undefined>(useQuery(api.demandas.painelPrazos, asType(filtros)));
+  return asType<MovimentoRet | undefined>(useQuery(api.painel.proximoMovimento, {}));
 }
 
-export function useMinhasDemandas(): MinhasRet | undefined {
+// [RF14i] Tela de consulta separada — nunca a inicial.
+export function useTodasDemandas(): DemandaView[] | undefined {
   if (DEMO) {
     const { demandas } = useDemo();
-    return useMemo<MinhasRet>(() => {
+    return useMemo(() => {
       const agora = Date.now();
-      const minhas = demandas
-        .filter((d) => d.responsavelId === EXECUTOR_DEMO)
+      return [...demandas]
+        .filter((d) => isAtiva(d.status) || d.status === "aberta")
         .sort((a, b) => compararPorRiscoEPrioridade(a, b, agora))
         .map((d) => ({ ...d, risco: nivelRisco(d.prazo, agora) }));
-      const g = (s: string) => minhas.filter((d) => d.status === s);
-      return {
-        em_execucao: g("em_execucao"),
-        aguardando: g("aguardando"),
-        triada: g("triada"),
-        concluida: g("concluida"),
-      };
     }, [demandas]);
   }
-  return asType<MinhasRet | undefined>(useQuery(api.demandas.minhasDemandas, {}));
+  return asType<DemandaView[] | undefined>(useQuery(api.painel.todasDemandas, {}));
 }
 
 export function useAbertas(): DemandaView[] | undefined {
