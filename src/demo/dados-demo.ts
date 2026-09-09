@@ -8,7 +8,7 @@ export interface DemoDemanda extends DemandaView {
   localTextoOriginal: string;
   categoriaId?: string;
   localId?: string;
-  executorId?: string;
+  responsavelId?: string;
   status: StatusDemanda;
   prioridade?: Prioridade;
   motivoImpedimento?: MotivoImpedimento;
@@ -25,9 +25,10 @@ export interface DemoRecorrencia {
   executorPadraoId: string;
   categoriaNome: string;
   localNome: string;
-  executorNome: string;
+  responsavelNome: string;
   periodicidade: string;
   prazoDias: number;
+  antecedenciaDias: number;
   ativa: boolean;
   proximaGeracao: number | null;
 }
@@ -121,7 +122,7 @@ function demanda(d: Partial<DemoDemanda> & { titulo: string; status: StatusDeman
     fotos: [],
     categoriaNome: nomeCat(d.categoriaId),
     localNome: nomeLoc(d.localId),
-    executorNome: nomeExe(d.executorId),
+    responsavelNome: nomeExe(d.responsavelId),
     ...d,
   };
 }
@@ -140,7 +141,7 @@ export function seedDemandas(): DemoDemanda[] {
       localId: "l_salao",
       prioridade: "alta",
       prazo: off(-2),
-      executorId: "u_marcos",
+      responsavelId: "u_marcos",
       resultadoEsperado: "Vazamento estancado e forro sem pingar em dia de chuva.",
       riscoSinalizadoEm: off(-1),
       fotos: [foto("#5B6470", "Antes")],
@@ -162,7 +163,7 @@ export function seedDemandas(): DemoDemanda[] {
       localId: "l_infantil",
       prioridade: "alta",
       prazo: off(-1),
-      executorId: "u_joao",
+      responsavelId: "u_joao",
       resultadoEsperado: "Tomada substituída e testada com carga.",
       historico: [
         ev(-3, "criada", "Demanda aberta pelo formulário público"),
@@ -180,7 +181,7 @@ export function seedDemandas(): DemoDemanda[] {
       localId: "l_banheiros",
       prioridade: "media",
       prazo: off(0),
-      executorId: "u_marcos",
+      responsavelId: "u_marcos",
       resultadoEsperado: "Fechadura funcionando e porta trancando.",
       historico: [
         ev(-4, "criada", "Demanda aberta pelo formulário público"),
@@ -199,7 +200,7 @@ export function seedDemandas(): DemoDemanda[] {
       localId: "l_templo",
       prioridade: "media",
       prazo: off(1),
-      executorId: "u_rafael",
+      responsavelId: "u_rafael",
       resultadoEsperado: "Dreno desobstruído e sem gotejamento.",
       historico: [
         ev(-2, "criada", "Demanda aberta pelo formulário público"),
@@ -217,7 +218,7 @@ export function seedDemandas(): DemoDemanda[] {
       localId: "l_cozinha",
       prioridade: "media",
       prazo: off(3),
-      executorId: "u_marcos",
+      responsavelId: "u_marcos",
       motivoImpedimento: "aguardando_material",
       impedimentoDesde: off(-2),
       resultadoEsperado: "Torneira vedando sem vazamento.",
@@ -238,7 +239,7 @@ export function seedDemandas(): DemoDemanda[] {
       localId: "l_secretaria",
       prioridade: "baixa",
       prazo: off(5),
-      executorId: "u_rafael",
+      responsavelId: "u_rafael",
       resultadoEsperado: "Parede tratada e repintada sem descascar.",
       historico: [
         ev(-3, "criada", "Demanda aberta pelo formulário público"),
@@ -260,7 +261,7 @@ export function seedDemandas(): DemoDemanda[] {
       prazo: off(-10),
       concluidaEm: off(-8),
       resultadoConfirmado: true,
-      executorId: "u_marcos",
+      responsavelId: "u_marcos",
       resultadoEsperado: "Rachadura tratada e selada.",
       fotos: [foto("#6E5B48", "Antes"), foto("#4C6A55", "Depois")],
       historico: [
@@ -304,9 +305,10 @@ export function seedRecorrencias(): DemoRecorrencia[] {
       executorPadraoId: "u_marcos",
       categoriaNome: "Hidráulica",
       localNome: "Templo principal",
-      executorNome: "Marcos Silva",
+      responsavelNome: "Marcos Silva",
       periodicidade: "semestral",
       prazoDias: 15,
+      antecedenciaDias: 10,
       ativa: true,
       proximaGeracao: off(12),
     },
@@ -319,9 +321,10 @@ export function seedRecorrencias(): DemoRecorrencia[] {
       executorPadraoId: "u_joao",
       categoriaNome: "Elétrica",
       localNome: "Templo principal",
-      executorNome: "João Pereira",
+      responsavelNome: "João Pereira",
       periodicidade: "anual",
       prazoDias: 30,
+      antecedenciaDias: 21,
       ativa: true,
       proximaGeracao: off(88),
     },

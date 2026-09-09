@@ -81,13 +81,13 @@ async function comContexto(ctx: QueryCtx, d: Doc<"demandas">, agora: number) {
   const [categoria, local, executor] = await Promise.all([
     d.categoriaId ? ctx.db.get(d.categoriaId) : Promise.resolve(null),
     d.localId ? ctx.db.get(d.localId) : Promise.resolve(null),
-    d.executorId ? ctx.db.get(d.executorId) : Promise.resolve(null),
+    d.responsavelId ? ctx.db.get(d.responsavelId) : Promise.resolve(null),
   ]);
   return {
     ...d,
     categoriaNome: categoria?.nome ?? null,
     localNome: local?.nome ?? null,
-    executorNome: executor?.nome ?? null,
+    responsavelNome: executor?.nome ?? null,
     risco: nivelRisco(d.prazo, agora),
   };
 }
@@ -98,7 +98,7 @@ export type DemandaComContexto = Awaited<ReturnType<typeof comContexto>>;
 export const painelPrazos = query({
   args: {
     categoriaId: v.optional(v.id("categorias")),
-    executorId: v.optional(v.id("usuarios")),
+    responsavelId: v.optional(v.id("usuarios")),
   },
   handler: async (ctx, args) => {
     await requireRole(ctx, ["lideranca"]);
@@ -108,7 +108,7 @@ export const painelPrazos = query({
       isAtiva(d.status),
     );
     if (args.categoriaId) ativos = ativos.filter((d) => d.categoriaId === args.categoriaId);
-    if (args.executorId) ativos = ativos.filter((d) => d.executorId === args.executorId);
+    if (args.responsavelId) ativos = ativos.filter((d) => d.responsavelId === args.responsavelId);
 
     ativos.sort((a, b) => compararPorRiscoEPrioridade(a, b, agora));
     const enriquecidos = await Promise.all(ativos.map((d) => comContexto(ctx, d, agora)));
@@ -142,7 +142,7 @@ export const minhasDemandas = query({
 
     const minhas = await ctx.db
       .query("demandas")
-      .withIndex("by_executor", (q) => q.eq("executorId", usuario._id))
+      .withIndex("by_responsavel", (q) => q.eq("responsavelId", usuario._id))
       .collect();
 
     minhas.sort((a, b) => compararPorRiscoEPrioridade(a, b, agora));
@@ -168,7 +168,7 @@ export const detalheDemanda = query({
     const usuario = await getUsuarioAtual(ctx);
     const d = await ctx.db.get(args.demandaId);
     if (!d) throw new Error("Demanda não encontrada.");
-    if (usuario.papel !== "lideranca" && d.executorId !== usuario._id) {
+    if (usuario.papel !== "lideranca" && d.responsavelId !== usuario._id) {
       throw new Error("Sem permissão para ver esta demanda.");
     }
 
@@ -195,7 +195,7 @@ export const detalheDemanda = query({
         .slice()
         .sort((a, b) => a._creationTime - b._creationTime),
       fotos: fotos.filter((f) => f.url),
-      podeExecutar: d.executorId === usuario._id,
+      podeExecutar: d.responsavelId === usuario._id,
       papel: usuario.papel,
     };
   },
@@ -234,7 +234,7 @@ export const mudarStatus = mutation({
     const usuario = await requireRole(ctx, ["executor", "lideranca"]);
     const d = await ctx.db.get(args.demandaId);
     if (!d) throw new Error("Demanda não encontrada.");
-    if (usuario.papel !== "lideranca" && d.executorId !== usuario._id) {
+    if (usuario.papel !== "lideranca" && d.responsavelId !== usuario._id) {
       throw new Error("Você só pode atualizar demandas atribuídas a você.");
     }
 
@@ -295,7 +295,7 @@ export const anexarFoto = mutation({
     const usuario = await getUsuarioAtual(ctx);
     const d = await ctx.db.get(args.demandaId);
     if (!d) throw new Error("Demanda não encontrada.");
-    if (usuario.papel !== "lideranca" && d.executorId !== usuario._id) {
+    if (usuario.papel !== "lideranca" && d.responsavelId !== usuario._id) {
       throw new Error("Sem permissão para anexar fotos nesta demanda.");
     }
     await registrarHistorico(ctx, {

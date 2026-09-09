@@ -1,8 +1,8 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
-// Schema — Central CN Obras. Fonte: docs/02-schema-convex.md (já com as correções da
-// auditoria Trino v2: impedimento estruturado, resultado esperado/confirmado, risco).
+// Schema — Central CN Obras. Fonte: docs/02-schema-convex.md (Emenda 01).
+// E1 avisos · E2 orçamento/custo/consumos · E4 responsável/equipe · E5 antecedência.
 
 export const statusDemanda = v.union(
   v.literal("aberta"),
@@ -33,6 +33,37 @@ export const periodicidade = v.union(
   v.literal("trimestral"),
   v.literal("semestral"),
   v.literal("anual"),
+);
+
+// [E2] compromisso embutido na demanda — obrigatório por inteiro na mutation
+// que entra em "aguardando" com motivo "aguardando_orcamento".
+export const blocoOrcamento = v.object({
+  fornecedor: v.string(),
+  solicitadoEm: v.number(),
+  cobrarEm: v.number(),
+  responsavelCobrancaId: v.id("usuarios"),
+  cobrancasFeitas: v.number(),
+  valorRecebido: v.optional(v.number()),
+  recebidoEm: v.optional(v.number()),
+  aprovadoEm: v.optional(v.number()),
+  aprovadoPorId: v.optional(v.id("usuarios")),
+});
+
+// [E2] fato realizado — obrigatório (zero é válido) antes de "concluida"
+// quando a demanda passou por material ou orçamento.
+export const blocoCusto = v.object({
+  valor: v.number(),
+  origem: v.union(
+    v.literal("estoque"),
+    v.literal("compra_direta"),
+    v.literal("orcamento"),
+  ),
+  lancadoEm: v.number(),
+});
+
+export const origemConsumo = v.union(
+  v.literal("estoque"),
+  v.literal("compra"),
 );
 
 export default defineSchema({
@@ -79,12 +110,19 @@ export default defineSchema({
     localId: v.optional(v.id("locais")),
     prioridade: v.optional(prioridadeDemanda),
     prazo: v.optional(v.number()),
-    executorId: v.optional(v.id("usuarios")),
     resultadoEsperado: v.optional(v.string()),
+
+    // [E4] dono único do próximo movimento — renomeado de executorId
+    responsavelId: v.optional(v.id("usuarios")),
+    // [E4] quem executa junto; tem acesso, não recebe o movimento
+    equipeIds: v.optional(v.array(v.id("usuarios"))),
 
     // preenchidos ao entrar em "aguardando" (durante a parada)
     motivoImpedimento: v.optional(motivoImpedimento),
     impedimentoDesde: v.optional(v.number()),
+
+    orcamento: v.optional(blocoOrcamento),
+    custo: v.optional(blocoCusto),
 
     concluidaEm: v.optional(v.number()),
     resultadoConfirmado: v.optional(v.boolean()),
@@ -94,13 +132,15 @@ export default defineSchema({
     origemRecorrenciaId: v.optional(v.id("manutencoesRecorrentes")),
   })
     .index("by_status", ["status"])
-    .index("by_executor", ["executorId"])
+    .index("by_responsavel", ["responsavelId"])
     .index("by_prazo", ["prazo"])
-    .index("by_origem_recorrencia", ["origemRecorrenciaId"]),
+    .index("by_origem_recorrencia", ["origemRecorrenciaId"])
+    // [E2] varre orçamentos vencidos sem depender de alguém abrir o painel
+    .index("by_cobranca", ["status", "orcamento.cobrarEm"]),
 
   historicoDemanda: defineTable({
     demandaId: v.id("demandas"),
-    tipo: v.string(), // "criada" | "triada" | "status_alterado" | "foto" | "risco_sinalizado" | ...
+    tipo: v.string(),
     descricao: v.string(),
     criadoPorClerkId: v.optional(v.string()), // ausente quando gerado pelo sistema (cron)
     anexos: v.optional(v.array(v.id("_storage"))),
@@ -114,7 +154,31 @@ export default defineSchema({
     executorPadraoId: v.id("usuarios"),
     periodicidade,
     prazoDias: v.number(),
+    // [E5] gera a demanda com antecedência, para dar tempo de programação
+    antecedenciaDias: v.number(),
     ativa: v.boolean(),
     ultimaGeracaoEm: v.optional(v.number()),
   }).index("by_ativa", ["ativa"]),
+
+  // [E2] consumo de material — sem saldo, sem inventário (decisão explícita)
+  consumos: defineTable({
+    demandaId: v.id("demandas"),
+    item: v.string(),
+    quantidade: v.number(),
+    valorUnitario: v.optional(v.number()),
+    origem: origemConsumo,
+  })
+    .index("by_demanda", ["demandaId"])
+    .index("by_item", ["item"]), // histórico de preço pago, usado na aprovação
+
+  // [E1] compromisso de avisar o solicitante — envio manual, lembrete não
+  avisos: defineTable({
+    demandaId: v.id("demandas"),
+    responsavelId: v.id("usuarios"),
+    gatilho: v.string(), // status que disparou o aviso
+    mensagem: v.string(), // já montada a partir do modelo
+    enviadoEm: v.optional(v.number()), // ausente = ainda pendente no painel
+  })
+    .index("by_responsavel_pendente", ["responsavelId", "enviadoEm"])
+    .index("by_demanda", ["demandaId"]),
 });

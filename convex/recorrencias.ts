@@ -23,11 +23,16 @@ export const criar = mutation({
     executorPadraoId: v.id("usuarios"),
     periodicidade,
     prazoDias: v.number(),
+    // [E5] gerar antes do vencimento, para dar tempo de programação
+    antecedenciaDias: v.number(),
   },
   handler: async (ctx, args) => {
     await requireRole(ctx, ["lideranca"]);
     if (!args.titulo.trim()) throw new Error("Título é obrigatório.");
     if (args.prazoDias <= 0) throw new Error("Prazo em dias deve ser positivo.");
+    if (args.antecedenciaDias < 0) {
+      throw new Error("Antecedência em dias não pode ser negativa.");
+    }
     return await ctx.db.insert("manutencoesRecorrentes", {
       ...args,
       titulo: args.titulo.trim(),
@@ -48,6 +53,7 @@ export const editar = mutation({
     executorPadraoId: v.optional(v.id("usuarios")),
     periodicidade: v.optional(periodicidade),
     prazoDias: v.optional(v.number()),
+    antecedenciaDias: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     await requireRole(ctx, ["lideranca"]);
@@ -87,7 +93,7 @@ export const listar = query({
           ...r,
           categoriaNome: categoria?.nome ?? null,
           localNome: local?.nome ?? null,
-          executorNome: executor?.nome ?? null,
+          responsavelNome: executor?.nome ?? null,
           proximaGeracao: r.ativa ? proximaGeracao : null,
         };
       }),
@@ -124,7 +130,7 @@ export const gerarRecorrenciasDoDia = internalMutation({
         localId: r.localId,
         prioridade: "media",
         prazo: agora + r.prazoDias * DIA_MS,
-        executorId: r.executorPadraoId,
+        responsavelId: r.executorPadraoId,
         resultadoEsperado: `Manutenção recorrente "${r.titulo}" realizada conforme rotina.`,
         origemRecorrenciaId: r._id,
       });

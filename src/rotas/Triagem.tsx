@@ -93,7 +93,7 @@ function FormularioTriagem({
   const [localId, setLocalId] = useState("");
   const [prioridade, setPrioridade] = useState<Prioridade>("media");
   const [prazo, setPrazo] = useState("");
-  const [executorId, setExecutorId] = useState("");
+  const [responsavelId, setResponsavelId] = useState("");
   const [resultadoEsperado, setResultadoEsperado] = useState("");
   const [erro, setErro] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
@@ -113,7 +113,7 @@ function FormularioTriagem({
         prioridade,
         prazo: new Date(`${prazo}T23:59:59`).getTime(),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        executorId: executorId as any,
+        responsavelId: responsavelId as any,
         resultadoEsperado,
       });
       onPronto();
@@ -187,8 +187,8 @@ function FormularioTriagem({
         <span className="label">Executor responsável</span>
         <select
           className="input"
-          value={executorId}
-          onChange={(e) => setExecutorId(e.target.value)}
+          value={responsavelId}
+          onChange={(e) => setResponsavelId(e.target.value)}
           required
         >
           <option value="">Selecione</option>

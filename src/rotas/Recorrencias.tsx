@@ -59,7 +59,7 @@ function ItemRecorrencia({ rec }: { rec: any }) {
           <span>{PERIODICIDADE[rec.periodicidade]}</span>
           {rec.categoriaNome && <span>{rec.categoriaNome}</span>}
           {rec.localNome && <span>{rec.localNome}</span>}
-          {rec.executorNome && <span>{rec.executorNome}</span>}
+          {rec.responsavelNome && <span>{rec.responsavelNome}</span>}
           {rec.ativa && rec.proximaGeracao && (
             <span>próxima: {formatarData(rec.proximaGeracao)}</span>
           )}
@@ -91,6 +91,7 @@ function FormularioRecorrencia({ onPronto }: { onPronto: () => void }) {
     executorPadraoId: "",
     periodicidade: "mensal",
     prazoDias: "15",
+    antecedenciaDias: "7",
   });
   const [erro, setErro] = useState<string | null>(null);
 
@@ -110,6 +111,7 @@ function FormularioRecorrencia({ onPronto }: { onPronto: () => void }) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         periodicidade: f.periodicidade as any,
         prazoDias: Number(f.prazoDias),
+        antecedenciaDias: Number(f.antecedenciaDias),
       });
       onPronto();
     } catch (err) {
@@ -164,6 +166,21 @@ function FormularioRecorrencia({ onPronto }: { onPronto: () => void }) {
             onChange={(e) => setF({ ...f, prazoDias: e.target.value })}
             required
           />
+        </label>
+        <label className="block">
+          <span className="label">Antecedência (dias)</span>
+          <input
+            type="number"
+            min={0}
+            className="input"
+            value={f.antecedenciaDias}
+            onChange={(e) => setF({ ...f, antecedenciaDias: e.target.value })}
+            required
+          />
+          <span className="mt-1 block text-xs text-text-2">
+            Quantos dias antes do vencimento a demanda é gerada, para dar tempo de
+            programação.
+          </span>
         </label>
       </div>
       {erro && (

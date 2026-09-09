@@ -28,7 +28,7 @@ interface TriarArgs {
   localId: string;
   prioridade: Prioridade;
   prazo: number;
-  executorId: string;
+  responsavelId: string;
   resultadoEsperado: string;
 }
 interface StatusArgs {
@@ -52,7 +52,7 @@ interface DemoCtx {
     criarRecorrencia: (
       r: Omit<
         DemoRecorrencia,
-        "_id" | "categoriaNome" | "localNome" | "executorNome" | "proximaGeracao" | "ativa"
+        "_id" | "categoriaNome" | "localNome" | "responsavelNome" | "proximaGeracao" | "ativa"
       >,
     ) => void;
     alternarRecorrencia: (id: string, ativa: boolean) => void;
@@ -102,7 +102,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
           fotos: [],
           categoriaNome: null,
           localNome: null,
-          executorNome: null,
+          responsavelNome: null,
         };
         setDemandas((prev) => [nova, ...prev]);
         return { protocolo: protocolo(id) };
@@ -117,12 +117,12 @@ export function DemoProvider({ children }: { children: ReactNode }) {
           localNome: nomeLoc(a.localId),
           prioridade: a.prioridade,
           prazo: a.prazo,
-          executorId: a.executorId,
-          executorNome: nomeExe(a.executorId),
+          responsavelId: a.responsavelId,
+          responsavelNome: nomeExe(a.responsavelId),
           resultadoEsperado: a.resultadoEsperado,
           historico: [
             ...d.historico,
-            evento("triada", `Triada · prioridade ${a.prioridade} · atribuída a ${nomeExe(a.executorId)}`),
+            evento("triada", `Triada · prioridade ${a.prioridade} · atribuída a ${nomeExe(a.responsavelId)}`),
           ],
         }));
       },
@@ -181,7 +181,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
             ativa: true,
             categoriaNome: nomeCat(r.categoriaId) ?? "",
             localNome: nomeLoc(r.localId) ?? "",
-            executorNome: nomeExe(r.executorPadraoId) ?? "",
+            responsavelNome: nomeExe(r.executorPadraoId) ?? "",
             proximaGeracao: Date.now(),
           },
         ]),

@@ -10,13 +10,13 @@ export default function PainelPrazos() {
   const navigate = useNavigate();
   const agora = Date.now();
   const [categoriaId, setCategoriaId] = useState<string>("");
-  const [executorId, setExecutorId] = useState<string>("");
+  const [responsavelId, setResponsavelId] = useState<string>("");
 
   const categorias = useCategorias();
   const executores = useExecutores();
   const painel = usePainelPrazos({
     categoriaId: categoriaId || undefined,
-    executorId: executorId || undefined,
+    responsavelId: responsavelId || undefined,
   });
 
   return (
@@ -75,8 +75,8 @@ export default function PainelPrazos() {
             </select>
             <select
               className="input max-w-[220px]"
-              value={executorId}
-              onChange={(e) => setExecutorId(e.target.value)}
+              value={responsavelId}
+              onChange={(e) => setResponsavelId(e.target.value)}
             >
               <option value="">Todos os executores</option>
               {(executores ?? []).map((u) => (

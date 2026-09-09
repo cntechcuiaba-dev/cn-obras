@@ -11,7 +11,7 @@ export interface DemandaView {
   prazo?: number;
   categoriaNome?: string | null;
   localNome?: string | null;
-  executorNome?: string | null;
+  responsavelNome?: string | null;
   solicitanteNome?: string;
   solicitanteWhatsapp?: string;
   localTextoOriginal?: string;

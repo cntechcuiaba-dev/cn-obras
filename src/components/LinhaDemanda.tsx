@@ -44,10 +44,10 @@ export function LinhaDemanda({
               {demanda.localNome}
             </span>
           )}
-          {demanda.executorNome && (
+          {demanda.responsavelNome && (
             <span className="inline-flex items-center gap-1">
               <User className="h-3.5 w-3.5" />
-              {demanda.executorNome}
+              {demanda.responsavelNome}
             </span>
           )}
           <StatusChip status={demanda.status} />

@@ -19,7 +19,7 @@ export const listarAbertas = query({
 });
 
 // RF06/RF07: triar exige categoria, local, prioridade, prazo, executor e resultado esperado.
-// prazo e executorId são obrigatórios — o próprio tipo impede "triada" sem eles.
+// prazo e responsavelId são obrigatórios — o próprio tipo impede "triada" sem eles.
 export const triar = mutation({
   args: {
     demandaId: v.id("demandas"),
@@ -27,7 +27,7 @@ export const triar = mutation({
     localId: v.id("locais"),
     prioridade: prioridadeDemanda,
     prazo: v.number(),
-    executorId: v.id("usuarios"),
+    responsavelId: v.id("usuarios"),
     resultadoEsperado: v.string(),
   },
   handler: async (ctx, args) => {
@@ -42,7 +42,7 @@ export const triar = mutation({
       throw new Error("Defina o resultado esperado (o que caracteriza a demanda como resolvida).");
     }
 
-    const executor = await ctx.db.get(args.executorId);
+    const executor = await ctx.db.get(args.responsavelId);
     if (!executor) throw new Error("Executor não encontrado.");
 
     await ctx.db.patch(args.demandaId, {
@@ -51,7 +51,7 @@ export const triar = mutation({
       localId: args.localId,
       prioridade: args.prioridade,
       prazo: args.prazo,
-      executorId: args.executorId,
+      responsavelId: args.responsavelId,
       resultadoEsperado: resultado,
     });
 
@@ -68,7 +68,7 @@ export const triar = mutation({
 export const atualizar = mutation({
   args: {
     demandaId: v.id("demandas"),
-    executorId: v.optional(v.id("usuarios")),
+    responsavelId: v.optional(v.id("usuarios")),
     prazo: v.optional(v.number()),
     prioridade: v.optional(prioridadeDemanda),
     resultadoEsperado: v.optional(v.string()),
@@ -80,9 +80,9 @@ export const atualizar = mutation({
 
     const patch: Record<string, unknown> = {};
     const mudancas: string[] = [];
-    if (args.executorId && args.executorId !== d.executorId) {
-      const ex = await ctx.db.get(args.executorId);
-      patch.executorId = args.executorId;
+    if (args.responsavelId && args.responsavelId !== d.responsavelId) {
+      const ex = await ctx.db.get(args.responsavelId);
+      patch.responsavelId = args.responsavelId;
       mudancas.push(`reatribuída a ${ex?.nome ?? "?"}`);
     }
     if (args.prazo !== undefined && args.prazo !== d.prazo) {

@@ -77,7 +77,7 @@ export function useModelos(): Modelo[] | undefined {
 
 export function usePainelPrazos(filtros: {
   categoriaId?: string;
-  executorId?: string;
+  responsavelId?: string;
 }): PainelRet | undefined {
   if (DEMO) {
     const { demandas } = useDemo();
@@ -85,7 +85,7 @@ export function usePainelPrazos(filtros: {
       const agora = Date.now();
       let ativos = demandas.filter((d) => isAtiva(d.status));
       if (filtros.categoriaId) ativos = ativos.filter((d) => d.categoriaId === filtros.categoriaId);
-      if (filtros.executorId) ativos = ativos.filter((d) => d.executorId === filtros.executorId);
+      if (filtros.responsavelId) ativos = ativos.filter((d) => d.responsavelId === filtros.responsavelId);
       const ord = [...ativos]
         .sort((a, b) => compararPorRiscoEPrioridade(a, b, agora))
         .map((d) => ({ ...d, risco: nivelRisco(d.prazo, agora) }));
@@ -102,7 +102,7 @@ export function usePainelPrazos(filtros: {
           emExecucao: emExecucao.length,
         },
       };
-    }, [demandas, filtros.categoriaId, filtros.executorId]);
+    }, [demandas, filtros.categoriaId, filtros.responsavelId]);
   }
   return asType<PainelRet | undefined>(useQuery(api.demandas.painelPrazos, asType(filtros)));
 }
@@ -113,7 +113,7 @@ export function useMinhasDemandas(): MinhasRet | undefined {
     return useMemo<MinhasRet>(() => {
       const agora = Date.now();
       const minhas = demandas
-        .filter((d) => d.executorId === EXECUTOR_DEMO)
+        .filter((d) => d.responsavelId === EXECUTOR_DEMO)
         .sort((a, b) => compararPorRiscoEPrioridade(a, b, agora))
         .map((d) => ({ ...d, risco: nivelRisco(d.prazo, agora) }));
       const g = (s: string) => minhas.filter((d) => d.status === s);
@@ -153,7 +153,7 @@ export function useDetalhe(id: string | undefined): DetalheRet | null | undefine
         demanda: { ...d, risco: nivelRisco(d.prazo, agora) },
         historico: [...d.historico].sort((a, b) => a._creationTime - b._creationTime),
         fotos: d.fotos.filter((f) => f.url),
-        podeExecutar: papel === "lideranca" || d.executorId === EXECUTOR_DEMO,
+        podeExecutar: papel === "lideranca" || d.responsavelId === EXECUTOR_DEMO,
         papel,
       };
     }, [demandas, id, papel]);
