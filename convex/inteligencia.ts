@@ -19,7 +19,13 @@ export const aprendizado = query({
     const nomeCategoria = new Map(categorias.map((c) => [c._id, c.nome]));
     const nomeLocal = new Map(locais.map((l) => [l._id, l.nome]));
 
-    type Acc = { total: number; concluidas: number; somaDias: number };
+    type Acc = {
+      total: number;
+      espontaneas: number;
+      recorrentes: number;
+      concluidas: number;
+      somaDias: number;
+    };
     const porCategoria = new Map<string, Acc>();
     const porLocal = new Map<string, Acc>();
 
@@ -28,8 +34,15 @@ export const aprendizado = query({
       chave: string,
       d: Doc<"demandas">,
     ) => {
-      const a = mapa.get(chave) ?? { total: 0, concluidas: 0, somaDias: 0 };
+      const a =
+        mapa.get(chave) ??
+        { total: 0, espontaneas: 0, recorrentes: 0, concluidas: 0, somaDias: 0 };
       a.total += 1;
+      // [RF29] manutenção programada não é "problema que se repete" — se entrar
+      // na mesma conta, uma recorrência mensal inflaria o local e esconderia
+      // exatamente o padrão que esta tela existe para revelar.
+      if (d.origemRecorrenciaId) a.recorrentes += 1;
+      else a.espontaneas += 1;
       if (d.status === "concluida" && d.concluidaEm) {
         a.concluidas += 1;
         a.somaDias += (d.concluidaEm - d._creationTime) / DIA_MS;
@@ -48,12 +61,15 @@ export const aprendizado = query({
         .map(([nome, a]) => ({
           nome,
           total: a.total,
+          espontaneas: a.espontaneas,
+          recorrentes: a.recorrentes,
           concluidas: a.concluidas,
           tempoMedioDias: a.concluidas > 0
             ? Math.round((a.somaDias / a.concluidas) * 10) / 10
             : null,
         }))
-        .sort((x, y) => y.total - x.total);
+        // ordena por problema que se repete, não por volume total
+        .sort((x, y) => y.espontaneas - x.espontaneas || y.total - x.total);
 
     return {
       porCategoria: materializar(porCategoria),

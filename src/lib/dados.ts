@@ -24,6 +24,9 @@ type Modelo = { _id: string; nome: string; tipo: string; texto: string };
 type LinhaAprend = {
   nome: string;
   total: number;
+  // [RF29] manutenção programada contada à parte do problema que se repete
+  espontaneas: number;
+  recorrentes: number;
   concluidas: number;
   tempoMedioDias: number | null;
 };
@@ -232,12 +235,22 @@ export function useAprendizado(): AprendizadoRet | undefined {
   if (DEMO) {
     const { demandas } = useDemo();
     return useMemo<AprendizadoRet>(() => {
-      type Acc = { total: number; concluidas: number; somaDias: number };
+      type Acc = {
+        total: number;
+        espontaneas: number;
+        recorrentes: number;
+        concluidas: number;
+        somaDias: number;
+      };
       const porCat = new Map<string, Acc>();
       const porLoc = new Map<string, Acc>();
       const acc = (m: Map<string, Acc>, k: string, d: (typeof demandas)[number]) => {
-        const a = m.get(k) ?? { total: 0, concluidas: 0, somaDias: 0 };
+        const a =
+          m.get(k) ??
+          { total: 0, espontaneas: 0, recorrentes: 0, concluidas: 0, somaDias: 0 };
         a.total++;
+        if (d.origemRecorrenciaId) a.recorrentes++;
+        else a.espontaneas++;
         if (d.status === "concluida" && d.concluidaEm) {
           a.concluidas++;
           a.somaDias += (d.concluidaEm - d._creationTime) / DIA_MS;
@@ -254,11 +267,13 @@ export function useAprendizado(): AprendizadoRet | undefined {
           .map(([nome, a]) => ({
             nome,
             total: a.total,
+            espontaneas: a.espontaneas,
+            recorrentes: a.recorrentes,
             concluidas: a.concluidas,
             tempoMedioDias:
               a.concluidas > 0 ? Math.round((a.somaDias / a.concluidas) * 10) / 10 : null,
           }))
-          .sort((x, y) => y.total - x.total);
+          .sort((x, y) => y.espontaneas - x.espontaneas || y.total - x.total);
       return {
         porCategoria: mat(porCat),
         porLocal: mat(porLoc),

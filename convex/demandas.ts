@@ -1,10 +1,10 @@
-import { mutation, query, internalMutation, QueryCtx } from "./_generated/server";
+import { mutation, query, internalMutation, QueryCtx, MutationCtx } from "./_generated/server";
 import { v } from "convex/values";
-import { Doc } from "./_generated/dataModel";
+import { Doc, Id } from "./_generated/dataModel";
 import { requireRole, getUsuarioAtual, podeAcessarDemanda } from "./lib/auth";
 import { registrarHistorico } from "./lib/historico";
 import { criarDemanda, transicionar } from "./lib/estado";
-import { nivelRisco, isAtiva } from "./lib/risco";
+import { nivelRisco, isAtiva, DIAS_VENCENDO, DIA_MS } from "./lib/risco";
 
 // ---------- Upload de fotos ----------
 
@@ -247,6 +247,26 @@ export const anexarFoto = mutation({
 
 // ---------- Cron: avaliação diária de risco (RF30, princípio 11) ----------
 
+// Momento da última mudança de status da demanda, lido do histórico. Sinalizar
+// risco não conta como progresso — senão o próprio aviso silenciaria o próximo.
+const TIPOS_DE_PROGRESSO = ["criada", "triada", "status_alterado", "atualizada"];
+
+async function ultimaMudancaDeStatus(
+  ctx: MutationCtx,
+  demandaId: Id<"demandas">,
+): Promise<number | null> {
+  const eventos = await ctx.db
+    .query("historicoDemanda")
+    .withIndex("by_demanda", (q) => q.eq("demandaId", demandaId))
+    .collect();
+
+  const progressos = eventos
+    .filter((e) => TIPOS_DE_PROGRESSO.includes(e.tipo))
+    .map((e) => e._creationTime);
+
+  return progressos.length ? Math.max(...progressos) : null;
+}
+
 export const avaliarRiscosDoDia = internalMutation({
   args: {},
   handler: async (ctx) => {
@@ -256,20 +276,35 @@ export const avaliarRiscosDoDia = internalMutation({
 
     for (const d of todas) {
       if (!isAtiva(d.status)) continue;
+      if (d.riscoSinalizadoEm !== undefined) continue; // idempotente (RF30)
+
       const nivel = nivelRisco(d.prazo, agora);
-      const emRisco = nivel === "vencida" || nivel === "vencendo";
-      if (emRisco && d.riscoSinalizadoEm === undefined) {
-        await ctx.db.patch(d._id, { riscoSinalizadoEm: agora });
-        await registrarHistorico(ctx, {
-          demandaId: d._id,
-          tipo: "risco_sinalizado",
-          descricao:
-            nivel === "vencida"
-              ? "Risco sinalizado: demanda vencida sem conclusão"
-              : "Risco sinalizado: demanda próxima do vencimento",
-        });
-        sinalizadas++;
+      if (nivel !== "vencida" && nivel !== "vencendo") continue;
+
+      // [RF30] "vencidas, OU a vencer em N dias SEM PROGRESSO desde a última
+      // mudança de status". Vencida é risco sempre; a vencer só é risco se
+      // ninguém mexeu — senão o sistema grita para quem já está trabalhando.
+      let motivo: string;
+      if (nivel === "vencida") {
+        motivo = "Risco sinalizado: demanda vencida sem conclusão";
+      } else {
+        const ultimoProgresso = await ultimaMudancaDeStatus(ctx, d._id);
+        const houveProgressoRecente =
+          ultimoProgresso !== null &&
+          agora - ultimoProgresso < DIAS_VENCENDO * DIA_MS;
+        if (houveProgressoRecente) continue;
+        motivo =
+          "Risco sinalizado: vence em breve e não houve movimento desde a " +
+          "última mudança de status";
       }
+
+      await ctx.db.patch(d._id, { riscoSinalizadoEm: agora });
+      await registrarHistorico(ctx, {
+        demandaId: d._id,
+        tipo: "risco_sinalizado",
+        descricao: motivo,
+      });
+      sinalizadas++;
     }
     return { sinalizadas };
   },

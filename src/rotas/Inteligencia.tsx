@@ -10,7 +10,7 @@ export default function Inteligencia() {
       <CabecalhoSecao
         supra="Liderança"
         titulo="Aprendizado"
-        descricao="O que o histórico revela — recorrência por local/categoria e tempo até concluir."
+        descricao="Problemas que se repetem por local e categoria. Manutenção programada é contada à parte — senão ela infla o local e esconde o padrão."
       />
 
       {dados === undefined ? (
@@ -37,11 +37,13 @@ function Tabela({
   linhas: {
     nome: string;
     total: number;
+    espontaneas: number;
+    recorrentes: number;
     concluidas: number;
     tempoMedioDias: number | null;
   }[];
 }) {
-  const max = Math.max(1, ...linhas.map((l) => l.total));
+  const max = Math.max(1, ...linhas.map((l) => l.espontaneas));
   return (
     <div className="card p-5">
       <h2 className="mb-4 font-semibold">{titulo}</h2>
@@ -51,7 +53,16 @@ function Tabela({
             <div className="mb-1 flex items-baseline justify-between text-sm">
               <span className="font-medium">{l.nome}</span>
               <span className="text-text-2">
-                <span className="font-mono tnum">{l.total}</span> demandas
+                <span className="font-mono tnum">{l.espontaneas}</span> problema
+                {l.espontaneas === 1 ? "" : "s"}
+                {l.recorrentes > 0 && (
+                  <>
+                    {" · "}
+                    <span className="font-mono tnum">{l.recorrentes}</span> manutenção
+                    {l.recorrentes === 1 ? "" : "s"} programada
+                    {l.recorrentes === 1 ? "" : "s"}
+                  </>
+                )}
                 {l.tempoMedioDias != null && (
                   <>
                     {" · "}
@@ -63,7 +74,7 @@ function Tabela({
             <div className="h-2 overflow-hidden rounded-full bg-bg">
               <div
                 className="h-full rounded-full bg-accent"
-                style={{ width: `${(l.total / max) * 100}%` }}
+                style={{ width: `${(l.espontaneas / max) * 100}%` }}
               />
             </div>
           </div>
