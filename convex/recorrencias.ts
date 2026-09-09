@@ -47,14 +47,12 @@ export const criar = mutation({
     localId: v.id("locais"),
     executorPadraoId: v.id("usuarios"),
     periodicidade,
-    prazoDias: v.number(),
     // [E5] gerar antes do vencimento, para dar tempo de programação
     antecedenciaDias: v.number(),
   },
   handler: async (ctx, args) => {
     await requireRole(ctx, ["lideranca"]);
     if (!args.titulo.trim()) throw new Error("Título é obrigatório.");
-    if (args.prazoDias <= 0) throw new Error("Prazo em dias deve ser positivo.");
     if (args.antecedenciaDias < 0) {
       throw new Error("Antecedência em dias não pode ser negativa.");
     }
@@ -77,7 +75,6 @@ export const editar = mutation({
     localId: v.optional(v.id("locais")),
     executorPadraoId: v.optional(v.id("usuarios")),
     periodicidade: v.optional(periodicidade),
-    prazoDias: v.optional(v.number()),
     antecedenciaDias: v.optional(v.number()),
   },
   handler: async (ctx, args) => {

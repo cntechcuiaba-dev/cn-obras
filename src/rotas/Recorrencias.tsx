@@ -93,7 +93,6 @@ function FormularioRecorrencia({ onPronto }: { onPronto: () => void }) {
     localId: "",
     executorPadraoId: "",
     periodicidade: "mensal",
-    prazoDias: "15",
     antecedenciaDias: "7",
   });
   const [erro, setErro] = useState<string | null>(null);
@@ -113,7 +112,6 @@ function FormularioRecorrencia({ onPronto }: { onPronto: () => void }) {
         executorPadraoId: f.executorPadraoId as any,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         periodicidade: f.periodicidade as any,
-        prazoDias: Number(f.prazoDias),
         antecedenciaDias: Number(f.antecedenciaDias),
       });
       onPronto();
@@ -158,17 +156,6 @@ function FormularioRecorrencia({ onPronto }: { onPronto: () => void }) {
               </option>
             ))}
           </select>
-        </label>
-        <label className="block">
-          <span className="label">Prazo (dias após gerar)</span>
-          <input
-            type="number"
-            min={1}
-            className="input"
-            value={f.prazoDias}
-            onChange={(e) => setF({ ...f, prazoDias: e.target.value })}
-            required
-          />
         </label>
         <label className="block">
           <span className="label">Antecedência (dias)</span>

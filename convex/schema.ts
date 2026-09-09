@@ -153,7 +153,6 @@ export default defineSchema({
     localId: v.id("locais"),
     executorPadraoId: v.id("usuarios"),
     periodicidade,
-    prazoDias: v.number(),
     // [E5] gera a demanda com antecedência, para dar tempo de programação
     antecedenciaDias: v.number(),
     ativa: v.boolean(),

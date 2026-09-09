@@ -145,7 +145,6 @@ export default defineSchema({
       v.literal("semestral"),
       v.literal("anual"),
     ),
-    prazoDias: v.number(), // dias entre geração e prazo da demanda gerada
     antecedenciaDias: v.number(), // [E5] quanto antes do vencimento a demanda é gerada, para dar tempo de programação
     ativa: v.boolean(),
     ultimaGeracaoEm: v.optional(v.number()),
@@ -206,6 +205,11 @@ export default defineSchema({
 - `antecedenciaDias` (E5): a demanda recorrente nasce com essa antecedência
   em relação ao vencimento, não no dia — para dar tempo da liderança se
   programar. Gera o movimento "programar [manutenção]" no painel.
+- `prazoDias` foi **removido** (set/2026, durante a implementação do E5). Ele
+  definia o prazo como "geração + prazoDias"; com o E5 o prazo passou a ser a
+  data prevista da manutenção, e o campo ficou escrito e nunca lido — o campo
+  morto que o princípio 6 manda tirar do schema. A distância entre geração e
+  prazo agora é `antecedenciaDias`, que já é declarada.
 - `origemRecorrenciaId` tem índice próprio porque é **lido** pela visão de
   aprendizado (recorrência de problema por local/categoria — RF29).
 - Sem tabelas `operadores`/`sessoesOperador`: executor entra pelo Clerk.

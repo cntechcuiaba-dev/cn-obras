@@ -32,7 +32,6 @@ async function cenario(antecedenciaDias: number, diasAtras: number) {
       localId: local,
       executorPadraoId: lider,
       periodicidade: "mensal", // 30 dias
-      prazoDias: 15,
       antecedenciaDias,
       ativa: true,
       // última geração há N dias

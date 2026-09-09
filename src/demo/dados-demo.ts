@@ -27,7 +27,6 @@ export interface DemoRecorrencia {
   localNome: string;
   responsavelNome: string;
   periodicidade: string;
-  prazoDias: number;
   antecedenciaDias: number;
   ativa: boolean;
   proximaGeracao: number | null;
@@ -308,7 +307,6 @@ export function seedRecorrencias(): DemoRecorrencia[] {
       localNome: "Templo principal",
       responsavelNome: "Marcos Silva",
       periodicidade: "semestral",
-      prazoDias: 15,
       antecedenciaDias: 10,
       ativa: true,
       proximaGeracao: off(12),
@@ -325,7 +323,6 @@ export function seedRecorrencias(): DemoRecorrencia[] {
       localNome: "Templo principal",
       responsavelNome: "João Pereira",
       periodicidade: "anual",
-      prazoDias: 30,
       antecedenciaDias: 21,
       ativa: true,
       proximaGeracao: off(88),

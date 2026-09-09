@@ -150,7 +150,6 @@ export default defineSchema({
       v.literal("semestral"),
       v.literal("anual"),
     ),
-    prazoDias: v.number(), // dias entre geração e prazo da demanda gerada
     antecedenciaDias: v.number(), // [E5] quanto antes do vencimento a demanda é gerada, para dar tempo de programação
     ativa: v.boolean(),
     ultimaGeracaoEm: v.optional(v.number()),
