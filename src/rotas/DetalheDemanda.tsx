@@ -35,6 +35,7 @@ type OrigemCusto = "estoque" | "compra_direta" | "orcamento";
 import { Carregando, StatusChip, PrazoBadge, PrioridadeChip } from "../components/ui";
 import { MOTIVO_IMPEDIMENTO, MotivoImpedimento, Prioridade } from "../lib/labels";
 import { formatarData, formatarDataHora, linkWhatsapp, preencherModelo } from "../lib/format";
+import { mascararMoeda, valorMoedaParaNumero } from "../lib/mascaras";
 
 export default function DetalheDemanda() {
   const { id } = useParams();
@@ -405,12 +406,11 @@ export default function DetalheDemanda() {
                 <label className="block">
                   <span className="label">Valor gasto (R$)</span>
                   <input
-                    type="number"
-                    min={0}
-                    step="0.01"
+                    type="text"
+                    inputMode="decimal"
                     className="input"
                     value={custoValor}
-                    onChange={(e) => setCustoValor(e.target.value)}
+                    onChange={(e) => setCustoValor(mascararMoeda(e.target.value))}
                     placeholder="0,00"
                   />
                 </label>
@@ -444,7 +444,7 @@ export default function DetalheDemanda() {
                     novoStatus: "concluida",
                     resultadoConfirmado: true,
                     custo: precisaLancarCusto
-                      ? { valor: Number(custoValor), origem: custoOrigem }
+                      ? { valor: valorMoedaParaNumero(custoValor), origem: custoOrigem }
                       : undefined,
                   }),
                 )
@@ -550,7 +550,7 @@ function SecaoConsumos({
         demandaId,
         item,
         quantidade: Number(quantidade),
-        valorUnitario: valorUnitario ? Number(valorUnitario) : undefined,
+        valorUnitario: valorUnitario ? valorMoedaParaNumero(valorUnitario) : undefined,
         origem,
       });
       setItem("");
@@ -639,13 +639,12 @@ function SecaoConsumos({
             <label className="block">
               <span className="label">Valor unitário (opcional)</span>
               <input
-                type="number"
-                min={0}
-                step="0.01"
+                type="text"
+                inputMode="decimal"
                 className="input"
                 placeholder="0,00"
                 value={valorUnitario}
-                onChange={(e) => setValorUnitario(e.target.value)}
+                onChange={(e) => setValorUnitario(mascararMoeda(e.target.value))}
               />
             </label>
             <label className="block sm:col-span-2">
@@ -733,12 +732,12 @@ function BlocoOrcamento({
           <label className="block">
             <span className="label">Valor recebido (R$)</span>
             <input
-              type="number"
-              min={0}
-              step="0.01"
+              type="text"
+              inputMode="decimal"
               className="input max-w-[160px]"
+              placeholder="0,00"
               value={valor}
-              onChange={(e) => setValor(e.target.value)}
+              onChange={(e) => setValor(mascararMoeda(e.target.value))}
             />
           </label>
           <button
@@ -746,7 +745,7 @@ function BlocoOrcamento({
             disabled={valor === ""}
             onClick={() =>
               tentar(() =>
-                registrarValor({ demandaId: demanda._id, valor: Number(valor) }),
+                registrarValor({ demandaId: demanda._id, valor: valorMoedaParaNumero(valor) }),
               )
             }
           >

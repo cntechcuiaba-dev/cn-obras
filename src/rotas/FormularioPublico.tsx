@@ -2,6 +2,7 @@ import { FormEvent, useState } from "react";
 import { HardHat, Camera, CheckCircle2, Send, X } from "lucide-react";
 import { useAbrir, useGerarUrlPublico } from "../lib/dados";
 import { DEMO } from "../lib/env";
+import { mascararTelefone } from "../lib/mascaras";
 
 const VAZIO = {
   titulo: "",
@@ -123,9 +124,10 @@ export default function FormularioPublico() {
               <input
                 className="input"
                 inputMode="numeric"
-                placeholder="62 99999-9999"
+                placeholder="(62) 99999-9999"
                 value={form.solicitanteWhatsapp}
-                onChange={(e) => set("solicitanteWhatsapp", e.target.value)}
+                onChange={(e) => set("solicitanteWhatsapp", mascararTelefone(e.target.value))}
+                maxLength={15}
                 required
               />
             </Campo>
