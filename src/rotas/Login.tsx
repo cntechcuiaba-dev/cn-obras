@@ -31,9 +31,9 @@ export default function Login() {
 
         <div className="flex justify-center">
           {modo === "entrar" ? (
-            <SignIn routing="virtual" appearance={aparencia} />
+            <SignIn routing="virtual" appearance={aparencia} forceRedirectUrl="/" />
           ) : (
-            <SignUp routing="virtual" appearance={aparencia} />
+            <SignUp routing="virtual" appearance={aparencia} forceRedirectUrl="/" />
           )}
         </div>
 
