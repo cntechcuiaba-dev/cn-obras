@@ -7,7 +7,7 @@ import {
   Prioridade,
   TOM_PRAZO_CLS,
 } from "../lib/labels";
-import { rotuloPrazo } from "../lib/format";
+import { rotuloPrazo, formatarData } from "../lib/format";
 
 export function StatusChip({ status }: { status: StatusDemanda }) {
   const s = STATUS[status];
@@ -37,10 +37,31 @@ export function PrioridadeChip({ prioridade }: { prioridade?: Prioridade }) {
 export function PrazoBadge({
   prazo,
   agora,
+  status,
+  concluidaEm,
 }: {
   prazo?: number | null;
   agora?: number;
+  status?: StatusDemanda;
+  concluidaEm?: number;
 }) {
+  // Demanda encerrada não tem prazo pendente — mostrar "vence em X" ali é ruído.
+  if (status === "concluida") {
+    return (
+      <span className="inline-flex items-center gap-1.5 font-mono text-sm tnum text-st-concluida">
+        <Clock className="h-4 w-4" />
+        {concluidaEm ? `Concluída ${formatarData(concluidaEm)}` : "Concluída"}
+      </span>
+    );
+  }
+  if (status === "cancelada") {
+    return (
+      <span className="inline-flex items-center gap-1.5 font-mono text-sm tnum text-st-cancelada">
+        Cancelada
+      </span>
+    );
+  }
+
   const { texto, tom } = rotuloPrazo(prazo, agora);
   const Icone = tom === "vencida" ? AlertTriangle : Clock;
   return (

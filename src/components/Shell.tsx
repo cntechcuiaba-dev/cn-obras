@@ -8,6 +8,7 @@ import {
   Repeat,
   LineChart,
   ListChecks,
+  Plus,
   type LucideIcon,
 } from "lucide-react";
 import { Papel } from "../lib/auth-types";
@@ -77,6 +78,18 @@ export function Shell({
           </nav>
 
           <div className="flex items-center gap-2 border-l border-border pl-2">
+            {/* Abrir demanda continua sendo o mesmo formulário público (RF01) —
+                aqui é só o atalho, que faltava para quem está logado. */}
+            <a
+              href="/nova"
+              target="_blank"
+              rel="noreferrer"
+              title="Abrir nova solicitação (formulário público)"
+              className="inline-flex items-center gap-1.5 rounded px-2.5 py-1.5 text-sm font-medium text-accent hover:bg-accent-subtle"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">Nova</span>
+            </a>
             <span className="hidden text-sm text-text-2 md:inline">{nome}</span>
             {DEMO ? (
               <span className="grid h-8 w-8 place-items-center rounded-full bg-accent-subtle text-xs font-semibold text-accent-active">

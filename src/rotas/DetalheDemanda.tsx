@@ -105,7 +105,12 @@ export default function DetalheDemanda() {
             <h1 className="text-2xl font-bold">{d.titulo}</h1>
             <p className="mt-1 text-text-2">{d.descricao}</p>
           </div>
-          <PrazoBadge prazo={d.prazo} agora={agora} />
+          <PrazoBadge
+            prazo={d.prazo}
+            agora={agora}
+            status={d.status}
+            concluidaEm={d.concluidaEm}
+          />
         </div>
 
         <div className="mt-4 flex flex-wrap items-center gap-2">

@@ -55,7 +55,12 @@ export function LinhaDemanda({
         </div>
       </div>
       <div className="flex flex-none items-center gap-3">
-        <PrazoBadge prazo={demanda.prazo} agora={agora} />
+        <PrazoBadge
+          prazo={demanda.prazo}
+          agora={agora}
+          status={demanda.status}
+          concluidaEm={demanda.concluidaEm}
+        />
         <ChevronRight className="h-4 w-4 text-text-2" />
       </div>
     </button>
