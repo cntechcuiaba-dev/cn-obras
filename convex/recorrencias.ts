@@ -76,7 +76,9 @@ export const editar = mutation({
     descricao: v.optional(v.string()),
     categoriaId: v.optional(v.id("categorias")),
     localId: v.optional(v.id("locais")),
-    equipamentoId: v.optional(v.id("equipamentos")),
+    // omitido = não mexe; null = desvincula; id = troca (mesmo padrão de
+    // triagem.atualizar — sem essa distinção nunca daria pra desvincular).
+    equipamentoId: v.optional(v.union(v.id("equipamentos"), v.null())),
     executorPadraoId: v.optional(v.id("usuarios")),
     periodicidade: v.optional(periodicidade),
     antecedenciaDias: v.optional(v.number()),
@@ -84,9 +86,20 @@ export const editar = mutation({
   handler: async (ctx, args) => {
     await requireRole(ctx, ["lideranca"]);
     const { id, ...resto } = args;
+
+    if (resto.titulo !== undefined && !resto.titulo.trim()) {
+      throw new Error("Título é obrigatório.");
+    }
+    if (resto.antecedenciaDias !== undefined && resto.antecedenciaDias < 0) {
+      throw new Error("Antecedência em dias não pode ser negativa.");
+    }
+
     const patch = Object.fromEntries(
-      Object.entries(resto).filter(([, val]) => val !== undefined),
+      Object.entries(resto)
+        .filter(([, val]) => val !== undefined)
+        .map(([k, val]) => [k, val === null ? undefined : val]),
     );
+    if (Object.keys(patch).length === 0) return;
     await ctx.db.patch(id, patch);
   },
 });

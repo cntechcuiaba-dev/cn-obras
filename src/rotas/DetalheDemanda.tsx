@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, FormEvent } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -10,6 +10,7 @@ import {
   Copy,
   Target,
   SlidersHorizontal,
+  Plus,
 } from "lucide-react";
 import {
   useDetalhe,
@@ -23,6 +24,9 @@ import {
   useRegistrarValorRecebido,
   useRegistrarCobranca,
   useAprovarOrcamento,
+  useConsumosDaDemanda,
+  useRegistrarConsumo,
+  useHistoricoDePreco,
 } from "../lib/dados";
 import { DEMO } from "../lib/env";
 import { DemandaView } from "../lib/tipos";
@@ -485,6 +489,9 @@ export default function DetalheDemanda() {
         </div>
       )}
 
+      {/* [E2] Material consumido — sem saldo, sem inventário (decisão explícita) */}
+      <SecaoConsumos demandaId={d._id} podeAgir={podeAgir} />
+
       {/* Linha do tempo (RF25) */}
       <div className="mt-6">
         <h2 className="mb-3 font-semibold">Histórico</h2>
@@ -501,6 +508,169 @@ export default function DetalheDemanda() {
           ))}
         </ol>
       </div>
+    </div>
+  );
+}
+
+// [E2] Consumo de material — sem saldo, sem inventário. Registra só o que foi
+// gasto nesta demanda; o histórico de preço por item é o que sobra sem saldo.
+function SecaoConsumos({
+  demandaId,
+  podeAgir,
+}: {
+  demandaId: string;
+  podeAgir: boolean;
+}) {
+  const consumos = useConsumosDaDemanda(demandaId);
+  const registrar = useRegistrarConsumo();
+  const [mostrarForm, setMostrarForm] = useState(false);
+  const [item, setItem] = useState("");
+  const [itemBuscado, setItemBuscado] = useState("");
+  const [quantidade, setQuantidade] = useState("1");
+  const [valorUnitario, setValorUnitario] = useState("");
+  const [origem, setOrigem] = useState<"estoque" | "compra">("compra");
+  const [erro, setErro] = useState<string | null>(null);
+  const [salvando, setSalvando] = useState(false);
+
+  // debounce simples: só consulta o preço anterior 400ms depois de parar de digitar
+  useEffect(() => {
+    const t = setTimeout(() => setItemBuscado(item), 400);
+    return () => clearTimeout(t);
+  }, [item]);
+  const precosAnteriores = useHistoricoDePreco(itemBuscado);
+
+  if (!podeAgir && (consumos === undefined || consumos.length === 0)) return null;
+
+  async function salvar(e: FormEvent) {
+    e.preventDefault();
+    setErro(null);
+    setSalvando(true);
+    try {
+      await registrar({
+        demandaId,
+        item,
+        quantidade: Number(quantidade),
+        valorUnitario: valorUnitario ? Number(valorUnitario) : undefined,
+        origem,
+      });
+      setItem("");
+      setItemBuscado("");
+      setQuantidade("1");
+      setValorUnitario("");
+      setMostrarForm(false);
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : "Erro ao registrar.");
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  const brl = (v: number) =>
+    v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  return (
+    <div className="mt-6">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="font-semibold">Materiais usados</h2>
+        {podeAgir && !mostrarForm && (
+          <button className="btn-ghost" onClick={() => setMostrarForm(true)}>
+            <Plus className="h-4 w-4" /> Registrar consumo
+          </button>
+        )}
+      </div>
+
+      {consumos && consumos.length > 0 && (
+        <div className="mb-3 space-y-2">
+          {consumos.map((c) => (
+            <div key={c._id} className="card flex items-center justify-between px-4 py-2 text-sm">
+              <span>
+                {c.quantidade}× {c.item}
+                <span className="text-text-2">
+                  {" "}
+                  ({c.origem === "estoque" ? "estoque" : "compra"})
+                </span>
+              </span>
+              {c.valorUnitario !== undefined && (
+                <span className="font-mono tnum text-text-2">
+                  {brl(c.valorUnitario)}/un
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+      {(!consumos || consumos.length === 0) && !mostrarForm && (
+        <p className="text-sm text-text-2">Nenhum material registrado ainda.</p>
+      )}
+
+      {mostrarForm && (
+        <form onSubmit={salvar} className="card space-y-3 p-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <label className="block sm:col-span-2">
+              <span className="label">Item</span>
+              <input
+                className="input"
+                placeholder="Ex: Disjuntor 20A"
+                value={item}
+                onChange={(e) => setItem(e.target.value)}
+                required
+              />
+              {/* [E2] "com o valor pago anteriormente pelo mesmo item exibido ao lado" */}
+              {precosAnteriores && precosAnteriores.length > 0 && (
+                <p className="mt-1 text-xs text-accent-active">
+                  Última vez: {brl(precosAnteriores[0].valorUnitario)}/un em{" "}
+                  {formatarData(precosAnteriores[0].quando)}
+                  {precosAnteriores[0].origem === "estoque" ? " (estoque)" : " (compra)"}
+                </p>
+              )}
+            </label>
+            <label className="block">
+              <span className="label">Quantidade</span>
+              <input
+                type="number"
+                min={1}
+                step="1"
+                className="input"
+                value={quantidade}
+                onChange={(e) => setQuantidade(e.target.value)}
+                required
+              />
+            </label>
+            <label className="block">
+              <span className="label">Valor unitário (opcional)</span>
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                className="input"
+                placeholder="0,00"
+                value={valorUnitario}
+                onChange={(e) => setValorUnitario(e.target.value)}
+              />
+            </label>
+            <label className="block sm:col-span-2">
+              <span className="label">Origem</span>
+              <select
+                className="input"
+                value={origem}
+                onChange={(e) => setOrigem(e.target.value as "estoque" | "compra")}
+              >
+                <option value="estoque">Estoque da igreja</option>
+                <option value="compra">Compra</option>
+              </select>
+            </label>
+          </div>
+          {erro && <p className="text-xs text-pri-alta">{erro}</p>}
+          <div className="flex gap-2">
+            <button type="submit" className="btn-primary" disabled={salvando}>
+              {salvando ? "Salvando…" : "Registrar"}
+            </button>
+            <button type="button" className="btn-ghost" onClick={() => setMostrarForm(false)}>
+              Cancelar
+            </button>
+          </div>
+        </form>
+      )}
     </div>
   );
 }

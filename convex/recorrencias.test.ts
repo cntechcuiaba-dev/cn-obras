@@ -127,3 +127,88 @@ describe("movimento de programar (RF18b)", () => {
     expect(painel.item!.titulo).toBe("Limpeza da caixa d'água");
   });
 });
+
+describe("editar recorrência (RF20)", () => {
+  test("edita sem afetar demandas já geradas", async () => {
+    const c = await cenario(7, 31);
+    await c.t.mutation(internal.recorrencias.gerarRecorrenciasDoDia, {});
+
+    await c.t.withIdentity({ subject: CLERK_LIDER }).mutation(api.recorrencias.editar, {
+      id: c.rec,
+      titulo: "Limpeza da caixa d'água (novo nome)",
+      antecedenciaDias: 15,
+    });
+
+    await c.t.run(async (ctx) => {
+      const r = await ctx.db.get(c.rec);
+      expect(r?.titulo).toBe("Limpeza da caixa d'água (novo nome)");
+      expect(r?.antecedenciaDias).toBe(15);
+
+      // a demanda já gerada não muda
+      const demandas = await ctx.db.query("demandas").collect();
+      expect(demandas).toHaveLength(1);
+      expect(demandas[0].titulo).toBe("Limpeza da caixa d'água");
+    });
+  });
+
+  test("título vazio é recusado", async () => {
+    const c = await cenario(7, 31);
+    await expect(
+      c.t.withIdentity({ subject: CLERK_LIDER }).mutation(api.recorrencias.editar, {
+        id: c.rec,
+        titulo: "   ",
+      }),
+    ).rejects.toThrow(/título/i);
+  });
+
+  test("antecedência negativa é recusada", async () => {
+    const c = await cenario(7, 31);
+    await expect(
+      c.t.withIdentity({ subject: CLERK_LIDER }).mutation(api.recorrencias.editar, {
+        id: c.rec,
+        antecedenciaDias: -1,
+      }),
+    ).rejects.toThrow(/antecedência/i);
+  });
+
+  test("executor não edita", async () => {
+    const c = await cenario(7, 31);
+    const exec = await c.t.run((ctx) =>
+      ctx.db.insert("usuarios", {
+        clerkId: "clerk_exec", nome: "Marcos", email: "m@cn.com", papel: "executor", ativo: true,
+      }),
+    );
+    expect(exec).toBeDefined();
+    await expect(
+      c.t.withIdentity({ subject: "clerk_exec" }).mutation(api.recorrencias.editar, {
+        id: c.rec,
+        titulo: "Outro nome",
+      }),
+    ).rejects.toThrow(/permissão/i);
+  });
+
+  test("null desvincula o equipamento; omitido não mexe", async () => {
+    const c = await cenario(7, 31);
+    const comoLider = c.t.withIdentity({ subject: CLERK_LIDER });
+    const eqId = await comoLider.mutation(api.equipamentos.criar, {
+      nome: "Caixa d'água", tipo: "Reservatório", localId: c.local,
+    });
+
+    await comoLider.mutation(api.recorrencias.editar, { id: c.rec, equipamentoId: eqId });
+    await c.t.run(async (ctx) => {
+      expect((await ctx.db.get(c.rec))?.equipamentoId).toBe(eqId);
+    });
+
+    // omitido: não mexe
+    await comoLider.mutation(api.recorrencias.editar, { id: c.rec, titulo: "x" });
+    await c.t.run(async (ctx) => {
+      expect((await ctx.db.get(c.rec))?.equipamentoId).toBe(eqId);
+    });
+
+    // null: desvincula
+    await comoLider.mutation(api.recorrencias.editar, { id: c.rec, equipamentoId: null });
+    await c.t.run(async (ctx) => {
+      expect((await ctx.db.get(c.rec))?.equipamentoId).toBeUndefined();
+    });
+  });
+});

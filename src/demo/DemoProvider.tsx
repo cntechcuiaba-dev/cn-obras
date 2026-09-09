@@ -10,6 +10,7 @@ import {
   nomeCat,
   nomeLoc,
   nomeExe,
+  nomeEquip,
 } from "./dados-demo";
 
 let contador = 5000;
@@ -56,6 +57,8 @@ interface DemoCtx {
       >,
     ) => void;
     alternarRecorrencia: (id: string, ativa: boolean) => void;
+    // RF20: editar sem afetar demandas já geradas — só o cadastro futuro muda.
+    editarRecorrencia: (id: string, alteracoes: Partial<DemoRecorrencia>) => void;
   };
 }
 
@@ -188,6 +191,21 @@ export function DemoProvider({ children }: { children: ReactNode }) {
         ]),
       alternarRecorrencia: (id, ativa) =>
         setRecorrencias((prev) => prev.map((r) => (r._id === id ? { ...r, ativa } : r))),
+      editarRecorrencia: (id, alteracoes) =>
+        setRecorrencias((prev) =>
+          prev.map((r) => {
+            if (r._id !== id) return r;
+            const atualizada = { ...r, ...alteracoes };
+            // nomes derivados precisam recalcular quando o id de referência muda
+            if (alteracoes.categoriaId) atualizada.categoriaNome = nomeCat(alteracoes.categoriaId) ?? "";
+            if (alteracoes.localId) atualizada.localNome = nomeLoc(alteracoes.localId) ?? "";
+            if (alteracoes.executorPadraoId)
+              atualizada.responsavelNome = nomeExe(alteracoes.executorPadraoId) ?? "";
+            if ("equipamentoId" in alteracoes)
+              atualizada.equipamentoNome = nomeEquip(alteracoes.equipamentoId);
+            return atualizada;
+          }),
+        ),
     }),
     [],
   );

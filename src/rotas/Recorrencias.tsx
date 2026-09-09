@@ -1,9 +1,10 @@
 import { FormEvent, useState } from "react";
-import { Repeat, Plus, Power } from "lucide-react";
+import { Repeat, Plus, Power, Pencil } from "lucide-react";
 import {
   useRecorrencias,
   useAlternarRecorrencia,
   useCriarRecorrencia,
+  useEditarRecorrencia,
   useCategorias,
   useLocais,
   useExecutores,
@@ -16,6 +17,7 @@ import { formatarData } from "../lib/format";
 export default function Recorrencias() {
   const recs = useRecorrencias();
   const [criando, setCriando] = useState(false);
+  const [editandoId, setEditandoId] = useState<string | null>(null);
 
   return (
     <div>
@@ -24,9 +26,17 @@ export default function Recorrencias() {
         titulo="Recorrências"
         descricao="Manutenções periódicas geradas automaticamente pelo sistema."
         acao={
-          <button className="btn-primary" onClick={() => setCriando((v) => !v)}>
-            <Plus className="h-4 w-4" /> Nova recorrência
-          </button>
+          !criando && (
+            <button
+              className="btn-primary"
+              onClick={() => {
+                setEditandoId(null);
+                setCriando(true);
+              }}
+            >
+              <Plus className="h-4 w-4" /> Nova recorrência
+            </button>
+          )
         }
       />
 
@@ -40,9 +50,25 @@ export default function Recorrencias() {
         </EstadoVazio>
       ) : (
         <div className="mt-4 space-y-2">
-          {recs.map((r) => (
-            <ItemRecorrencia key={r._id} rec={r} />
-          ))}
+          {recs.map((r) =>
+            editandoId === r._id ? (
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              <FormularioRecorrencia
+                key={r._id}
+                recorrencia={r}
+                onPronto={() => setEditandoId(null)}
+              />
+            ) : (
+              <ItemRecorrencia
+                key={r._id}
+                rec={r}
+                onEditar={() => {
+                  setCriando(false);
+                  setEditandoId(r._id);
+                }}
+              />
+            ),
+          )}
         </div>
       )}
     </div>
@@ -50,7 +76,7 @@ export default function Recorrencias() {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function ItemRecorrencia({ rec }: { rec: any }) {
+function ItemRecorrencia({ rec, onEditar }: { rec: any; onEditar: () => void }) {
   const alternar = useAlternarRecorrencia();
   return (
     <div className="card flex items-center gap-4 px-4 py-3">
@@ -72,34 +98,49 @@ function ItemRecorrencia({ rec }: { rec: any }) {
           )}
         </div>
       </div>
-      <button
-        className={`btn-ghost ${rec.ativa ? "" : "opacity-60"}`}
-        onClick={() => alternar({ id: rec._id, ativa: !rec.ativa })}
-        title={rec.ativa ? "Desativar" : "Ativar"}
-      >
-        <Power className="h-4 w-4" />
-        {rec.ativa ? "Ativa" : "Inativa"}
-      </button>
+      <div className="flex flex-none gap-2">
+        <button className="btn-ghost" onClick={onEditar}>
+          <Pencil className="h-4 w-4" /> Editar
+        </button>
+        <button
+          className={`btn-ghost ${rec.ativa ? "" : "opacity-60"}`}
+          onClick={() => alternar({ id: rec._id, ativa: !rec.ativa })}
+          title={rec.ativa ? "Desativar" : "Ativar"}
+        >
+          <Power className="h-4 w-4" />
+          {rec.ativa ? "Ativa" : "Inativa"}
+        </button>
+      </div>
     </div>
   );
 }
 
-function FormularioRecorrencia({ onPronto }: { onPronto: () => void }) {
+// [RF20] Sem `recorrencia`: cria. Com `recorrencia`: edita — mudanças aqui não
+// afetam demandas já geradas, só a próxima.
+function FormularioRecorrencia({
+  recorrencia,
+  onPronto,
+}: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  recorrencia?: any;
+  onPronto: () => void;
+}) {
   const categorias = useCategorias();
   const locais = useLocais();
   const executores = useExecutores();
   const equipamentos = useEquipamentos();
   const criar = useCriarRecorrencia();
+  const editar = useEditarRecorrencia();
 
   const [f, setF] = useState({
-    titulo: "",
-    descricao: "",
-    categoriaId: "",
-    localId: "",
-    equipamentoId: "",
-    executorPadraoId: "",
-    periodicidade: "mensal",
-    antecedenciaDias: "7",
+    titulo: recorrencia?.titulo ?? "",
+    descricao: recorrencia?.descricao ?? "",
+    categoriaId: recorrencia?.categoriaId ?? "",
+    localId: recorrencia?.localId ?? "",
+    equipamentoId: recorrencia?.equipamentoId ?? "",
+    executorPadraoId: recorrencia?.executorPadraoId ?? "",
+    periodicidade: recorrencia?.periodicidade ?? "mensal",
+    antecedenciaDias: String(recorrencia?.antecedenciaDias ?? 7),
   });
   const [erro, setErro] = useState<string | null>(null);
 
@@ -107,24 +148,31 @@ function FormularioRecorrencia({ onPronto }: { onPronto: () => void }) {
     e.preventDefault();
     setErro(null);
     try {
-      await criar({
+      const campos = {
         titulo: f.titulo,
         descricao: f.descricao,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         categoriaId: f.categoriaId as any,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         localId: f.localId as any,
+        // omitido = não mexe; aqui sempre mandamos o valor atual do formulário —
+        // "" vira null (desvincula) só quando já havia um equipamento antes.
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        equipamentoId: (f.equipamentoId || undefined) as any,
+        equipamentoId: (f.equipamentoId || (recorrencia?.equipamentoId ? null : undefined)) as any,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         executorPadraoId: f.executorPadraoId as any,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         periodicidade: f.periodicidade as any,
         antecedenciaDias: Number(f.antecedenciaDias),
-      });
+      };
+      if (recorrencia) {
+        await editar({ id: recorrencia._id, ...campos });
+      } else {
+        await criar(campos);
+      }
       onPronto();
     } catch (err) {
-      setErro(err instanceof Error ? err.message : "Erro ao criar.");
+      setErro(err instanceof Error ? err.message : "Erro ao salvar.");
     }
   }
 
@@ -201,7 +249,7 @@ function FormularioRecorrencia({ onPronto }: { onPronto: () => void }) {
       )}
       <div className="flex gap-2">
         <button type="submit" className="btn-primary">
-          Salvar recorrência
+          {recorrencia ? "Salvar alterações" : "Salvar recorrência"}
         </button>
         <button type="button" className="btn-ghost" onClick={onPronto}>
           Cancelar

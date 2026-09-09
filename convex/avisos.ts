@@ -1,4 +1,4 @@
-import { mutation, query, MutationCtx } from "./_generated/server";
+import { mutation, query, MutationCtx, QueryCtx } from "./_generated/server";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { getUsuarioAtual } from "./lib/auth";
@@ -51,34 +51,40 @@ export async function gerarAvisoSeInteressaAoSolicitante(
   });
 }
 
-// Avisos ainda não enviados de quem está logado — viram movimento no painel.
+// Avisos ainda não enviados de um usuário — viram movimento no painel dele.
+// Único lugar que lê "by_responsavel_pendente"; painel.proximoMovimento chama
+// isto em vez de duplicar a consulta (duas implementações da mesma busca
+// divergem cedo ou tarde — foi o que aconteceu aqui até esta limpeza).
+export async function avisosPendentesDe(ctx: QueryCtx, usuarioId: Id<"usuarios">) {
+  const meus = await ctx.db
+    .query("avisos")
+    .withIndex("by_responsavel_pendente", (q) =>
+      q.eq("responsavelId", usuarioId).eq("enviadoEm", undefined),
+    )
+    .collect();
+
+  return await Promise.all(
+    meus.map(async (a) => {
+      const d = await ctx.db.get(a.demandaId);
+      return {
+        _id: a._id,
+        demandaId: a.demandaId,
+        gatilho: a.gatilho,
+        mensagem: a.mensagem,
+        criadoEm: a._creationTime,
+        demandaTitulo: d?.titulo ?? "(demanda removida)",
+        whatsapp: d?.solicitanteWhatsapp ?? "",
+        solicitante: d?.solicitanteNome ?? "",
+      };
+    }),
+  );
+}
+
 export const pendentes = query({
   args: {},
   handler: async (ctx) => {
     const usuario = await getUsuarioAtual(ctx);
-
-    const meus = await ctx.db
-      .query("avisos")
-      .withIndex("by_responsavel_pendente", (q) =>
-        q.eq("responsavelId", usuario._id).eq("enviadoEm", undefined),
-      )
-      .collect();
-
-    return await Promise.all(
-      meus.map(async (a) => {
-        const d = await ctx.db.get(a.demandaId);
-        return {
-          _id: a._id,
-          demandaId: a.demandaId,
-          gatilho: a.gatilho,
-          mensagem: a.mensagem,
-          criadoEm: a._creationTime,
-          demandaTitulo: d?.titulo ?? "(demanda removida)",
-          whatsapp: d?.solicitanteWhatsapp ?? "",
-          solicitante: d?.solicitanteNome ?? "",
-        };
-      }),
-    );
+    return await avisosPendentesDe(ctx, usuario._id);
   },
 });
 

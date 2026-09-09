@@ -296,6 +296,72 @@ describe("consumo sem saldo (E2)", () => {
       }),
     ).rejects.toThrow(/quantidade/i);
   });
+
+  test("consumosDaDemanda lista só os desta demanda, e quem não tem acesso não lê", async () => {
+    const c = await cenario();
+    const demandaId = await demandaEmExecucao(c);
+    const outraId = await demandaEmExecucao(c);
+    const comoExec = c.t.withIdentity({ subject: EXEC });
+
+    await comoExec.mutation(api.orcamento.registrarConsumo, {
+      demandaId, item: "Disjuntor 20A", quantidade: 2, valorUnitario: 18.5, origem: "compra",
+    });
+    await comoExec.mutation(api.orcamento.registrarConsumo, {
+      demandaId, item: "Fita isolante", quantidade: 1, origem: "estoque",
+    });
+    await comoExec.mutation(api.orcamento.registrarConsumo, {
+      demandaId: outraId, item: "Disjuntor 20A", quantidade: 1, valorUnitario: 20, origem: "compra",
+    });
+
+    const lista = await comoExec.query(api.orcamento.consumosDaDemanda, { demandaId });
+    expect(lista).toHaveLength(2);
+    expect(lista.map((x) => x.item).sort()).toEqual(["Disjuntor 20A", "Fita isolante"]);
+
+    // estranho sem responsabilidade nem equipe na demanda não lê
+    const estranho = await c.t.run((ctx) =>
+      ctx.db.insert("usuarios", {
+        clerkId: "clerk_estranho", nome: "Rafael", email: "r@cn.com", papel: "executor", ativo: true,
+      }),
+    );
+    expect(estranho).toBeDefined();
+    await expect(
+      c.t.withIdentity({ subject: "clerk_estranho" }).query(api.orcamento.consumosDaDemanda, {
+        demandaId,
+      }),
+    ).rejects.toThrow(/permissão/i);
+  });
+
+  test("historicoDePreco traz o mais recente primeiro, no máximo 5", async () => {
+    const c = await cenario();
+    const comoExec = c.t.withIdentity({ subject: EXEC });
+
+    for (let i = 0; i < 7; i++) {
+      const demandaId = await demandaEmExecucao(c);
+      await comoExec.mutation(api.orcamento.registrarConsumo, {
+        demandaId, item: "Lâmpada LED", quantidade: 1, valorUnitario: 10 + i, origem: "compra",
+      });
+    }
+
+    const precos = await c.t
+      .withIdentity({ subject: LIDER })
+      .query(api.orcamento.historicoDePreco, { item: "Lâmpada LED" });
+    expect(precos).toHaveLength(5);
+    // o mais recente (i=6, valor 16) vem primeiro
+    expect(precos[0].valorUnitario).toBe(16);
+  });
+
+  test("item vazio ou sem histórico retorna lista vazia", async () => {
+    const c = await cenario();
+    const vazio = await c.t
+      .withIdentity({ subject: LIDER })
+      .query(api.orcamento.historicoDePreco, { item: "  " });
+    expect(vazio).toEqual([]);
+
+    const semHistorico = await c.t
+      .withIdentity({ subject: LIDER })
+      .query(api.orcamento.historicoDePreco, { item: "Item nunca comprado" });
+    expect(semHistorico).toEqual([]);
+  });
 });
 
 describe("avisos ao solicitante (E1)", () => {

@@ -2,6 +2,7 @@ import { query } from "./_generated/server";
 import { Doc } from "./_generated/dataModel";
 import { getUsuarioAtual } from "./lib/auth";
 import { pontuar, frase, bloqueio, acaoDe, aguardaAprovacao } from "./lib/movimento";
+import { avisosPendentesDe } from "./avisos";
 
 // [E3] Painel de UM movimento. Substitui o RF14 original (grupos + contadores),
 // revogado pela Emenda 01.
@@ -85,26 +86,7 @@ export const proximoMovimento = query({
 
     // [E1] avisos pendentes: o envio é manual, o lembrete não. Só somem quando
     // marcados como enviados.
-    const avisosPendentes = await ctx.db
-      .query("avisos")
-      .withIndex("by_responsavel_pendente", (q) =>
-        q.eq("responsavelId", usuario._id).eq("enviadoEm", undefined),
-      )
-      .collect();
-
-    const avisos = await Promise.all(
-      avisosPendentes.map(async (a) => {
-        const d = await ctx.db.get(a.demandaId);
-        return {
-          _id: a._id,
-          demandaId: a.demandaId,
-          mensagem: a.mensagem,
-          gatilho: a.gatilho,
-          demandaTitulo: d?.titulo ?? "",
-          whatsapp: d?.solicitanteWhatsapp ?? "",
-        };
-      }),
-    );
+    const avisos = await avisosPendentesDe(ctx, usuario._id);
 
     // [E2] orçamento recebido e não aprovado é movimento da liderança.
     const aprovacoes =

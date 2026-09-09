@@ -465,6 +465,43 @@ export function useRegistrarConsumo(): Fn {
   return useMutation(api.orcamento.registrarConsumo);
 }
 
+export interface Consumo {
+  _id: string;
+  item: string;
+  quantidade: number;
+  valorUnitario?: number;
+  origem: "estoque" | "compra";
+  _creationTime: number;
+}
+
+// [E2] material já registrado nesta demanda — sem saldo, sem inventário.
+export function useConsumosDaDemanda(demandaId: string | undefined): Consumo[] | undefined {
+  if (DEMO) return [];
+  return asType<Consumo[] | undefined>(
+    useQuery(
+      api.orcamento.consumosDaDemanda,
+      demandaId ? asType({ demandaId }) : "skip",
+    ),
+  );
+}
+
+export interface PrecoAnterior {
+  valorUnitario: number;
+  quantidade: number;
+  quando: number;
+  origem: "estoque" | "compra";
+}
+
+// [E2] "com o valor pago anteriormente pelo mesmo item exibido ao lado" — só
+// consulta quando há um nome de item digitado (evita ida ao servidor a cada tecla).
+export function useHistoricoDePreco(item: string): PrecoAnterior[] | undefined {
+  const item_ = item.trim();
+  if (DEMO) return [];
+  return asType<PrecoAnterior[] | undefined>(
+    useQuery(api.orcamento.historicoDePreco, item_ ? asType({ item: item_ }) : "skip"),
+  );
+}
+
 export function useCancelar(): Fn {
   if (DEMO) {
     const { acoes } = useDemo();
@@ -505,6 +542,15 @@ export function useCriarRecorrencia(): Fn {
     return async (a) => acoes.criarRecorrencia(a);
   }
   return useMutation(api.recorrencias.criar);
+}
+
+// RF20: editar sem afetar demandas já geradas.
+export function useEditarRecorrencia(): Fn {
+  if (DEMO) {
+    const { acoes } = useDemo();
+    return async (a) => acoes.editarRecorrencia(a.id, a);
+  }
+  return useMutation(api.recorrencias.editar);
 }
 
 export function useAlternarRecorrencia(): Fn {
