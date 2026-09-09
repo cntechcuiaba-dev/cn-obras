@@ -7,9 +7,17 @@
 // /__clerk/* (a Proxy URL cadastrada no painel do Clerk) para /api/clerk-proxy/*,
 // e é aqui que os headers extras são adicionados antes do fetch real.
 export default async function handler(req, res) {
-  const pathParts = Array.isArray(req.query.path) ? req.query.path : [req.query.path].filter(Boolean);
-  const search = req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : "";
-  const targetUrl = `https://frontend-api.clerk.dev/${pathParts.join("/")}${search}`;
+  // "path" vem do rewrite (/__clerk/:path* -> /api/clerk-proxy?path=:path*);
+  // os demais query params são os originais da chamada ao Clerk.
+  const { path, ...resto } = req.query;
+  const targetPath = Array.isArray(path) ? path.join("/") : path || "";
+  const qs = new URLSearchParams();
+  for (const [chave, valor] of Object.entries(resto)) {
+    if (Array.isArray(valor)) valor.forEach((v) => qs.append(chave, v));
+    else if (valor != null) qs.append(chave, valor);
+  }
+  const search = qs.toString();
+  const targetUrl = `https://frontend-api.clerk.dev/${targetPath}${search ? `?${search}` : ""}`;
 
   const secretKey = process.env.CLERK_SECRET_KEY;
   if (!secretKey) {
