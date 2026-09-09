@@ -31,6 +31,7 @@ export interface DemoRecorrencia {
   antecedenciaDias: number;
   ativa: boolean;
   proximaGeracao: number | null;
+  proximaManutencao: number | null;
 }
 
 const DIA = 86_400_000;
@@ -311,6 +312,7 @@ export function seedRecorrencias(): DemoRecorrencia[] {
       antecedenciaDias: 10,
       ativa: true,
       proximaGeracao: off(12),
+      proximaManutencao: off(22),
     },
     {
       _id: "r2",
@@ -327,6 +329,7 @@ export function seedRecorrencias(): DemoRecorrencia[] {
       antecedenciaDias: 21,
       ativa: true,
       proximaGeracao: off(88),
+      proximaManutencao: off(118),
     },
   ];
 }

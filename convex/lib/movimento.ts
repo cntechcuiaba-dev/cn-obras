@@ -133,12 +133,16 @@ export function bloqueio(d: Doc<"demandas">): Bloqueio | null {
 }
 
 // [RF14f] Nenhum item entra no painel sem ação executável — o rótulo sai do estado.
+// [RF18b] Manutenção recorrente recém-gerada é movimento de PROGRAMAR, não de
+// executar: ela nasce triada e com antecedência justamente para dar tempo disso.
 export function acaoDe(d: Doc<"demandas">): { rotulo: string; destino: string } | null {
   switch (d.status) {
     case "aberta":
       return { rotulo: "Triar agora", destino: "triagem" };
     case "triada":
-      return { rotulo: "Iniciar", destino: "detalhe" };
+      return d.origemRecorrenciaId
+        ? { rotulo: "Programar manutenção", destino: "detalhe" }
+        : { rotulo: "Iniciar", destino: "detalhe" };
     case "em_execucao":
       return { rotulo: "Concluir", destino: "detalhe" };
     default:

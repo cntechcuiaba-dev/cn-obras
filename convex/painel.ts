@@ -21,7 +21,10 @@ export const proximoMovimento = query({
       const souResponsavel = d.responsavelId === usuario._id;
       const souEquipe = (d.equipeIds ?? []).includes(usuario._id);
       if (usuario.papel === "lideranca") {
-        return d.status === "aberta" || souResponsavel || souEquipe;
+        // [RF18b] manutenção recorrente recém-gerada é movimento da liderança
+        // ("programar"), não linha silenciosa numa lista
+        const aProgramar = Boolean(d.origemRecorrenciaId) && d.status === "triada";
+        return d.status === "aberta" || aProgramar || souResponsavel || souEquipe;
       }
       // [E4] equipe tem acesso, mas o movimento é do responsável
       return souResponsavel;

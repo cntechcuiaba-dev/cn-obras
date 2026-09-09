@@ -13,6 +13,31 @@ const INTERVALO_DIAS: Record<string, number> = {
   anual: 365,
 };
 
+// [E5] A recorrência não serve para criar a demanda no dia — serve para a liderança
+// se programar antes. Estas duas datas são o coração disso, e são usadas tanto pelo
+// cron quanto pela tela, para não divergirem.
+export function datasDaRecorrencia(r: {
+  periodicidade: string;
+  antecedenciaDias: number;
+  ultimaGeracaoEm?: number;
+  _creationTime: number;
+}) {
+  const intervalo = INTERVALO_DIAS[r.periodicidade] * DIA_MS;
+  const antecedencia = r.antecedenciaDias * DIA_MS;
+
+  // Data prevista da próxima manutenção. Quando já houve geração, a manutenção
+  // anterior estava prevista para (geração + antecedência).
+  const proximaManutencao =
+    r.ultimaGeracaoEm !== undefined
+      ? r.ultimaGeracaoEm + antecedencia + intervalo
+      : r._creationTime + intervalo;
+
+  // Quando a demanda deve nascer: com a antecedência combinada.
+  const proximaGeracao = proximaManutencao - antecedencia;
+
+  return { proximaManutencao, proximaGeracao };
+}
+
 // RF17: cadastrar manutenção recorrente.
 export const criar = mutation({
   args: {
@@ -85,16 +110,14 @@ export const listar = query({
           ctx.db.get(r.localId),
           ctx.db.get(r.executorPadraoId),
         ]);
-        const intervalo = INTERVALO_DIAS[r.periodicidade] * DIA_MS;
-        const proximaGeracao = r.ultimaGeracaoEm
-          ? r.ultimaGeracaoEm + intervalo
-          : Date.now();
+        const { proximaManutencao, proximaGeracao } = datasDaRecorrencia(r);
         return {
           ...r,
           categoriaNome: categoria?.nome ?? null,
           localNome: local?.nome ?? null,
           responsavelNome: executor?.nome ?? null,
           proximaGeracao: r.ativa ? proximaGeracao : null,
+          proximaManutencao: r.ativa ? proximaManutencao : null,
         };
       }),
     );
@@ -114,10 +137,14 @@ export const gerarRecorrenciasDoDia = internalMutation({
 
     let geradas = 0;
     for (const r of ativas) {
-      const intervalo = INTERVALO_DIAS[r.periodicidade] * DIA_MS;
-      const venceu =
-        r.ultimaGeracaoEm === undefined || agora - r.ultimaGeracaoEm >= intervalo;
-      if (!venceu) continue;
+      const { proximaManutencao, proximaGeracao } = datasDaRecorrencia(r);
+
+      // [RF18a] gera COM antecedência — demanda que nasce no dia do vencimento
+      // não deu tempo de nada. [RF19] idempotente: ultimaGeracaoEm empurra a
+      // próxima geração um intervalo inteiro para frente.
+      if (agora < proximaGeracao) continue;
+
+      const previstaEm = new Date(proximaManutencao).toLocaleDateString("pt-BR");
 
       // RF31: nasce pelo dono único do estado, com evento visível (não silencioso).
       await criarDemanda(
@@ -131,13 +158,15 @@ export const gerarRecorrenciasDoDia = internalMutation({
           categoriaId: r.categoriaId,
           localId: r.localId,
           prioridade: "media",
-          prazo: agora + r.prazoDias * DIA_MS,
+          // [RF18a] o prazo é a data prevista da manutenção
+          prazo: proximaManutencao,
           responsavelId: r.executorPadraoId,
           resultadoEsperado: `Manutenção recorrente "${r.titulo}" realizada conforme rotina.`,
           origemRecorrenciaId: r._id,
         },
         "triada",
-        `Gerada automaticamente pela recorrência "${r.titulo}"`,
+        `Gerada com ${r.antecedenciaDias} dia(s) de antecedência pela recorrência ` +
+          `"${r.titulo}" — manutenção prevista para ${previstaEm}`,
       );
 
       await ctx.db.patch(r._id, { ultimaGeracaoEm: agora });

@@ -52,7 +52,7 @@ interface DemoCtx {
     criarRecorrencia: (
       r: Omit<
         DemoRecorrencia,
-        "_id" | "categoriaNome" | "localNome" | "responsavelNome" | "proximaGeracao" | "ativa"
+        "_id" | "categoriaNome" | "localNome" | "responsavelNome" | "proximaGeracao" | "proximaManutencao" | "ativa"
       >,
     ) => void;
     alternarRecorrencia: (id: string, ativa: boolean) => void;
@@ -183,6 +183,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
             localNome: nomeLoc(r.localId) ?? "",
             responsavelNome: nomeExe(r.executorPadraoId) ?? "",
             proximaGeracao: Date.now(),
+            proximaManutencao: Date.now() + r.antecedenciaDias * 86_400_000,
           },
         ]),
       alternarRecorrencia: (id, ativa) =>

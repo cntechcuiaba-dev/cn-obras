@@ -60,8 +60,11 @@ function ItemRecorrencia({ rec }: { rec: any }) {
           {rec.categoriaNome && <span>{rec.categoriaNome}</span>}
           {rec.localNome && <span>{rec.localNome}</span>}
           {rec.responsavelNome && <span>{rec.responsavelNome}</span>}
-          {rec.ativa && rec.proximaGeracao && (
-            <span>próxima: {formatarData(rec.proximaGeracao)}</span>
+          {rec.ativa && rec.proximaManutencao && (
+            <span>
+              manutenção prevista {formatarData(rec.proximaManutencao)} · entra no
+              painel {formatarData(rec.proximaGeracao)}
+            </span>
           )}
         </div>
       </div>
