@@ -26,6 +26,9 @@ export const triar = mutation({
     demandaId: v.id("demandas"),
     categoriaId: v.id("categorias"),
     localId: v.id("locais"),
+    // Equipamento ao qual a demanda se refere, quando aplicável (opcional —
+    // nem toda demanda é sobre um equipamento cadastrado).
+    equipamentoId: v.optional(v.id("equipamentos")),
     prioridade: prioridadeDemanda,
     prazo: v.number(),
     // [E4] dono único do próximo movimento
@@ -68,6 +71,7 @@ export const triar = mutation({
       campos: {
         categoriaId: args.categoriaId,
         localId: args.localId,
+        equipamentoId: args.equipamentoId,
         prioridade: args.prioridade,
         prazo: args.prazo,
         responsavelId: args.responsavelId,
@@ -84,6 +88,9 @@ export const atualizar = mutation({
     demandaId: v.id("demandas"),
     responsavelId: v.optional(v.id("usuarios")),
     equipeIds: v.optional(v.array(v.id("usuarios"))),
+    // omitido = não mexe; null = limpa o vínculo; id = troca. Sem essa distinção,
+    // uma demanda vinculada por engano nunca poderia ser desvinculada.
+    equipamentoId: v.optional(v.union(v.id("equipamentos"), v.null())),
     prazo: v.optional(v.number()),
     prioridade: v.optional(prioridadeDemanda),
     resultadoEsperado: v.optional(v.string()),
@@ -95,6 +102,16 @@ export const atualizar = mutation({
 
     const patch: Record<string, unknown> = {};
     const mudancas: string[] = [];
+    if (args.equipamentoId !== undefined && args.equipamentoId !== d.equipamentoId) {
+      if (args.equipamentoId === null) {
+        patch.equipamentoId = undefined;
+        mudancas.push("desvinculada do equipamento");
+      } else {
+        const eq = await ctx.db.get(args.equipamentoId);
+        patch.equipamentoId = args.equipamentoId;
+        mudancas.push(`vinculada ao equipamento ${eq?.nome ?? "?"}`);
+      }
+    }
     if (args.responsavelId && args.responsavelId !== d.responsavelId) {
       const ex = await ctx.db.get(args.responsavelId);
       patch.responsavelId = args.responsavelId;

@@ -20,9 +20,14 @@ export default function Inteligencia() {
           Ainda não há demandas suficientes para gerar aprendizado
         </EstadoVazio>
       ) : (
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
           <Tabela titulo="Por local" linhas={dados.porLocal} />
           <Tabela titulo="Por categoria" linhas={dados.porCategoria} />
+          {/* A maioria das demandas não é sobre um equipamento cadastrado —
+              card só aparece quando há algo a mostrar, senão é ruído vazio. */}
+          {dados.porEquipamento.length > 0 && (
+            <Tabela titulo="Por equipamento" linhas={dados.porEquipamento} />
+          )}
         </div>
       )}
     </div>

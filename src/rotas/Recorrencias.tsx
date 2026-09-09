@@ -7,6 +7,7 @@ import {
   useCategorias,
   useLocais,
   useExecutores,
+  useEquipamentos,
 } from "../lib/dados";
 import { CabecalhoSecao, Carregando, EstadoVazio } from "../components/ui";
 import { PERIODICIDADE } from "../lib/labels";
@@ -57,6 +58,9 @@ function ItemRecorrencia({ rec }: { rec: any }) {
         <p className="font-semibold">{rec.titulo}</p>
         <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-text-2">
           <span>{PERIODICIDADE[rec.periodicidade]}</span>
+          {rec.equipamentoNome && (
+            <span className="font-medium text-text-1">{rec.equipamentoNome}</span>
+          )}
           {rec.categoriaNome && <span>{rec.categoriaNome}</span>}
           {rec.localNome && <span>{rec.localNome}</span>}
           {rec.responsavelNome && <span>{rec.responsavelNome}</span>}
@@ -84,6 +88,7 @@ function FormularioRecorrencia({ onPronto }: { onPronto: () => void }) {
   const categorias = useCategorias();
   const locais = useLocais();
   const executores = useExecutores();
+  const equipamentos = useEquipamentos();
   const criar = useCriarRecorrencia();
 
   const [f, setF] = useState({
@@ -91,6 +96,7 @@ function FormularioRecorrencia({ onPronto }: { onPronto: () => void }) {
     descricao: "",
     categoriaId: "",
     localId: "",
+    equipamentoId: "",
     executorPadraoId: "",
     periodicidade: "mensal",
     antecedenciaDias: "7",
@@ -108,6 +114,8 @@ function FormularioRecorrencia({ onPronto }: { onPronto: () => void }) {
         categoriaId: f.categoriaId as any,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         localId: f.localId as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        equipamentoId: (f.equipamentoId || undefined) as any,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         executorPadraoId: f.executorPadraoId as any,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -143,6 +151,21 @@ function FormularioRecorrencia({ onPronto }: { onPronto: () => void }) {
         <Select label="Categoria" value={f.categoriaId} onChange={(v) => setF({ ...f, categoriaId: v })} opcoes={(categorias ?? []).map((c) => ({ id: c._id, nome: c.nome }))} />
         <Select label="Local" value={f.localId} onChange={(v) => setF({ ...f, localId: v })} opcoes={(locais ?? []).map((l) => ({ id: l._id, nome: l.nome }))} />
         <Select label="Executor padrão" value={f.executorPadraoId} onChange={(v) => setF({ ...f, executorPadraoId: v })} opcoes={(executores ?? []).map((u) => ({ id: u._id, nome: u.nome }))} />
+        <label className="block">
+          <span className="label">Equipamento (opcional)</span>
+          <select
+            className="input"
+            value={f.equipamentoId}
+            onChange={(e) => setF({ ...f, equipamentoId: e.target.value })}
+          >
+            <option value="">Nenhum</option>
+            {(equipamentos ?? []).map((eq) => (
+              <option key={eq._id} value={eq._id}>
+                {eq.nome} — {eq.localNome}
+              </option>
+            ))}
+          </select>
+        </label>
         <label className="block">
           <span className="label">Periodicidade</span>
           <select

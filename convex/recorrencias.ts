@@ -45,6 +45,9 @@ export const criar = mutation({
     descricao: v.string(),
     categoriaId: v.id("categorias"),
     localId: v.id("locais"),
+    // A maioria das recorrências é sobre um equipamento; opcional porque nem
+    // toda (ex.: "revisão elétrica geral do templo") é sobre "um" equipamento.
+    equipamentoId: v.optional(v.id("equipamentos")),
     executorPadraoId: v.id("usuarios"),
     periodicidade,
     // [E5] gerar antes do vencimento, para dar tempo de programação
@@ -73,6 +76,7 @@ export const editar = mutation({
     descricao: v.optional(v.string()),
     categoriaId: v.optional(v.id("categorias")),
     localId: v.optional(v.id("locais")),
+    equipamentoId: v.optional(v.id("equipamentos")),
     executorPadraoId: v.optional(v.id("usuarios")),
     periodicidade: v.optional(periodicidade),
     antecedenciaDias: v.optional(v.number()),
@@ -102,10 +106,11 @@ export const listar = query({
     const recs = await ctx.db.query("manutencoesRecorrentes").collect();
     return await Promise.all(
       recs.map(async (r) => {
-        const [categoria, local, executor] = await Promise.all([
+        const [categoria, local, executor, equipamento] = await Promise.all([
           ctx.db.get(r.categoriaId),
           ctx.db.get(r.localId),
           ctx.db.get(r.executorPadraoId),
+          r.equipamentoId ? ctx.db.get(r.equipamentoId) : Promise.resolve(null),
         ]);
         const { proximaManutencao, proximaGeracao } = datasDaRecorrencia(r);
         return {
@@ -113,6 +118,7 @@ export const listar = query({
           categoriaNome: categoria?.nome ?? null,
           localNome: local?.nome ?? null,
           responsavelNome: executor?.nome ?? null,
+          equipamentoNome: equipamento?.nome ?? null,
           proximaGeracao: r.ativa ? proximaGeracao : null,
           proximaManutencao: r.ativa ? proximaManutencao : null,
         };
@@ -158,6 +164,7 @@ export const gerarRecorrenciasDoDia = internalMutation({
           localTextoOriginal: "",
           categoriaId: r.categoriaId,
           localId: r.localId,
+          equipamentoId: r.equipamentoId,
           prioridade: "media",
           // [RF18a] o prazo é a data prevista da manutenção
           prazo: proximaManutencao,

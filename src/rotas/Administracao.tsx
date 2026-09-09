@@ -7,12 +7,15 @@ import {
   ShieldCheck,
   Check,
   X as XIcon,
+  Wrench,
 } from "lucide-react";
 import {
   useCategoriasAdmin,
   useLocaisAdmin,
   useUsuariosAdmin,
   useModelos,
+  useLocais,
+  useEquipamentosAdmin,
   useCriarCategoria,
   useAlternarCategoria,
   useCriarLocalAdmin,
@@ -20,15 +23,21 @@ import {
   useAtualizarModelo,
   usePromoverUsuario,
   useAlternarAtivoUsuario,
+  useCriarEquipamento,
+  useAtualizarEquipamento,
+  useAlternarAtivoEquipamento,
   type CadastroAdmin,
   type UsuarioAdmin,
+  type EquipamentoAdmin,
 } from "../lib/dados";
 import { CabecalhoSecao, Carregando, EstadoVazio } from "../components/ui";
+import { formatarData } from "../lib/format";
 
-// RF26/RF27/RF21: cadastro/ativação de categorias e locais, edição dos modelos de
-// mensagem e promoção/desativação de usuários. Tudo que antes só existia via seed.
+// RF26/RF27/RF21: cadastro/ativação de categorias, locais e equipamentos, edição
+// dos modelos de mensagem e promoção/desativação de usuários. Tudo que antes só
+// existia via seed.
 
-type Aba = "categorias" | "locais" | "modelos" | "usuarios";
+type Aba = "categorias" | "locais" | "equipamentos" | "modelos" | "usuarios";
 
 export default function Administracao() {
   const [aba, setAba] = useState<Aba>("categorias");
@@ -38,7 +47,7 @@ export default function Administracao() {
       <CabecalhoSecao
         supra="Liderança"
         titulo="Administração"
-        descricao="Categorias, locais, modelos de mensagem e usuários."
+        descricao="Categorias, locais, equipamentos, modelos de mensagem e usuários."
       />
 
       <div className="mb-6 flex gap-1 border-b border-border">
@@ -46,6 +55,7 @@ export default function Administracao() {
           [
             ["categorias", "Categorias"],
             ["locais", "Locais"],
+            ["equipamentos", "Equipamentos"],
             ["modelos", "Modelos de mensagem"],
             ["usuarios", "Usuários"],
           ] as [Aba, string][]
@@ -66,6 +76,7 @@ export default function Administracao() {
 
       {aba === "categorias" && <AbaCategorias />}
       {aba === "locais" && <AbaLocais />}
+      {aba === "equipamentos" && <AbaEquipamentos />}
       {aba === "modelos" && <AbaModelos />}
       {aba === "usuarios" && <AbaUsuarios />}
     </div>
@@ -198,6 +209,211 @@ function ListaComCadastro({
         </div>
       )}
     </div>
+  );
+}
+
+// ---------------- Equipamentos ----------------
+// Diferente de categoria/local (nome + flag), equipamento tem campos próprios
+// (tipo, local, patrimônio, data de instalação) — não cabe no ListaComCadastro
+// genérico, tem componente dedicado.
+
+function AbaEquipamentos() {
+  const equipamentos = useEquipamentosAdmin();
+  const alternar = useAlternarAtivoEquipamento();
+  const [criando, setCriando] = useState(false);
+  const [editandoId, setEditandoId] = useState<string | null>(null);
+  const [erro, setErro] = useState<string | null>(null);
+
+  return (
+    <div>
+      <div className="mb-4 flex items-center justify-between">
+        <p className="text-sm text-text-2">
+          Ar-condicionados, bebedouros e outros equipamentos com manutenção periódica.
+        </p>
+        {!criando && (
+          <button className="btn-primary flex-none" onClick={() => setCriando(true)}>
+            <Plus className="h-4 w-4" /> Novo equipamento
+          </button>
+        )}
+      </div>
+
+      {criando && (
+        <FormularioEquipamento onPronto={() => setCriando(false)} onErro={setErro} />
+      )}
+      {erro && !criando && (
+        <p className="mb-4 rounded bg-pri-alta-bg px-3 py-2 text-sm text-pri-alta">{erro}</p>
+      )}
+
+      {equipamentos === undefined ? (
+        <Carregando />
+      ) : equipamentos.length === 0 ? (
+        <EstadoVazio icone={<Wrench className="h-6 w-6" />}>
+          Nenhum equipamento cadastrado
+        </EstadoVazio>
+      ) : (
+        <div className="space-y-2">
+          {equipamentos.map((eq) =>
+            editandoId === eq._id ? (
+              <FormularioEquipamento
+                key={eq._id}
+                equipamento={eq}
+                onPronto={() => setEditandoId(null)}
+                onErro={setErro}
+              />
+            ) : (
+              <div
+                key={eq._id}
+                className={`card flex flex-wrap items-center gap-3 px-4 py-3 ${
+                  eq.ativo ? "" : "opacity-60"
+                }`}
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium">{eq.nome}</p>
+                  <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-text-2">
+                    <span>{eq.tipo}</span>
+                    {eq.localNome && <span>{eq.localNome}</span>}
+                    {eq.patrimonio && <span>patrimônio {eq.patrimonio}</span>}
+                    {eq.instaladoEm && (
+                      <span>instalado em {formatarData(eq.instaladoEm)}</span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex flex-none gap-2">
+                  <button className="btn-ghost" onClick={() => setEditandoId(eq._id)}>
+                    <Pencil className="h-4 w-4" /> Editar
+                  </button>
+                  <button
+                    className={`btn-ghost ${eq.ativo ? "" : "opacity-60"}`}
+                    onClick={() => alternar({ equipamentoId: eq._id, ativo: !eq.ativo })}
+                  >
+                    <Power className="h-4 w-4" />
+                    {eq.ativo ? "Ativo" : "Inativo"}
+                  </button>
+                </div>
+              </div>
+            ),
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FormularioEquipamento({
+  equipamento,
+  onPronto,
+  onErro,
+}: {
+  equipamento?: EquipamentoAdmin;
+  onPronto: () => void;
+  onErro: (m: string | null) => void;
+}) {
+  const locais = useLocais();
+  const criar = useCriarEquipamento();
+  const atualizar = useAtualizarEquipamento();
+
+  const [nome, setNome] = useState(equipamento?.nome ?? "");
+  const [tipo, setTipo] = useState(equipamento?.tipo ?? "");
+  const [localId, setLocalId] = useState(equipamento?.localId ?? "");
+  const [patrimonio, setPatrimonio] = useState(equipamento?.patrimonio ?? "");
+  const [instaladoEm, setInstaladoEm] = useState(
+    equipamento?.instaladoEm
+      ? new Date(equipamento.instaladoEm).toISOString().slice(0, 10)
+      : "",
+  );
+  const [salvando, setSalvando] = useState(false);
+
+  async function salvar(e: FormEvent) {
+    e.preventDefault();
+    onErro(null);
+    setSalvando(true);
+    try {
+      const campos = {
+        nome,
+        tipo,
+        localId,
+        patrimonio: patrimonio || undefined,
+        instaladoEm: instaladoEm ? new Date(`${instaladoEm}T12:00:00`).getTime() : undefined,
+      };
+      if (equipamento) {
+        await atualizar({ equipamentoId: equipamento._id, ...campos });
+      } else {
+        await criar(campos);
+      }
+      onPronto();
+    } catch (err) {
+      onErro(err instanceof Error ? err.message : "Erro ao salvar.");
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  return (
+    <form onSubmit={salvar} className="card mb-4 space-y-4 p-5">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <label className="block">
+          <span className="label">Nome</span>
+          <input
+            className="input"
+            placeholder="Ex: Ar-condicionado — Secretaria"
+            value={nome}
+            onChange={(e) => setNome(e.target.value)}
+            required
+          />
+        </label>
+        <label className="block">
+          <span className="label">Tipo</span>
+          <input
+            className="input"
+            placeholder="Ex: Ar-condicionado, Bebedouro"
+            value={tipo}
+            onChange={(e) => setTipo(e.target.value)}
+            required
+          />
+        </label>
+        <label className="block">
+          <span className="label">Local</span>
+          <select
+            className="input"
+            value={localId}
+            onChange={(e) => setLocalId(e.target.value)}
+            required
+          >
+            <option value="">Selecione</option>
+            {(locais ?? []).map((l) => (
+              <option key={l._id} value={l._id}>
+                {l.nome}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className="label">Patrimônio / série (opcional)</span>
+          <input
+            className="input"
+            value={patrimonio}
+            onChange={(e) => setPatrimonio(e.target.value)}
+          />
+        </label>
+        <label className="block">
+          <span className="label">Instalado em (opcional)</span>
+          <input
+            type="date"
+            className="input"
+            value={instaladoEm}
+            onChange={(e) => setInstaladoEm(e.target.value)}
+          />
+        </label>
+      </div>
+      <div className="flex gap-2">
+        <button type="submit" className="btn-primary" disabled={salvando}>
+          {salvando ? "Salvando…" : equipamento ? "Salvar alterações" : "Cadastrar"}
+        </button>
+        <button type="button" className="btn-ghost" onClick={onPronto}>
+          Cancelar
+        </button>
+      </div>
+    </form>
   );
 }
 

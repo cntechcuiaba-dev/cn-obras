@@ -13,6 +13,8 @@ export interface DemandaView {
   localNome?: string | null;
   responsavelNome?: string | null;
   equipeNomes?: string[];
+  equipamentoId?: string;
+  equipamentoNome?: string | null;
   origemRecorrenciaId?: string;
   responsavelId?: string;
   equipeIds?: string[];

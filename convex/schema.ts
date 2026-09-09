@@ -85,6 +85,22 @@ export default defineSchema({
     ativo: v.boolean(),
   }),
 
+  // Equipamento que pode ter manutenção periódica (ar-condicionado, bebedouro,
+  // portão eletrônico...). Vincula tanto recorrências quanto demandas avulsas,
+  // para o aprendizado (RF29) revelar padrão por EQUIPAMENTO, não só por local —
+  // "este ar-condicionado específico já teve 4 chamados" é sinal de trocar, não
+  // só consertar de novo.
+  equipamentos: defineTable({
+    nome: v.string(), // ex: "Ar-condicionado — Secretaria"
+    tipo: v.string(), // ex: "Ar-condicionado", "Bebedouro" — curado pela liderança, não enum fechado
+    localId: v.id("locais"),
+    patrimonio: v.optional(v.string()),
+    instaladoEm: v.optional(v.number()),
+    ativo: v.boolean(),
+  })
+    .index("by_local", ["localId"])
+    .index("by_ativo", ["ativo"]),
+
   modelosMensagem: defineTable({
     nome: v.string(),
     texto: v.string(), // placeholders: {{demanda}}, {{prazo}}, {{local}}, {{solicitante}}
@@ -111,6 +127,10 @@ export default defineSchema({
     prioridade: v.optional(prioridadeDemanda),
     prazo: v.optional(v.number()),
     resultadoEsperado: v.optional(v.string()),
+    // Equipamento ao qual a demanda se refere, quando aplicável (ex: "o
+    // ar-condicionado tal está vazando"). Opcional — marcado na triagem, nem
+    // toda demanda é sobre um equipamento cadastrado.
+    equipamentoId: v.optional(v.id("equipamentos")),
 
     // [E4] dono único do próximo movimento — renomeado de executorId
     responsavelId: v.optional(v.id("usuarios")),
@@ -135,6 +155,7 @@ export default defineSchema({
     .index("by_responsavel", ["responsavelId"])
     .index("by_prazo", ["prazo"])
     .index("by_origem_recorrencia", ["origemRecorrenciaId"])
+    .index("by_equipamento", ["equipamentoId"])
     // [E2] varre orçamentos vencidos sem depender de alguém abrir o painel
     .index("by_cobranca", ["status", "orcamento.cobrarEm"]),
 
@@ -151,6 +172,10 @@ export default defineSchema({
     descricao: v.string(),
     categoriaId: v.id("categorias"),
     localId: v.id("locais"),
+    // Equipamento específico, quando a recorrência é sobre um (a maioria é).
+    // Opcional porque nem toda recorrência é de equipamento — ex.: revisão
+    // elétrica geral do templo não é "um" equipamento.
+    equipamentoId: v.optional(v.id("equipamentos")),
     executorPadraoId: v.id("usuarios"),
     periodicidade,
     // [E5] gera a demanda com antecedência, para dar tempo de programação

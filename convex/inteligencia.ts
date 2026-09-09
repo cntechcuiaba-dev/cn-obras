@@ -11,13 +11,15 @@ export const aprendizado = query({
   handler: async (ctx) => {
     await requireRole(ctx, ["lideranca"]);
 
-    const [demandas, categorias, locais] = await Promise.all([
+    const [demandas, categorias, locais, equipamentos] = await Promise.all([
       ctx.db.query("demandas").collect(),
       ctx.db.query("categorias").collect(),
       ctx.db.query("locais").collect(),
+      ctx.db.query("equipamentos").collect(),
     ]);
     const nomeCategoria = new Map(categorias.map((c) => [c._id, c.nome]));
     const nomeLocal = new Map(locais.map((l) => [l._id, l.nome]));
+    const nomeEquipamento = new Map(equipamentos.map((e) => [e._id, e.nome]));
 
     type Acc = {
       total: number;
@@ -28,6 +30,7 @@ export const aprendizado = query({
     };
     const porCategoria = new Map<string, Acc>();
     const porLocal = new Map<string, Acc>();
+    const porEquipamento = new Map<string, Acc>();
 
     const acumular = (
       mapa: Map<string, Acc>,
@@ -54,6 +57,12 @@ export const aprendizado = query({
       if (d.status === "cancelada") continue;
       acumular(porCategoria, nomeCategoria.get(d.categoriaId!) ?? "Sem categoria", d);
       acumular(porLocal, nomeLocal.get(d.localId!) ?? "Sem local", d);
+      // Diferente de categoria/local (quase toda demanda tem um), a maioria não
+      // é sobre um equipamento cadastrado — sem bucket "sem equipamento" aqui,
+      // ele dominaria a lista e escondería o sinal que interessa.
+      if (d.equipamentoId) {
+        acumular(porEquipamento, nomeEquipamento.get(d.equipamentoId) ?? "(removido)", d);
+      }
     }
 
     const materializar = (mapa: Map<string, Acc>) =>
@@ -74,6 +83,7 @@ export const aprendizado = query({
     return {
       porCategoria: materializar(porCategoria),
       porLocal: materializar(porLocal),
+      porEquipamento: materializar(porEquipamento),
       totalConsiderado: demandas.filter((d) => d.status !== "cancelada").length,
     };
   },

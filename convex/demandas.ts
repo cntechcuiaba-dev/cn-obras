@@ -74,10 +74,11 @@ export const abrirDemanda = mutation({
 // ---------- Enriquecimento ----------
 
 async function comContexto(ctx: QueryCtx, d: Doc<"demandas">, agora: number) {
-  const [categoria, local, executor] = await Promise.all([
+  const [categoria, local, executor, equipamento] = await Promise.all([
     d.categoriaId ? ctx.db.get(d.categoriaId) : Promise.resolve(null),
     d.localId ? ctx.db.get(d.localId) : Promise.resolve(null),
     d.responsavelId ? ctx.db.get(d.responsavelId) : Promise.resolve(null),
+    d.equipamentoId ? ctx.db.get(d.equipamentoId) : Promise.resolve(null),
   ]);
   // [E4] nomes da equipe, para a tela mostrar quem executa junto
   const equipeNomes = (
@@ -91,6 +92,7 @@ async function comContexto(ctx: QueryCtx, d: Doc<"demandas">, agora: number) {
     categoriaNome: categoria?.nome ?? null,
     localNome: local?.nome ?? null,
     responsavelNome: executor?.nome ?? null,
+    equipamentoNome: equipamento?.nome ?? null,
     equipeNomes,
     risco: nivelRisco(d.prazo, agora),
   };

@@ -8,6 +8,7 @@ export interface DemoDemanda extends DemandaView {
   localTextoOriginal: string;
   categoriaId?: string;
   localId?: string;
+  equipamentoId?: string;
   responsavelId?: string;
   status: StatusDemanda;
   prioridade?: Prioridade;
@@ -22,6 +23,8 @@ export interface DemoRecorrencia {
   descricao: string;
   categoriaId: string;
   localId: string;
+  equipamentoId?: string;
+  equipamentoNome?: string | null;
   executorPadraoId: string;
   categoriaNome: string;
   localNome: string;
@@ -82,6 +85,46 @@ export const LOCAIS = [
   { _id: "l_secretaria", nome: "Secretaria", ativo: false },
 ];
 
+// Equipamento que pode ter manutenção periódica — ar-condicionados, bebedouros...
+export const EQUIPAMENTOS = [
+  {
+    _id: "eq_ar_templo",
+    nome: "Ar-condicionado — Templo (lateral direita)",
+    tipo: "Ar-condicionado",
+    localId: "l_templo",
+    localNome: "Templo principal",
+    patrimonio: "PAT-0231",
+    instaladoEm: off(-540),
+    ativo: true,
+  },
+  {
+    _id: "eq_ar_infantil",
+    nome: "Ar-condicionado — Sala infantil",
+    tipo: "Ar-condicionado",
+    localId: "l_infantil",
+    localNome: "Sala infantil",
+    patrimonio: "PAT-0245",
+    instaladoEm: off(-320),
+    ativo: true,
+  },
+  {
+    _id: "eq_bebedouro_secretaria",
+    nome: "Bebedouro — Secretaria",
+    tipo: "Bebedouro",
+    localId: "l_secretaria",
+    localNome: "Secretaria",
+    ativo: true,
+  },
+  {
+    _id: "eq_portao_estac",
+    nome: "Portão eletrônico — Estacionamento",
+    tipo: "Portão eletrônico",
+    localId: "l_estac",
+    localNome: "Estacionamento",
+    ativo: false,
+  },
+];
+
 export const MODELOS = [
   {
     _id: "m1",
@@ -109,6 +152,7 @@ export const MODELOS = [
 const nomeCat = (id?: string) => CATEGORIAS.find((c) => c._id === id)?.nome ?? null;
 const nomeLoc = (id?: string) => LOCAIS.find((l) => l._id === id)?.nome ?? null;
 const nomeExe = (id?: string) => EXECUTORES.find((e) => e._id === id)?.nome ?? null;
+const nomeEquip = (id?: string) => EQUIPAMENTOS.find((e) => e._id === id)?.nome ?? null;
 
 function demanda(d: Partial<DemoDemanda> & { titulo: string; status: StatusDemanda }): DemoDemanda {
   return {
@@ -123,6 +167,7 @@ function demanda(d: Partial<DemoDemanda> & { titulo: string; status: StatusDeman
     categoriaNome: nomeCat(d.categoriaId),
     localNome: nomeLoc(d.localId),
     responsavelNome: nomeExe(d.responsavelId),
+    equipamentoNome: nomeEquip(d.equipamentoId),
     ...d,
   };
 }
@@ -198,6 +243,7 @@ export function seedDemandas(): DemoDemanda[] {
       status: "triada",
       categoriaId: "c_ar",
       localId: "l_templo",
+      equipamentoId: "eq_ar_templo",
       prioridade: "media",
       prazo: off(1),
       responsavelId: "u_rafael",
@@ -273,6 +319,32 @@ export function seedDemandas(): DemoDemanda[] {
       ],
     }),
     demanda({
+      titulo: "Ar-condicionado do templo sem gelar",
+      descricao: "O mesmo aparelho da lateral direita não está gelando bem há uns dias.",
+      solicitanteNome: "Diác. Paulo",
+      solicitanteWhatsapp: "5562987651234",
+      localTextoOriginal: "Templo, lado direito",
+      _creationTime: off(-40),
+      status: "concluida",
+      categoriaId: "c_ar",
+      localId: "l_templo",
+      equipamentoId: "eq_ar_templo",
+      prioridade: "media",
+      prazo: off(-35),
+      concluidaEm: off(-33),
+      resultadoConfirmado: true,
+      responsavelId: "u_rafael",
+      resultadoEsperado: "Gás recarregado e ar gelando normalmente.",
+      custo: { valor: 180, origem: "compra_direta", lancadoEm: off(-33) },
+      historico: [
+        ev(-40, "criada", "Demanda aberta pelo formulário público"),
+        ev(-39, "triada", "Triada · atribuída a Rafael Costa"),
+        ev(-36, "impedimento_aguardando_material", "Status: Aguardando — aguardando material", true),
+        ev(-34, "status_alterado", "Status: Em execução"),
+        ev(-33, "status_alterado", "Status: Concluída — resultado confirmado"),
+      ],
+    }),
+    demanda({
       titulo: "Cadeiras quebradas no salão",
       descricao: "Cinco cadeiras com encosto solto ou perna torta. Alguém pode se machucar.",
       solicitanteNome: "Roberto Dias",
@@ -313,6 +385,24 @@ export function seedRecorrencias(): DemoRecorrencia[] {
       proximaManutencao: off(22),
     },
     {
+      _id: "r3",
+      titulo: "Limpeza do ar-condicionado — Templo",
+      descricao: "Limpeza de filtros e higienização.",
+      categoriaId: "c_ar",
+      localId: "l_templo",
+      equipamentoId: "eq_ar_templo",
+      equipamentoNome: "Ar-condicionado — Templo (lateral direita)",
+      executorPadraoId: "u_rafael",
+      categoriaNome: "Ar-condicionado",
+      localNome: "Templo principal",
+      responsavelNome: "Rafael Costa",
+      periodicidade: "trimestral",
+      antecedenciaDias: 7,
+      ativa: true,
+      proximaGeracao: off(75),
+      proximaManutencao: off(82),
+    },
+    {
       _id: "r2",
       titulo: "Revisão elétrica geral",
       descricao: "Inspeção anual dos quadros e circuitos.",
@@ -332,4 +422,4 @@ export function seedRecorrencias(): DemoRecorrencia[] {
 }
 
 export const protocolo = (id: string) => `CN-${id.slice(-6).toUpperCase()}`;
-export { nomeCat, nomeLoc, nomeExe };
+export { nomeCat, nomeLoc, nomeExe, nomeEquip };

@@ -6,6 +6,7 @@ import {
   useCategorias,
   useLocais,
   useExecutores,
+  useEquipamentos,
   useTriar,
   useCancelar,
 } from "../lib/dados";
@@ -91,11 +92,13 @@ function FormularioTriagem({
   const categorias = useCategorias();
   const locais = useLocais();
   const executores = useExecutores();
+  const equipamentos = useEquipamentos();
   const triar = useTriar();
   const cancelar = useCancelar();
 
   const [categoriaId, setCategoriaId] = useState("");
   const [localId, setLocalId] = useState("");
+  const [equipamentoId, setEquipamentoId] = useState("");
   const [prioridade, setPrioridade] = useState<Prioridade>("media");
   const [prazo, setPrazo] = useState("");
   const [responsavelId, setResponsavelId] = useState("");
@@ -116,6 +119,8 @@ function FormularioTriagem({
         categoriaId: categoriaId as any,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         localId: localId as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        equipamentoId: (equipamentoId || undefined) as any,
         prioridade,
         prazo: new Date(`${prazo}T23:59:59`).getTime(),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -166,6 +171,25 @@ function FormularioTriagem({
               </option>
             ))}
           </select>
+        </label>
+        <label className="block sm:col-span-2">
+          <span className="label">Equipamento (opcional)</span>
+          <select
+            className="input"
+            value={equipamentoId}
+            onChange={(e) => setEquipamentoId(e.target.value)}
+          >
+            <option value="">Nenhum</option>
+            {(equipamentos ?? []).map((eq) => (
+              <option key={eq._id} value={eq._id}>
+                {eq.nome} — {eq.localNome}
+              </option>
+            ))}
+          </select>
+          <span className="mt-1 block text-xs text-text-2">
+            Se a demanda é sobre um equipamento cadastrado, marcar aqui alimenta o
+            Aprendizado com o histórico dele.
+          </span>
         </label>
         <label className="block">
           <span className="label">Prioridade</span>

@@ -45,15 +45,17 @@ export const proximoMovimento = query({
       .sort((a, b) => b.pontos - a.pontos);
 
     const enriquecer = async (d: Doc<"demandas">) => {
-      const [categoria, local, responsavel] = await Promise.all([
+      const [categoria, local, responsavel, equipamento] = await Promise.all([
         d.categoriaId ? ctx.db.get(d.categoriaId) : Promise.resolve(null),
         d.localId ? ctx.db.get(d.localId) : Promise.resolve(null),
         d.responsavelId ? ctx.db.get(d.responsavelId) : Promise.resolve(null),
+        d.equipamentoId ? ctx.db.get(d.equipamentoId) : Promise.resolve(null),
       ]);
       return {
         categoriaNome: categoria?.nome ?? null,
         localNome: local?.nome ?? null,
         responsavelNome: responsavel?.nome ?? null,
+        equipamentoNome: equipamento?.nome ?? null,
       };
     };
 

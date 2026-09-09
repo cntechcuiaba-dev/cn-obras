@@ -7,7 +7,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { DEMO } from "./env";
 import { useDemo } from "../demo/DemoProvider";
-import { DemoRecorrencia, EXECUTOR_DEMO, CATEGORIAS, LOCAIS, EXECUTORES, MODELOS } from "../demo/dados-demo";
+import { DemoRecorrencia, EXECUTOR_DEMO, CATEGORIAS, LOCAIS, EXECUTORES, MODELOS, EQUIPAMENTOS } from "../demo/dados-demo";
 import { DemandaView, EventoHistorico } from "./tipos";
 import { StatusDemanda } from "./labels";
 import {
@@ -46,6 +46,7 @@ export interface ItemMovimento {
   categoriaNome: string | null;
   localNome: string | null;
   responsavelNome: string | null;
+  equipamentoNome: string | null;
 }
 export interface LinhaBloqueada {
   _id: string;
@@ -57,6 +58,7 @@ export interface LinhaBloqueada {
   condicaoRetorno: string;
   localNome: string | null;
   responsavelNome: string | null;
+  equipamentoNome: string | null;
 }
 export interface AvisoPendente {
   _id: string;
@@ -91,7 +93,18 @@ interface DetalheRet {
 interface AprendizadoRet {
   porCategoria: LinhaAprend[];
   porLocal: LinhaAprend[];
+  porEquipamento: LinhaAprend[];
   totalConsiderado: number;
+}
+export interface EquipamentoAdmin {
+  _id: string;
+  nome: string;
+  tipo: string;
+  localId: string;
+  localNome: string | null;
+  patrimonio?: string;
+  instaladoEm?: number;
+  ativo: boolean;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -117,6 +130,13 @@ export function useExecutores(): Cadastro[] | undefined {
 export function useModelos(): Modelo[] | undefined {
   if (DEMO) return MODELOS;
   return asType<Modelo[] | undefined>(useQuery(api.cadastros.listarModelos, {}));
+}
+
+// Equipamento com manutenção periódica (ar-condicionado, bebedouro...). Ativos
+// só — para os seletores de triagem/recorrências (mesmo padrão de categorias/locais).
+export function useEquipamentos(): (Cadastro & { tipo: string; localNome: string | null })[] | undefined {
+  if (DEMO) return EQUIPAMENTOS.filter((e) => e.ativo);
+  return asType(useQuery(api.equipamentos.listar, {}));
 }
 
 // ---------------- Administração ----------------
@@ -157,6 +177,13 @@ export function useUsuariosAdmin(): UsuarioAdmin[] | undefined {
   return asType<UsuarioAdmin[] | undefined>(useQuery(api.usuarios.listarUsuarios, {}));
 }
 
+export function useEquipamentosAdmin(): EquipamentoAdmin[] | undefined {
+  if (DEMO) return EQUIPAMENTOS.map((e) => ({ ...e }));
+  return asType<EquipamentoAdmin[] | undefined>(
+    useQuery(api.equipamentos.listar, { incluirInativos: true }),
+  );
+}
+
 export function useCriarCategoria(): Fn {
   if (DEMO) return async () => undefined;
   return useMutation(api.cadastros.criarCategoria);
@@ -184,6 +211,18 @@ export function usePromoverUsuario(): Fn {
 export function useAlternarAtivoUsuario(): Fn {
   if (DEMO) return async () => undefined;
   return useMutation(api.usuarios.alternarAtivo);
+}
+export function useCriarEquipamento(): Fn {
+  if (DEMO) return async () => undefined;
+  return useMutation(api.equipamentos.criar);
+}
+export function useAtualizarEquipamento(): Fn {
+  if (DEMO) return async () => undefined;
+  return useMutation(api.equipamentos.atualizar);
+}
+export function useAlternarAtivoEquipamento(): Fn {
+  if (DEMO) return async () => undefined;
+  return useMutation(api.equipamentos.alternarAtivo);
 }
 
 // [E3 / RF14a-i] Painel de um movimento.
@@ -215,6 +254,7 @@ export function useProximoMovimento(): MovimentoRet | undefined {
             condicaoRetorno: b.condicaoRetorno,
             localNome: d.localNome ?? null,
             responsavelNome: d.responsavelNome ?? null,
+            equipamentoNome: d.equipamentoNome ?? null,
           });
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } else if (acaoDe(d as any)) {
@@ -244,6 +284,7 @@ export function useProximoMovimento(): MovimentoRet | undefined {
               categoriaNome: p.d.categoriaNome ?? null,
               localNome: p.d.localNome ?? null,
               responsavelNome: p.d.responsavelNome ?? null,
+              equipamentoNome: p.d.equipamentoNome ?? null,
             }
           : null,
         proximos: ordenadas
@@ -330,6 +371,7 @@ export function useAprendizado(): AprendizadoRet | undefined {
       };
       const porCat = new Map<string, Acc>();
       const porLoc = new Map<string, Acc>();
+      const porEquip = new Map<string, Acc>();
       const acc = (m: Map<string, Acc>, k: string, d: (typeof demandas)[number]) => {
         const a =
           m.get(k) ??
@@ -347,6 +389,7 @@ export function useAprendizado(): AprendizadoRet | undefined {
         if (d.status === "cancelada") continue;
         acc(porCat, d.categoriaNome ?? "Sem categoria", d);
         acc(porLoc, d.localNome ?? "Sem local", d);
+        if (d.equipamentoNome) acc(porEquip, d.equipamentoNome, d);
       }
       const mat = (m: Map<string, Acc>): LinhaAprend[] =>
         [...m.entries()]
@@ -363,6 +406,7 @@ export function useAprendizado(): AprendizadoRet | undefined {
       return {
         porCategoria: mat(porCat),
         porLocal: mat(porLoc),
+        porEquipamento: mat(porEquip),
         totalConsiderado: demandas.filter((d) => d.status !== "cancelada").length,
       };
     }, [demandas]);

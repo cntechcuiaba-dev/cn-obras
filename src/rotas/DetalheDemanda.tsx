@@ -19,6 +19,7 @@ import {
   useGerarUrl,
   useAtualizar,
   useExecutores,
+  useEquipamentos,
   useRegistrarValorRecebido,
   useRegistrarCobranca,
   useAprovarOrcamento,
@@ -153,6 +154,7 @@ export default function DetalheDemanda() {
           {(d.localNome || d.localTextoOriginal) && (
             <Meta>{d.localNome ?? d.localTextoOriginal}</Meta>
           )}
+          {d.equipamentoNome && <Meta>Equipamento: {d.equipamentoNome}</Meta>}
           {d.responsavelNome && <Meta>Responsável: {d.responsavelNome}</Meta>}
           {d.equipeNomes && d.equipeNomes.length > 0 && (
             <Meta>Equipe: {d.equipeNomes.join(", ")}</Meta>
@@ -622,6 +624,7 @@ function PainelAjuste({
 }) {
   const atualizar = useAtualizar();
   const executores = useExecutores();
+  const equipamentos = useEquipamentos();
 
   const [prazo, setPrazo] = useState(
     demanda.prazo ? new Date(demanda.prazo).toISOString().slice(0, 10) : "",
@@ -630,6 +633,7 @@ function PainelAjuste({
     demanda.prioridade ?? "media",
   );
   const [responsavelId, setResponsavelId] = useState(demanda.responsavelId ?? "");
+  const [equipamentoId, setEquipamentoId] = useState(demanda.equipamentoId ?? "");
   const [salvando, setSalvando] = useState(false);
 
   async function salvar() {
@@ -641,6 +645,12 @@ function PainelAjuste({
         prazo: prazo ? new Date(`${prazo}T23:59:59`).getTime() : undefined,
         prioridade,
         responsavelId: responsavelId || undefined,
+        // omitido = não mexe; null = desvincula; string = novo id — só manda
+        // quando o valor de fato mudou, senão todo "Salvar" geraria um evento à toa.
+        equipamentoId:
+          equipamentoId === (demanda.equipamentoId ?? "")
+            ? undefined
+            : equipamentoId || null,
       });
       onPronto();
     } catch (err) {
@@ -652,7 +662,7 @@ function PainelAjuste({
 
   return (
     <div className="mt-4 rounded border border-border p-4">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <label className="block">
           <span className="label">Prazo</span>
           <input
@@ -684,6 +694,21 @@ function PainelAjuste({
             {(executores ?? []).map((u) => (
               <option key={u._id} value={u._id}>
                 {u.nome}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className="label">Equipamento</span>
+          <select
+            className="input"
+            value={equipamentoId}
+            onChange={(e) => setEquipamentoId(e.target.value)}
+          >
+            <option value="">Nenhum</option>
+            {(equipamentos ?? []).map((eq) => (
+              <option key={eq._id} value={eq._id}>
+                {eq.nome}
               </option>
             ))}
           </select>
