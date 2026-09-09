@@ -50,6 +50,14 @@ export default async function handler(req, res) {
   upstream.headers.forEach((value, key) => {
     const lower = key.toLowerCase();
     if (["content-encoding", "transfer-encoding", "content-length", "set-cookie"].includes(lower)) return;
+    if (lower === "location") {
+      // O Clerk manda redirects relativos à raiz do domínio (ex.: "/v1/oauth_callback?...").
+      // Como o proxy mora em /__clerk, sem reescrever isso o navegador cai fora do proxy
+      // (em /v1/... direto) e recebe o fallback do SPA em vez de continuar o fluxo do Clerk.
+      const destino = value.startsWith("/") && !value.startsWith("/__clerk") ? `/__clerk${value}` : value;
+      res.setHeader("location", destino);
+      return;
+    }
     res.setHeader(key, value);
   });
   const setCookies =
