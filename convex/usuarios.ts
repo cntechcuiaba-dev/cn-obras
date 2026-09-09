@@ -66,6 +66,21 @@ export const promover = mutation({
   },
 });
 
+// O campo `ativo` existia no schema desde o início, mas nada o escrevia — usuário
+// que sai do ministério não tinha como ser desligado do sistema.
+export const alternarAtivo = mutation({
+  args: { usuarioId: v.id("usuarios"), ativo: v.boolean() },
+  handler: async (ctx, args) => {
+    const eu = await requireRole(ctx, ["lideranca"]);
+    if (args.usuarioId === eu._id && !args.ativo) {
+      throw new Error("Você não pode desativar a própria conta.");
+    }
+    const alvo = await ctx.db.get(args.usuarioId);
+    if (!alvo) throw new Error("Usuário não encontrado.");
+    await ctx.db.patch(args.usuarioId, { ativo: args.ativo });
+  },
+});
+
 export const listarUsuarios = query({
   args: {},
   handler: async (ctx) => {

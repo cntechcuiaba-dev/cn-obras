@@ -119,6 +119,73 @@ export function useModelos(): Modelo[] | undefined {
   return asType<Modelo[] | undefined>(useQuery(api.cadastros.listarModelos, {}));
 }
 
+// ---------------- Administração ----------------
+// Tela de admin precisa ver os inativos também, ao contrário das listas usadas
+// na triagem/formulários — por isso hooks dedicados em vez de reaproveitar acima.
+
+export interface CadastroAdmin extends Cadastro {
+  ativa?: boolean;
+  ativo?: boolean;
+}
+
+export function useCategoriasAdmin(): CadastroAdmin[] | undefined {
+  // CATEGORIAS já traz `ativa` real — sobrescrever com true escondia inativas.
+  if (DEMO) return CATEGORIAS.map((c) => ({ ...c }));
+  return asType<CadastroAdmin[] | undefined>(
+    useQuery(api.cadastros.listarCategorias, { incluirInativas: true }),
+  );
+}
+
+export function useLocaisAdmin(): CadastroAdmin[] | undefined {
+  // LOCAIS já traz `ativo` real (ex.: Secretaria é inativa no seed de demo).
+  if (DEMO) return LOCAIS.map((l) => ({ ...l }));
+  return asType<CadastroAdmin[] | undefined>(
+    useQuery(api.cadastros.listarLocais, { incluirInativos: true }),
+  );
+}
+
+export interface UsuarioAdmin {
+  _id: string;
+  nome: string;
+  email: string;
+  papel: "lideranca" | "executor";
+  ativo: boolean;
+}
+
+export function useUsuariosAdmin(): UsuarioAdmin[] | undefined {
+  if (DEMO) return EXECUTORES.map((u) => ({ ...u, email: "", papel: "executor" as const, ativo: true }));
+  return asType<UsuarioAdmin[] | undefined>(useQuery(api.usuarios.listarUsuarios, {}));
+}
+
+export function useCriarCategoria(): Fn {
+  if (DEMO) return async () => undefined;
+  return useMutation(api.cadastros.criarCategoria);
+}
+export function useAlternarCategoria(): Fn {
+  if (DEMO) return async () => undefined;
+  return useMutation(api.cadastros.alternarCategoria);
+}
+export function useCriarLocalAdmin(): Fn {
+  if (DEMO) return async () => undefined;
+  return useMutation(api.cadastros.criarLocal);
+}
+export function useAlternarLocalAdmin(): Fn {
+  if (DEMO) return async () => undefined;
+  return useMutation(api.cadastros.alternarLocal);
+}
+export function useAtualizarModelo(): Fn {
+  if (DEMO) return async () => undefined;
+  return useMutation(api.cadastros.atualizarModelo);
+}
+export function usePromoverUsuario(): Fn {
+  if (DEMO) return async () => undefined;
+  return useMutation(api.usuarios.promover);
+}
+export function useAlternarAtivoUsuario(): Fn {
+  if (DEMO) return async () => undefined;
+  return useMutation(api.usuarios.alternarAtivo);
+}
+
 // [E3 / RF14a-i] Painel de um movimento.
 export function useProximoMovimento(): MovimentoRet | undefined {
   if (DEMO) {

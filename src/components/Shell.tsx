@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, Link } from "react-router-dom";
 import { UserButton } from "@clerk/clerk-react";
 import {
   HardHat,
@@ -8,6 +8,7 @@ import {
   Repeat,
   LineChart,
   ListChecks,
+  Settings,
   Plus,
   type LucideIcon,
 } from "lucide-react";
@@ -78,6 +79,17 @@ export function Shell({
           </nav>
 
           <div className="flex items-center gap-2 border-l border-border pl-2">
+            {/* Admin é aberta por escolha, não ação do dia a dia — fica fora da
+                nav de movimento, como ícone dedicado (mesmo espírito do RF14i). */}
+            {papel === "lideranca" && (
+              <Link
+                to="/admin"
+                title="Administração"
+                className="grid h-8 w-8 place-items-center rounded text-text-2 transition hover:bg-surface-raise hover:text-text-1"
+              >
+                <Settings className="h-4 w-4" />
+              </Link>
+            )}
             {/* Abrir demanda continua sendo o mesmo formulário público (RF01) —
                 aqui é só o atalho, que faltava para quem está logado. */}
             <a

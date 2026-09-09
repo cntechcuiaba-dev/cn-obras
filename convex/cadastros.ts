@@ -66,6 +66,34 @@ export const alternarLocal = mutation({
   },
 });
 
+// RF21: os modelos são pré-configurados pela liderança. Antes só o seed os criava,
+// então o texto enviado ao solicitante era imutável na prática.
+export const atualizarModelo = mutation({
+  args: {
+    modeloId: v.id("modelosMensagem"),
+    nome: v.optional(v.string()),
+    texto: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await requireRole(ctx, ["lideranca"]);
+    const patch: { nome?: string; texto?: string } = {};
+
+    if (args.nome !== undefined) {
+      const nome = args.nome.trim();
+      if (!nome) throw new Error("O nome do modelo é obrigatório.");
+      patch.nome = nome;
+    }
+    if (args.texto !== undefined) {
+      const texto = args.texto.trim();
+      if (!texto) throw new Error("O texto do modelo é obrigatório.");
+      patch.texto = texto;
+    }
+    if (Object.keys(patch).length === 0) return;
+
+    await ctx.db.patch(args.modeloId, patch);
+  },
+});
+
 // Seed inicial (kickoff passo 3): categorias, locais e um modelo por tipo. Idempotente.
 // Bootstrap: se o banco já tem dados, exige liderança; se está vazio (primeira carga via
 // `npx convex run cadastros:seed`), permite sem login.

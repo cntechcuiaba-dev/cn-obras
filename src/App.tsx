@@ -22,6 +22,7 @@ import Triagem from "./rotas/Triagem";
 import DetalheDemanda from "./rotas/DetalheDemanda";
 import Recorrencias from "./rotas/Recorrencias";
 import Inteligencia from "./rotas/Inteligencia";
+import Administracao from "./rotas/Administracao";
 
 function TelaCheia({ children }: { children: ReactNode }) {
   return (
@@ -50,6 +51,7 @@ function RotasApp({ papel }: { papel: Papel }) {
           <Route path="/triagem" element={<Triagem />} />
           <Route path="/recorrencias" element={<Recorrencias />} />
           <Route path="/inteligencia" element={<Inteligencia />} />
+          <Route path="/admin" element={<Administracao />} />
         </>
       )}
       <Route path="/demanda/:id" element={<DetalheDemanda />} />
