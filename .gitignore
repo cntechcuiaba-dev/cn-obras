@@ -1,0 +1,10 @@
+node_modules
+dist
+dist-ssr
+*.local
+.env.local
+.env
+.DS_Store
+.vite
+convex/_generated
+*.tsbuildinfo

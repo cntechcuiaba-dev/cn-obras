@@ -1,0 +1,1528 @@
+<title>Central CN Obras</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
+
+<style>
+  /* =========================================================================
+     DESIGN SYSTEM — fonte única de verdade (doc 05-prototipo-visual)
+     Identidade fixa, tema claro (neutros quentes + azul-petróleo dessaturado).
+     ========================================================================= */
+  :root {
+    /* Neutros com temperatura */
+    --bg:            #F7F5F2;
+    --surface:       #FFFFFF;
+    --surface-raise: #FCFAF7;
+    --border:        #E4DFD8;
+    --border-strong: #D8D2C8;
+    --text-2:        #6B6459;
+    --text-1:        #2B2621;
+
+    /* Acento — azul-petróleo dessaturado */
+    --accent:        #3D7A8C;
+    --accent-hover:  #336A7A;
+    --accent-active: #2A5866;
+    --accent-subtle: #E3EEF0;
+
+    /* Status */
+    --st-aberta:       #8A94A6; --st-aberta-bg:       #EEF1F5;
+    --st-triada:       #3D7A8C; --st-triada-bg:       #E3EEF0;
+    --st-execucao:     #C9821A; --st-execucao-bg:     #FBEFDC;
+    --st-aguardando:   #B5643E; --st-aguardando-bg:   #F6E9E2;
+    --st-concluida:    #4C8B5B; --st-concluida-bg:    #E7F2E9;
+    --st-cancelada:    #9A968D; --st-cancelada-bg:    #F1EFEB;
+
+    /* Prioridade */
+    --pri-alta:   #C4453A; --pri-alta-bg: #FBE6E4;
+    --pri-media:  #C9821A;
+
+    /* Vencimento */
+    --venc-vencida:  #C4453A;
+    --venc-vencendo: #C9821A;
+
+    --radius: 8px;
+    --shadow-sm: 0 1px 2px rgba(43,38,33,.05), 0 1px 1px rgba(43,38,33,.03);
+    --shadow-md: 0 2px 4px rgba(43,38,33,.05), 0 8px 22px -8px rgba(43,38,33,.14);
+    --shadow-lg: 0 12px 40px -6px rgba(43,38,33,.22);
+
+    --sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+    --sidebar-w: 244px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text-1);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1, h2, h3, h4 { margin: 0; text-wrap: balance; font-weight: 600; letter-spacing: -0.01em; }
+  h1 { font-size: 32px; line-height: 40px; }
+  h2 { font-size: 24px; line-height: 32px; }
+  p  { margin: 0; }
+  button { font-family: inherit; }
+
+  .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+  .label {
+    font-size: 13px; line-height: 16px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-2);
+  }
+
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+  svg { display: block; }
+  .ic { width: 20px; height: 20px; stroke-width: 2; flex: none; }
+  .ic-sm { width: 16px; height: 16px; }
+  .ic-lg { width: 22px; height: 22px; }
+
+  /* ---------- Prototype chrome: role switcher bar ---------- */
+  .proto-bar {
+    position: sticky; top: 0; z-index: 60;
+    display: flex; align-items: center; gap: 14px;
+    padding: 8px 16px;
+    background: var(--text-1);
+    color: #F2EFEA;
+    font-size: 13px;
+  }
+  .proto-bar .pb-brand { display: flex; align-items: center; gap: 8px; font-weight: 600; letter-spacing: .02em; }
+  .proto-bar .pb-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px rgba(61,122,140,.25); }
+  .proto-bar .pb-tag { font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: #B9B2A6; }
+  .proto-switch { display: flex; gap: 4px; margin-left: auto; background: rgba(255,255,255,.07); padding: 3px; border-radius: 999px; }
+  .proto-switch button {
+    border: 0; background: transparent; color: #CBC4B8; cursor: pointer;
+    padding: 5px 13px; border-radius: 999px; font-size: 12.5px; font-weight: 500;
+    display: inline-flex; align-items: center; gap: 6px; transition: background .15s, color .15s;
+  }
+  .proto-switch button:hover { color: #fff; }
+  .proto-switch button.on { background: var(--surface); color: var(--text-1); font-weight: 600; }
+  @media (max-width: 720px) {
+    .proto-bar .pb-tag { display: none; }
+    .proto-switch button span { display: none; }
+    .proto-switch button { padding: 7px 11px; }
+  }
+
+  /* ---------- App shell ---------- */
+  .app { display: flex; min-height: calc(100vh - 41px); }
+
+  .sidebar {
+    width: var(--sidebar-w); flex: none;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    padding: 20px 14px;
+    position: sticky; top: 41px; height: calc(100vh - 41px);
+  }
+  .side-brand { display: flex; align-items: center; gap: 11px; padding: 4px 8px 20px; }
+  .side-logo {
+    width: 38px; height: 38px; border-radius: 9px; flex: none;
+    background: linear-gradient(160deg, var(--accent), var(--accent-active));
+    color: #fff; display: grid; place-items: center;
+  }
+  .side-brand .sb-name { font-weight: 700; font-size: 15px; letter-spacing: .01em; line-height: 1.15; }
+  .side-brand .sb-sub { font-size: 12px; color: var(--text-2); }
+
+  .nav-group-label { padding: 14px 10px 6px; }
+  .nav-item {
+    width: 100%; text-align: left; border: 0; background: transparent; cursor: pointer;
+    display: flex; align-items: center; gap: 11px; padding: 9px 11px; border-radius: var(--radius);
+    color: var(--text-2); font-size: 14.5px; font-weight: 500; margin-bottom: 2px;
+    position: relative; transition: background .13s, color .13s;
+  }
+  .nav-item:hover { background: var(--surface-raise); color: var(--text-1); }
+  .nav-item.on { background: var(--accent-subtle); color: var(--accent-active); font-weight: 600; }
+  .nav-item.on::before { content: ""; position: absolute; left: -14px; top: 8px; bottom: 8px; width: 3px; border-radius: 0 3px 3px 0; background: var(--accent); }
+  .nav-item .ic { color: currentColor; }
+  .nav-item .nav-count {
+    margin-left: auto; font-size: 12px; font-weight: 600; font-family: var(--mono);
+    background: var(--bg); color: var(--text-2); padding: 1px 8px; border-radius: 999px;
+    border: 1px solid var(--border);
+  }
+  .nav-item.on .nav-count { background: var(--surface); color: var(--accent-active); border-color: var(--accent-subtle); }
+
+  .side-user { margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 12px 8px 2px; border-top: 1px solid var(--border); }
+  .avatar {
+    width: 34px; height: 34px; border-radius: 50%; flex: none;
+    background: var(--accent-subtle); color: var(--accent-active);
+    display: grid; place-items: center; font-weight: 700; font-size: 13px;
+  }
+  .side-user .su-name { font-size: 13.5px; font-weight: 600; }
+  .side-user .su-role { font-size: 12px; color: var(--text-2); }
+
+  /* ---------- Main ---------- */
+  .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .topbar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 16px 28px; border-bottom: 1px solid var(--border);
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    backdrop-filter: saturate(1.1) blur(6px);
+    position: sticky; top: 41px; z-index: 30;
+  }
+  .topbar .tb-title { font-size: 15px; font-weight: 600; }
+  .topbar .tb-sub { font-size: 13px; color: var(--text-2); }
+  .icon-btn {
+    width: 38px; height: 38px; border-radius: var(--radius); border: 1px solid var(--border);
+    background: var(--surface); color: var(--text-2); cursor: pointer; display: grid; place-items: center;
+    transition: background .13s, color .13s, border-color .13s;
+  }
+  .icon-btn:hover { color: var(--text-1); border-color: var(--border-strong); }
+  .hamburger { display: none; }
+
+  .content { padding: 28px; max-width: 1100px; width: 100%; margin: 0 auto; }
+  .page-head { display: flex; align-items: flex-end; gap: 16px; margin-bottom: 4px; }
+  .page-head .ph-text { flex: 1; min-width: 0; }
+  .page-head h1 { font-size: 27px; line-height: 34px; }
+  .page-head .eyebrow { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--accent); margin-bottom: 7px; display: flex; align-items: center; gap: 7px; }
+  .page-head .eyebrow .ic-sm { width: 14px; height: 14px; }
+  .page-head p.sub { color: var(--text-2); margin-top: 6px; font-size: 14.5px; }
+
+  /* ---------- Buttons ---------- */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    border-radius: var(--radius); border: 1px solid transparent; cursor: pointer;
+    font-size: 14.5px; font-weight: 600; padding: 10px 16px; line-height: 1;
+    transition: background .14s, color .14s, border-color .14s, box-shadow .14s;
+  }
+  .btn-primary { background: var(--accent); color: #fff; box-shadow: var(--shadow-sm); }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-primary:active { background: var(--accent-active); }
+  .btn-ghost { background: var(--surface); color: var(--text-1); border-color: var(--border); }
+  .btn-ghost:hover { border-color: var(--border-strong); background: var(--surface-raise); }
+  .btn-quiet { background: transparent; color: var(--text-2); }
+  .btn-quiet:hover { background: var(--surface-raise); color: var(--text-1); }
+  .btn-danger { background: transparent; color: var(--pri-alta); border-color: color-mix(in srgb, var(--pri-alta) 30%, var(--border)); }
+  .btn-danger:hover { background: var(--pri-alta-bg); }
+  .btn-lg { padding: 15px 20px; font-size: 15.5px; min-height: 56px; }
+  .btn-block { width: 100%; }
+  .btn:disabled { opacity: .55; cursor: not-allowed; }
+
+  /* ---------- Cards / surfaces ---------- */
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+  }
+  .card-pad { padding: 20px; }
+
+  /* ---------- Chips ---------- */
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12.5px; font-weight: 600; padding: 3px 10px 3px 8px; border-radius: 999px;
+    line-height: 1.4; white-space: nowrap;
+  }
+  .chip .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex: none; }
+  .st-aberta     { color: var(--st-aberta);     background: var(--st-aberta-bg); }
+  .st-triada     { color: var(--st-triada);     background: var(--st-triada-bg); }
+  .st-em_execucao{ color: var(--st-execucao);   background: var(--st-execucao-bg); }
+  .st-aguardando { color: var(--st-aguardando); background: var(--st-aguardando-bg); }
+  .st-concluida  { color: var(--st-concluida);  background: var(--st-concluida-bg); }
+  .st-cancelada  { color: var(--st-cancelada);  background: var(--st-cancelada-bg); }
+
+  .pri { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 600; }
+  .pri-alta  { color: var(--pri-alta); }
+  .pri-media { color: var(--pri-media); }
+  .pri-baixa { color: var(--text-2); }
+  .pri .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+
+  /* ---------- Prazo badge ---------- */
+  .prazo {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: var(--mono); font-variant-numeric: tabular-nums;
+    font-weight: 600; font-size: 13.5px;
+  }
+  .prazo .ic-sm { width: 15px; height: 15px; }
+  .prazo-vencida  { color: var(--venc-vencida); }
+  .prazo-vencendo { color: var(--venc-vencendo); }
+  .prazo-emdia    { color: var(--text-2); }
+  .prazo-concluida{ color: var(--st-concluida); }
+
+  .meta { display: inline-flex; align-items: center; gap: 6px; color: var(--text-2); font-size: 13.5px; }
+  .meta .ic-sm { color: var(--text-2); }
+
+  /* ---------- KPI summary strip ---------- */
+  .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 20px 0 26px; }
+  .kpi {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px 18px; box-shadow: var(--shadow-sm); position: relative; overflow: hidden;
+    display: flex; flex-direction: column; gap: 3px; text-align: left; cursor: pointer;
+    transition: border-color .14s, box-shadow .14s, transform .14s;
+  }
+  .kpi:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+  .kpi::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--kpi-c, var(--accent)); }
+  .kpi .kpi-top { display: flex; align-items: center; gap: 8px; }
+  .kpi .kpi-ic { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; background: var(--kpi-bg, var(--accent-subtle)); color: var(--kpi-c, var(--accent)); }
+  .kpi .kpi-ic .ic { width: 17px; height: 17px; }
+  .kpi .kpi-num { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 30px; font-weight: 600; line-height: 1.1; color: var(--kpi-c, var(--text-1)); letter-spacing: -0.02em; }
+  .kpi .kpi-lbl { font-size: 13px; color: var(--text-2); font-weight: 500; }
+  .kpi.k-vencida  { --kpi-c: var(--venc-vencida);  --kpi-bg: var(--pri-alta-bg); }
+  .kpi.k-vencendo { --kpi-c: var(--venc-vencendo); --kpi-bg: var(--st-execucao-bg); }
+  .kpi.k-exec     { --kpi-c: var(--accent);        --kpi-bg: var(--accent-subtle); }
+  @media (max-width: 560px) { .kpis { grid-template-columns: 1fr; gap: 10px; } .kpi { flex-direction: row; align-items: center; justify-content: space-between; } .kpi .kpi-num { font-size: 24px; } }
+
+  /* ---------- Category glyph ---------- */
+  .cat-glyph { width: 34px; height: 34px; border-radius: 9px; flex: none; display: grid; place-items: center; background: var(--accent-subtle); color: var(--accent-active); }
+  .cat-glyph .ic { width: 18px; height: 18px; }
+  .cat-glyph.sm { width: 30px; height: 30px; border-radius: 8px; }
+  .cat-glyph.sm .ic { width: 16px; height: 16px; }
+
+  /* ---------- Painel de Prazos ---------- */
+  .deadline-group { margin-bottom: 26px; }
+  .dg-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding: 0 2px; }
+  .dg-head .dg-marker { width: 9px; height: 9px; border-radius: 3px; flex: none; }
+  .dg-head h3 { font-size: 14px; font-weight: 700; letter-spacing: .01em; }
+  .dg-head .dg-count { font-family: var(--mono); font-size: 12.5px; font-weight: 600; color: var(--text-2); background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 1px 9px; }
+
+  .rowlist { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow-sm); }
+  .drow {
+    display: grid; grid-template-columns: auto 1fr auto; gap: 6px 15px; align-items: center;
+    width: 100%; text-align: left; border: 0; background: transparent; cursor: pointer;
+    padding: 14px 18px 14px 15px; border-bottom: 1px solid var(--border);
+    border-left: 3px solid transparent; transition: background .12s, border-color .12s;
+  }
+  .drow:last-child { border-bottom: 0; }
+  .drow:hover { background: var(--surface-raise); }
+  .drow.sev-vencida  { border-left-color: var(--venc-vencida); }
+  .drow.sev-vencida  { background: linear-gradient(90deg, color-mix(in srgb, var(--pri-alta-bg) 55%, transparent), transparent 34%); }
+  .drow.sev-vencida:hover { background: linear-gradient(90deg, var(--pri-alta-bg), transparent 42%); }
+  .drow.sev-vencendo { border-left-color: var(--venc-vencendo); }
+  .drow.sev-exec     { border-left-color: color-mix(in srgb, var(--accent) 55%, transparent); }
+  .drow-glyph { grid-row: span 2; }
+  .drow-main { min-width: 0; }
+  .drow-title { font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 9px; }
+  .drow-title .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .drow-sub { display: flex; align-items: center; gap: 8px 14px; margin-top: 5px; flex-wrap: wrap; }
+  .drow-right { display: flex; flex-direction: column; align-items: flex-end; gap: 7px; grid-row: span 2; }
+  .drow-prazo-lg { font-family: var(--mono); font-weight: 600; font-size: 16px; }
+
+  .row-enter { animation: rowEnter .5s cubic-bezier(.2,.7,.3,1); }
+  .row-flash { position: relative; }
+  .row-flash::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: var(--accent-subtle); opacity: .0; animation: flash 2.4s ease-out;
+  }
+  @keyframes rowEnter { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+  @keyframes flash { 0% { opacity: .75; } 100% { opacity: 0; } }
+  .live-pill {
+    display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--text-2);
+    background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 4px 11px 4px 9px;
+  }
+  .live-pill .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--st-concluida); box-shadow: 0 0 0 0 rgba(76,139,91,.5); animation: pulse 2.2s infinite; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(76,139,91,.45); } 70% { box-shadow: 0 0 0 6px rgba(76,139,91,0); } 100% { box-shadow: 0 0 0 0 rgba(76,139,91,0); } }
+
+  .empty { text-align: center; padding: 30px 20px; color: var(--text-2); background: var(--surface); border: 1px dashed var(--border-strong); border-radius: 12px; }
+  .empty .ic { width: 30px; height: 30px; margin: 0 auto 10px; color: var(--border-strong); stroke-width: 1.6; }
+  .empty p { font-size: 14px; }
+
+  /* ---------- Filters ---------- */
+  .filters { display: flex; align-items: center; gap: 10px; margin: 18px 0 22px; flex-wrap: wrap; }
+  .select {
+    appearance: none; -webkit-appearance: none;
+    background: var(--surface) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B6459' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>") no-repeat right 11px center;
+    border: 1px solid var(--border); border-radius: var(--radius); padding: 9px 34px 9px 12px;
+    font-size: 14px; color: var(--text-1); cursor: pointer; font-family: inherit;
+  }
+  .select:hover { border-color: var(--border-strong); }
+
+  /* ---------- Triagem: master-detail ---------- */
+  .triage-wrap { display: grid; grid-template-columns: 340px 1fr; gap: 22px; align-items: start; }
+  .triage-list { display: flex; flex-direction: column; gap: 10px; }
+  .tcard {
+    text-align: left; width: 100%; cursor: pointer; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 12px; padding: 14px 15px;
+    box-shadow: var(--shadow-sm); transition: border-color .13s, box-shadow .13s, transform .13s;
+  }
+  .tcard:hover { border-color: var(--accent); box-shadow: var(--shadow-md); }
+  .tcard.on { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-subtle); }
+  .tcard .tc-title { font-weight: 600; font-size: 14.5px; margin-bottom: 6px; }
+  .tcard .tc-meta { display: flex; align-items: center; gap: 12px; }
+  .tcard .tc-age { font-size: 12px; color: var(--text-2); font-family: var(--mono); }
+
+  .field { margin-bottom: 18px; }
+  .field > label { display: block; margin-bottom: 7px; }
+  .field .req { color: var(--pri-alta); }
+  .input, .textarea {
+    width: 100%; border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--surface); padding: 11px 13px; font-size: 15px; color: var(--text-1);
+    font-family: inherit; transition: border-color .13s, box-shadow .13s;
+  }
+  .input:focus, .textarea:focus, .select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-subtle); }
+  .textarea { resize: vertical; min-height: 92px; line-height: 1.5; }
+  .field-help { font-size: 12.5px; color: var(--text-2); margin-top: 6px; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  .seg { display: inline-flex; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 3px; gap: 3px; }
+  .seg button { border: 0; background: transparent; cursor: pointer; padding: 8px 15px; border-radius: 6px; font-size: 14px; font-weight: 600; color: var(--text-2); display: inline-flex; align-items: center; gap: 7px; transition: background .12s, color .12s; }
+  .seg button:hover { color: var(--text-1); }
+  .seg button.on { background: var(--surface); box-shadow: var(--shadow-sm); }
+  .seg button.on.p-alta { color: var(--pri-alta); }
+  .seg button.on.p-media { color: var(--pri-media); }
+  .seg button.on.p-baixa { color: var(--text-1); }
+
+  .form-actions { display: flex; gap: 12px; margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--border); }
+
+  /* ---------- Executor: card grid ---------- */
+  .status-block { margin-bottom: 26px; }
+  .sb-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+  .dcard {
+    text-align: left; cursor: pointer; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 17px; box-shadow: var(--shadow-sm);
+    display: flex; flex-direction: column; gap: 13px; transition: border-color .13s, box-shadow .13s, transform .13s;
+  }
+  .dcard:hover { border-color: var(--accent); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+  .dcard .dc-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .dcard .dc-title { font-weight: 600; font-size: 15.5px; line-height: 1.3; }
+  .dcard .dc-meta { display: flex; flex-direction: column; gap: 8px; }
+  .dcard .dc-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 12px; border-top: 1px solid var(--border); }
+
+  /* Quick status actions (mobile, toque grande) */
+  .quick-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 8px; }
+  .qbtn {
+    min-height: 56px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface);
+    cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+    font-size: 12.5px; font-weight: 600; color: var(--text-2); transition: all .13s;
+  }
+  .qbtn .ic { width: 21px; height: 21px; }
+  .qbtn:hover { border-color: var(--border-strong); color: var(--text-1); }
+  .qbtn.on-exec  { border-color: var(--st-execucao);   background: var(--st-execucao-bg);   color: var(--st-execucao); }
+  .qbtn.on-agua  { border-color: var(--st-aguardando); background: var(--st-aguardando-bg); color: var(--st-aguardando); }
+  .qbtn.on-conc  { border-color: var(--st-concluida);  background: var(--st-concluida-bg);  color: var(--st-concluida); }
+
+  /* ---------- Detalhe ---------- */
+  .detail-grid { display: grid; grid-template-columns: 1fr 340px; gap: 22px; align-items: start; }
+  .back-link { display: inline-flex; align-items: center; gap: 7px; color: var(--text-2); background: transparent; border: 0; cursor: pointer; font-size: 14px; font-weight: 500; padding: 4px 0; margin-bottom: 12px; }
+  .back-link:hover { color: var(--text-1); }
+
+  .kv { display: grid; grid-template-columns: 132px 1fr; gap: 12px 16px; }
+  .kv dt { font-size: 13px; color: var(--text-2); }
+  .kv dd { margin: 0; font-size: 14.5px; font-weight: 500; }
+
+  .photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
+  .photo {
+    aspect-ratio: 4/3; border-radius: 10px; border: 1px solid var(--border); overflow: hidden;
+    position: relative; display: grid; place-items: center; color: #fff;
+  }
+  .photo .ph-tag { position: absolute; top: 7px; left: 7px; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; background: rgba(43,38,33,.62); padding: 2px 7px; border-radius: 5px; }
+  .photo-add {
+    aspect-ratio: 4/3; border-radius: 10px; border: 1.5px dashed var(--border-strong); background: var(--surface-raise);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+    color: var(--text-2); cursor: pointer; font-size: 12.5px; font-weight: 600; transition: border-color .13s, color .13s;
+  }
+  .photo-add:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Timeline */
+  .timeline { position: relative; padding-left: 26px; }
+  .timeline::before { content: ""; position: absolute; left: 8px; top: 6px; bottom: 6px; width: 2px; background: var(--border); }
+  .tl-item { position: relative; padding-bottom: 20px; }
+  .tl-item:last-child { padding-bottom: 0; }
+  .tl-node { position: absolute; left: -26px; top: 1px; width: 18px; height: 18px; border-radius: 50%; background: var(--surface); border: 2px solid var(--border-strong); display: grid; place-items: center; }
+  .tl-node .ic-sm { width: 11px; height: 11px; }
+  .tl-node.accent { border-color: var(--accent); color: var(--accent); }
+  .tl-node.done   { border-color: var(--st-concluida); background: var(--st-concluida); color: #fff; }
+  .tl-title { font-size: 14px; font-weight: 600; }
+  .tl-desc { font-size: 13.5px; color: var(--text-2); margin-top: 2px; }
+  .tl-time { font-size: 12px; color: var(--text-2); font-family: var(--mono); margin-top: 3px; }
+  .tl-actor { font-weight: 600; color: var(--text-1); }
+
+  /* WhatsApp box */
+  .wa-box { background: var(--surface-raise); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+  .wa-msg { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px; font-size: 13.5px; line-height: 1.55; color: var(--text-1); white-space: pre-wrap; margin: 10px 0 12px; }
+  .wa-actions { display: flex; gap: 10px; }
+  .wa-open { background: #128C4A; color: #fff; }
+  .wa-open:hover { background: #0e7a40; }
+
+  /* ---------- Recorrências ---------- */
+  .rec-card { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 16px 18px; }
+  .rec-next { text-align: right; }
+  .rec-next .rn-label { font-size: 12px; color: var(--text-2); }
+  .rec-next .rn-date { font-family: var(--mono); font-weight: 600; font-size: 15px; }
+  .badge-soft { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--accent-active); background: var(--accent-subtle); padding: 3px 10px; border-radius: 999px; }
+  .toggle { width: 42px; height: 24px; border-radius: 999px; border: 0; cursor: pointer; background: var(--border-strong); position: relative; transition: background .15s; flex: none; }
+  .toggle::after { content: ""; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: var(--shadow-sm); transition: left .15s; }
+  .toggle.on { background: var(--accent); }
+  .toggle.on::after { left: 20px; }
+
+  /* ---------- Admin ---------- */
+  .admin-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: start; }
+  .taglist { display: flex; flex-direction: column; }
+  .tagrow { display: flex; align-items: center; gap: 10px; padding: 11px 4px; border-bottom: 1px solid var(--border); }
+  .tagrow:last-child { border-bottom: 0; }
+  .tagrow .tag-name { font-weight: 500; font-size: 14.5px; }
+  .tagrow.off .tag-name { color: var(--text-2); text-decoration: line-through; }
+  .tagrow .tag-actions { margin-left: auto; display: flex; gap: 4px; }
+  .inline-add { display: flex; gap: 10px; margin-top: 14px; }
+
+  /* ---------- Public form ---------- */
+  .public-screen { min-height: calc(100vh - 41px); background: var(--bg); display: flex; flex-direction: column; }
+  .public-topbar { display: flex; align-items: center; gap: 11px; padding: 18px 20px; border-bottom: 1px solid var(--border); background: var(--surface); }
+  .public-wrap { flex: 1; display: flex; justify-content: center; padding: 32px 18px 60px; }
+  .public-card { width: 100%; max-width: 560px; }
+  .public-hero { margin-bottom: 24px; }
+  .public-hero h1 { font-size: 27px; line-height: 34px; }
+  .public-hero p { color: var(--text-2); margin-top: 8px; font-size: 15px; }
+
+  .success {
+    text-align: center; padding: 40px 26px;
+  }
+  .success .ok-ring { width: 68px; height: 68px; border-radius: 50%; background: var(--st-concluida-bg); color: var(--st-concluida); display: grid; place-items: center; margin: 0 auto 20px; }
+  .success .ok-ring .ic { width: 34px; height: 34px; }
+  .protocol { display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-weight: 600; font-size: 20px; color: var(--accent-active); background: var(--accent-subtle); padding: 9px 18px; border-radius: 10px; margin: 6px 0 18px; letter-spacing: .04em; }
+
+  /* ---------- Login (Clerk-themed) ---------- */
+  .login-screen { min-height: calc(100vh - 41px); display: grid; grid-template-columns: 1fr 1fr; }
+  .login-aside { background: linear-gradient(165deg, var(--accent-active), #1f4551); color: #EAF2F4; padding: 56px 48px; display: flex; flex-direction: column; }
+  .login-aside .la-logo { width: 46px; height: 46px; border-radius: 11px; background: rgba(255,255,255,.14); display: grid; place-items: center; margin-bottom: auto; }
+  .login-aside h2 { color: #fff; font-size: 27px; line-height: 1.28; max-width: 22ch; }
+  .login-aside .la-quote { margin-top: 18px; color: #C6DBE0; font-size: 15px; line-height: 1.6; max-width: 34ch; }
+  .login-aside .la-feats { margin-top: 34px; display: flex; flex-direction: column; gap: 13px; }
+  .login-aside .la-feat { display: flex; align-items: center; gap: 11px; font-size: 14.5px; color: #DCEAED; }
+  .login-aside .la-feat .ic { color: #9Fc7cf; }
+  .login-main { display: grid; place-items: center; padding: 40px 24px; background: var(--surface); }
+  .login-box { width: 100%; max-width: 360px; }
+  .login-box .clerk-badge { font-size: 11.5px; color: var(--text-2); text-align: center; margin-top: 22px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .divider { display: flex; align-items: center; gap: 12px; color: var(--text-2); font-size: 12.5px; margin: 20px 0; }
+  .divider::before, .divider::after { content: ""; height: 1px; background: var(--border); flex: 1; }
+  @media (max-width: 860px) { .login-aside { display: none; } .login-screen { grid-template-columns: 1fr; } }
+
+  /* ---------- Skeleton ---------- */
+  .sk { background: linear-gradient(100deg, var(--surface-raise) 30%, #F1ECE4 50%, var(--surface-raise) 70%); background-size: 200% 100%; animation: shimmer 1.3s infinite; border-radius: 6px; }
+  @keyframes shimmer { to { background-position: -200% 0; } }
+  .sk-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; padding: 16px 18px; border-bottom: 1px solid var(--border); align-items: center; }
+  .sk-row:last-child { border-bottom: 0; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+  }
+
+  /* ---------- Responsive: executor mobile-first ---------- */
+  .backdrop { display: none; }
+  @media (max-width: 900px) {
+    :root { --sidebar-w: 260px; }
+    .sidebar { position: fixed; left: 0; top: 41px; z-index: 55; transform: translateX(-100%); transition: transform .22s ease; box-shadow: var(--shadow-lg); }
+    .sidebar.open { transform: none; }
+    .backdrop.show { display: block; position: fixed; inset: 41px 0 0; background: rgba(43,38,33,.4); z-index: 50; }
+    .hamburger { display: grid; }
+    .content { padding: 20px 16px 40px; }
+    .topbar { padding: 13px 16px; }
+    .triage-wrap { grid-template-columns: 1fr; }
+    .detail-grid { grid-template-columns: 1fr; }
+    .admin-cols { grid-template-columns: 1fr; }
+    .field-row { grid-template-columns: 1fr; }
+    h1 { font-size: 26px; line-height: 32px; }
+  }
+  @media (max-width: 560px) {
+    .drow { grid-template-columns: auto 1fr; }
+    .drow-glyph { grid-row: 1; }
+    .drow-right { grid-column: 1 / -1; grid-row: 2; align-items: flex-start; flex-direction: row; justify-content: space-between; width: 100%; margin-top: 4px; }
+    .page-head { flex-direction: column; align-items: stretch; gap: 12px; }
+    .page-head .btn { width: 100%; }
+    .login-main { padding: 28px 18px; }
+  }
+</style>
+
+<div id="root"></div>
+
+<script>
+/* =============================================================================
+   Central CN Obras — protótipo navegável (mock, sem backend)
+   ============================================================================= */
+
+const HOJE = new Date(2026, 7, 18); // 18/08/2026 — referência de "hoje"
+const DAY = 86400000;
+
+/* ---------- Ícones Lucide (inline) ---------- */
+const ICONS = {
+  menu:'<path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/>',
+  bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+  clock:'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  alert:'<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  check:'<polyline points="20 6 9 17 4 12"/>',
+  checkCircle:'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
+  x:'<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  plus:'<path d="M5 12h14"/><path d="M12 5v14"/>',
+  camera:'<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3"/>',
+  image:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>',
+  mapPin:'<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',
+  user:'<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  calendar:'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/>',
+  filter:'<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>',
+  chevronRight:'<path d="m9 18 6-6-6-6"/>',
+  arrowLeft:'<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
+  wrench:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
+  hardHat:'<path d="M2 18a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1z"/><path d="M10 10V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5"/><path d="M4 15v-3a6 6 0 0 1 6-6"/><path d="M14 6a6 6 0 0 1 6 6v3"/>',
+  message:'<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>',
+  copy:'<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+  external:'<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
+  repeat:'<path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/>',
+  settings:'<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
+  layout:'<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',
+  list:'<path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/>',
+  login:'<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><path d="M15 12H3"/>',
+  power:'<path d="M12 2v10"/><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/>',
+  pause:'<rect x="14" y="4" width="4" height="16" rx="1"/><rect x="6" y="4" width="4" height="16" rx="1"/>',
+  play:'<polygon points="6 3 20 12 6 21 6 3"/>',
+  edit:'<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+  trash:'<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+  phone:'<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>',
+  building:'<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/>',
+  droplet:'<path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/>',
+  zap:'<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
+  wind:'<path d="M12.8 19.6A2 2 0 1 0 14 16H2"/><path d="M17.5 8a2.5 2.5 0 1 1 2 4H2"/><path d="M9.8 4.4A2 2 0 1 1 11 8H2"/>',
+  paint:'<path d="M18.4 5.6a2 2 0 0 1 0 2.8L10 16.8 6 18l1.2-4 8.4-8.4a2 2 0 0 1 2.8 0Z"/><path d="M14 7l3 3"/>',
+  bug:'<path d="M12 20v-9"/><path d="M6.5 6.5 4 4"/><path d="M17.5 6.5 20 4"/><path d="M9 8a3 3 0 0 1 6 0v1H9z"/><rect x="7" y="9" width="10" height="8" rx="5"/><path d="M4 13H2"/><path d="M22 13h-2"/><path d="M5 18l-2 2"/><path d="M19 18l2 2"/>',
+  scissors:'<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.12 15.88"/><path d="M14.47 14.48 20 20"/><path d="M8.12 8.12 12 12"/>',
+  search:'<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+  send:'<path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/>',
+  shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+  clipboard:'<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>',
+  inbox:'<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+};
+function ic(name, cls) {
+  return `<svg class="ic ${cls||''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name]||''}</svg>`;
+}
+
+/* ---------- Dados mock ---------- */
+const EXECUTORES = {
+  marcos: { nome: "Marcos Silva",  iniciais: "MS" },
+  joao:   { nome: "João Pereira",  iniciais: "JP" },
+  rafael: { nome: "Rafael Costa",  iniciais: "RC" },
+};
+const CATEGORIAS = ["Elétrica","Hidráulica","Alvenaria","Pintura","Ar-condicionado","Marcenaria","Jardinagem"];
+const LOCAIS = ["Templo principal","Salão social","Cozinha","Banheiros — Térreo","Sala infantil","Estacionamento","Secretaria"];
+const catIcon = { "Elétrica":"zap","Hidráulica":"droplet","Alvenaria":"building","Pintura":"paint","Ar-condicionado":"wind","Marcenaria":"wrench","Jardinagem":"scissors" };
+
+let DEMANDAS = [
+  { id:"CN-0142", titulo:"Vazamento no forro do salão social", descricao:"Está pingando água do forro perto do palco, principalmente quando chove. O gesso já está manchado e começando a ceder.",
+    solicitanteNome:"Cleusa Ramos", solicitanteWhatsapp:"5562988440132", localOriginal:"Salão social, canto do palco",
+    status:"em_execucao", categoria:"Hidráulica", local:"Salão social", prioridade:"alta", prazoOff:-2, executor:"marcos",
+    fotos:[{tag:"Antes",cor:"#5B6470"},{tag:"Antes",cor:"#7A6A58"}],
+    hist:[
+      {tipo:"criada", quando:-6, actor:null, desc:"Demanda aberta pelo formulário público"},
+      {tipo:"triada", quando:-5, actor:"Ana (liderança)", desc:"Categoria Hidráulica · Salão social · prioridade alta · atribuída a Marcos Silva"},
+      {tipo:"status", quando:-4, actor:"Marcos Silva", desc:"Status alterado para Em execução"},
+      {tipo:"foto", quando:-4, actor:"Marcos Silva", desc:"2 fotos anexadas"},
+    ]},
+  { id:"CN-0141", titulo:"Tomada queimada na sala infantil", descricao:"A tomada ao lado da janela soltou faísca e parou de funcionar. Cheiro de queimado.",
+    solicitanteNome:"Marta Lopes", solicitanteWhatsapp:"5562991230045", localOriginal:"Sala das crianças",
+    status:"triada", categoria:"Elétrica", local:"Sala infantil", prioridade:"alta", prazoOff:-1, executor:"joao",
+    fotos:[], hist:[{tipo:"criada",quando:-3,actor:null,desc:"Demanda aberta pelo formulário público"},{tipo:"triada",quando:-2,actor:"Ana (liderança)",desc:"Categoria Elétrica · prioridade alta · atribuída a João Pereira"}]},
+  { id:"CN-0140", titulo:"Porta do banheiro térreo não tranca", descricao:"A fechadura gira em falso e a porta não fecha direito.",
+    solicitanteNome:"Diác. Paulo", solicitanteWhatsapp:"5562987651234", localOriginal:"Banheiro masculino do térreo",
+    status:"em_execucao", categoria:"Marcenaria", local:"Banheiros — Térreo", prioridade:"media", prazoOff:0, executor:"marcos",
+    fotos:[{tag:"Antes",cor:"#6B5D4A"}], hist:[{tipo:"criada",quando:-4,actor:null,desc:"Demanda aberta pelo formulário público"},{tipo:"triada",quando:-3,actor:"Ana (liderança)",desc:"Marcenaria · atribuída a Marcos Silva"},{tipo:"status",quando:-1,actor:"Marcos Silva",desc:"Status alterado para Em execução"}]},
+  { id:"CN-0139", titulo:"Ar-condicionado do templo pingando", descricao:"O aparelho da lateral direita está pingando sobre os bancos.",
+    solicitanteNome:"Sônia Alves", solicitanteWhatsapp:"5562994561278", localOriginal:"Templo, lado direito",
+    status:"triada", categoria:"Ar-condicionado", local:"Templo principal", prioridade:"media", prazoOff:1, executor:"rafael",
+    fotos:[], hist:[{tipo:"criada",quando:-2,actor:null,desc:"Demanda aberta pelo formulário público"},{tipo:"triada",quando:-1,actor:"Ana (liderança)",desc:"Ar-condicionado · atribuída a Rafael Costa"}]},
+  { id:"CN-0138", titulo:"Lâmpadas queimadas no estacionamento", descricao:"Três postes do estacionamento estão apagados, fica muito escuro na saída da noite.",
+    solicitanteNome:"Seg. Carlos", solicitanteWhatsapp:"5562990012345", localOriginal:"Estacionamento externo",
+    status:"triada", categoria:"Elétrica", local:"Estacionamento", prioridade:"baixa", prazoOff:2, executor:"joao",
+    fotos:[], hist:[{tipo:"criada",quando:-2,actor:null,desc:"Demanda aberta pelo formulário público"},{tipo:"triada",quando:-1,actor:"Ana (liderança)",desc:"Elétrica · atribuída a João Pereira"}]},
+  { id:"CN-0137", titulo:"Torneira da cozinha vazando", descricao:"A torneira principal da cozinha não fecha totalmente.",
+    solicitanteNome:"Irmã Lúcia", solicitanteWhatsapp:"5562988887766", localOriginal:"Cozinha, pia grande",
+    status:"aguardando", categoria:"Hidráulica", local:"Cozinha", prioridade:"media", prazoOff:3, executor:"marcos",
+    fotos:[{tag:"Antes",cor:"#54606B"}], hist:[{tipo:"criada",quando:-5,actor:null,desc:"Demanda aberta pelo formulário público"},{tipo:"triada",quando:-4,actor:"Ana (liderança)",desc:"Hidráulica · atribuída a Marcos Silva"},{tipo:"status",quando:-2,actor:"Marcos Silva",desc:"Status alterado para Aguardando — falta peça de reposição"}]},
+  { id:"CN-0136", titulo:"Pintura descascando na secretaria", descricao:"A parede atrás da mesa está descascando por umidade.",
+    solicitanteNome:"Secretaria", solicitanteWhatsapp:"5562991112233", localOriginal:"Sala da secretaria",
+    status:"em_execucao", categoria:"Pintura", local:"Secretaria", prioridade:"baixa", prazoOff:5, executor:"rafael",
+    fotos:[], hist:[{tipo:"criada",quando:-3,actor:null,desc:"Demanda aberta pelo formulário público"},{tipo:"triada",quando:-2,actor:"Ana (liderança)",desc:"Pintura · atribuída a Rafael Costa"},{tipo:"status",quando:-1,actor:"Rafael Costa",desc:"Status alterado para Em execução"}]},
+  { id:"CN-0130", titulo:"Rachadura na parede externa", descricao:"Rachadura vertical na parede lateral do templo.",
+    solicitanteNome:"Pr. Antônio", solicitanteWhatsapp:"5562990009999", localOriginal:"Lateral externa do templo",
+    status:"concluida", categoria:"Alvenaria", local:"Templo principal", prioridade:"alta", prazoOff:-10, concluidaOff:-8, executor:"marcos",
+    fotos:[{tag:"Antes",cor:"#6E5B48"},{tag:"Depois",cor:"#4C6A55"}], hist:[{tipo:"criada",quando:-16,actor:null,desc:"Demanda aberta pelo formulário público"},{tipo:"triada",quando:-15,actor:"Ana (liderança)",desc:"Alvenaria · prioridade alta · atribuída a Marcos Silva"},{tipo:"status",quando:-12,actor:"Marcos Silva",desc:"Status alterado para Em execução"},{tipo:"foto",quando:-9,actor:"Marcos Silva",desc:"Foto de antes e depois anexadas"},{tipo:"concluida",quando:-8,actor:"Marcos Silva",desc:"Demanda concluída"}]},
+  // Abertas — aguardando triagem
+  { id:"CN-0145", titulo:"Cadeiras quebradas no salão", descricao:"Umas cinco cadeiras do salão estão com o encosto solto ou a perna torta. Alguém pode se machucar.",
+    solicitanteNome:"Roberto Dias", solicitanteWhatsapp:"5562988112200", localOriginal:"Salão social, fundo perto da porta",
+    status:"aberta", prazoOff:null, fotos:[{tag:"Foto",cor:"#6B5D4A"}], hist:[{tipo:"criada",quando:0,actor:null,desc:"Demanda aberta pelo formulário público"}]},
+  { id:"CN-0144", titulo:"Vaso sanitário entupido no banheiro feminino", descricao:"O vaso do banheiro feminino do térreo está entupido desde ontem.",
+    solicitanteNome:"Irmã Marta", solicitanteWhatsapp:"5562991234500", localOriginal:"Banheiro feminino do térreo",
+    status:"aberta", prazoOff:null, fotos:[], hist:[{tipo:"criada",quando:0,actor:null,desc:"Demanda aberta pelo formulário público"}]},
+  { id:"CN-0143", titulo:"Grama alta no jardim da frente", descricao:"O jardim da entrada está com o mato muito alto, precisa roçar antes do culto de domingo.",
+    solicitanteNome:"Vânia Souza", solicitanteWhatsapp:"5562990556677", localOriginal:"Jardim frontal, entrada principal",
+    status:"aberta", prazoOff:null, fotos:[], hist:[{tipo:"criada",quando:-1,actor:null,desc:"Demanda aberta pelo formulário público"}]},
+];
+
+let RECORRENCIAS = [
+  { id:"r1", titulo:"Limpeza da caixa d'água", categoria:"Hidráulica", local:"Templo principal", executor:"marcos", periodicidade:"semestral", prazoDias:15, ativa:true, proxOff:12 },
+  { id:"r2", titulo:"Dedetização geral", categoria:"Alvenaria", local:"Templo principal", executor:"rafael", periodicidade:"trimestral", prazoDias:7, ativa:true, proxOff:34 },
+  { id:"r3", titulo:"Revisão elétrica geral", categoria:"Elétrica", local:"Templo principal", executor:"joao", periodicidade:"anual", prazoDias:30, ativa:true, proxOff:88 },
+  { id:"r4", titulo:"Limpeza dos ar-condicionados", categoria:"Ar-condicionado", local:"Templo principal", executor:"rafael", periodicidade:"bimestral", prazoDias:10, ativa:false, proxOff:null },
+];
+
+let CATS = CATEGORIAS.map((n,i)=>({ nome:n, ativa:true }));
+let LOCS = LOCAIS.map((n,i)=>({ nome:n, ativo: n!=="Secretaria" }));
+
+/* ---------- Estado ---------- */
+const state = {
+  mode: "app",          // login | public | app
+  role: "lideranca",    // lideranca | executor
+  screen: "prazos",
+  demandaId: null,
+  loading: false,
+  sidebarOpen: false,
+  publicSubmitted: false,
+  triageSel: "CN-0145",
+  waTipo: "em_execucao",
+};
+
+/* ---------- Helpers de data / prazo ---------- */
+function prazoDate(off){ return new Date(HOJE.getTime() + off*DAY); }
+function fmtDate(d){ return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0'); }
+function fmtDateFull(d){ return fmtDate(d)+'/'+d.getFullYear(); }
+function prazoLabel(off, status){
+  if(status==="concluida") return {cls:"prazo-concluida", ic:"checkCircle", txt:"Concluída"};
+  if(off===null||off===undefined) return {cls:"prazo-emdia", ic:"clock", txt:"Sem prazo"};
+  const d = prazoDate(off);
+  if(off < 0) return {cls:"prazo-vencida",  ic:"alert", txt:`Venceu há ${Math.abs(off)}d`};
+  if(off === 0) return {cls:"prazo-vencendo", ic:"clock", txt:"Vence hoje"};
+  if(off <= 3) return {cls:"prazo-vencendo", ic:"clock", txt:`Vence em ${off}d`};
+  return {cls:"prazo-emdia", ic:"calendar", txt:fmtDate(d)};
+}
+function relTime(off){
+  if(off===0) return "hoje";
+  if(off===-1) return "ontem";
+  return `há ${Math.abs(off)} dias`;
+}
+const STATUS_LABEL = { aberta:"Aberta", triada:"Triada", em_execucao:"Em execução", aguardando:"Aguardando", concluida:"Concluída", cancelada:"Cancelada" };
+
+function statusChip(status){
+  return `<span class="chip st-${status}"><span class="dot"></span>${STATUS_LABEL[status]}</span>`;
+}
+function prioTag(p){
+  if(!p) return "";
+  const lbl = {alta:"Alta",media:"Média",baixa:"Baixa"};
+  return `<span class="pri pri-${p}"><span class="dot"></span>${lbl[p]}</span>`;
+}
+function execAvatar(key, extraCls){
+  if(!key) return "";
+  const e = EXECUTORES[key];
+  return `<span class="avatar" style="width:24px;height:24px;font-size:10px" title="${e.nome}">${e.iniciais}</span>`;
+}
+function esc(s){ return (s||"").replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function getDemanda(id){ return DEMANDAS.find(d=>d.id===id); }
+
+/* =============================================================================
+   RENDER — router
+   ============================================================================= */
+const root = document.getElementById("root");
+
+function render(){
+  let body;
+  if(state.mode==="login")  body = renderLogin();
+  else if(state.mode==="public") body = renderPublic();
+  else body = renderApp();
+  root.innerHTML = protoBar() + body;
+  bind();
+}
+
+/* ---------- Proto switcher bar ---------- */
+function protoBar(){
+  const opt = (mode, role, icon, label) => {
+    const on = (mode==="app" ? (state.mode==="app" && state.role===role) : state.mode===mode);
+    return `<button data-proto="${mode}" data-role="${role||''}" class="${on?'on':''}">${ic(icon,'ic-sm')}<span>${label}</span></button>`;
+  };
+  return `<div class="proto-bar">
+    <div class="pb-brand"><span class="pb-dot"></span> Central CN Obras</div>
+    <span class="pb-tag">Protótipo navegável</span>
+    <div class="proto-switch">
+      ${opt("public",null,"send","Solicitante")}
+      ${opt("login",null,"login","Login")}
+      ${opt("app","lideranca","layout","Liderança")}
+      ${opt("app","executor","hardHat","Executor")}
+    </div>
+  </div>`;
+}
+
+/* =============================================================================
+   APP SHELL
+   ============================================================================= */
+function navConfig(){
+  const abertas = DEMANDAS.filter(d=>d.status==="aberta").length;
+  if(state.role==="lideranca") return {
+    user: { nome:"Ana Beatriz", role:"Liderança", ini:"AB" },
+    items: [
+      { key:"prazos", icon:"layout", label:"Painel de Prazos" },
+      { key:"triagem", icon:"inbox", label:"Triagem", count:abertas },
+      { key:"recorrencias", icon:"repeat", label:"Recorrências" },
+      { key:"admin", icon:"settings", label:"Administração" },
+    ]
+  };
+  const minhas = DEMANDAS.filter(d=>d.executor==="marcos" && !["concluida","cancelada"].includes(d.status)).length;
+  return {
+    user: { nome:"Marcos Silva", role:"Executor de campo", ini:"MS" },
+    items: [ { key:"minhas", icon:"hardHat", label:"Minhas Demandas", count:minhas } ]
+  };
+}
+
+function renderApp(){
+  const cfg = navConfig();
+  // valida screen para o papel
+  const allowed = cfg.items.map(i=>i.key).concat(["detalhe"]);
+  if(!allowed.includes(state.screen)) state.screen = cfg.items[0].key;
+
+  const nav = cfg.items.map(i=>`
+    <button class="nav-item ${state.screen===i.key?'on':''}" data-nav="${i.key}">
+      ${ic(i.icon)} <span>${i.label}</span>
+      ${i.count!=null ? `<span class="nav-count">${i.count}</span>`:''}
+    </button>`).join("");
+
+  const sidebar = `
+    <aside class="sidebar ${state.sidebarOpen?'open':''}">
+      <div class="side-brand">
+        <div class="side-logo">${ic("wrench")}</div>
+        <div><div class="sb-name">CN Obras</div><div class="sb-sub">Manutenção predial</div></div>
+      </div>
+      <div class="label nav-group-label">${state.role==='lideranca'?'Gestão':'Meu trabalho'}</div>
+      <nav>${nav}</nav>
+      <div class="side-user">
+        <div class="avatar">${cfg.user.ini}</div>
+        <div><div class="su-name">${cfg.user.nome}</div><div class="su-role">${cfg.user.role}</div></div>
+      </div>
+    </aside>`;
+
+  return `<div class="app">
+    ${sidebar}
+    <div class="backdrop ${state.sidebarOpen?'show':''}" data-close-side></div>
+    <main class="main">
+      ${renderScreen()}
+    </main>
+  </div>`;
+}
+
+function topbar(title, sub){
+  return `<div class="topbar">
+    <button class="icon-btn hamburger" data-open-side aria-label="Menu">${ic("menu")}</button>
+    <div><div class="tb-title">${title}</div>${sub?`<div class="tb-sub">${sub}</div>`:''}</div>
+    <div style="margin-left:auto;display:flex;gap:8px">
+      <button class="icon-btn" aria-label="Buscar">${ic("search")}</button>
+      <button class="icon-btn" aria-label="Notificações">${ic("bell")}</button>
+    </div>
+  </div>`;
+}
+
+function renderScreen(){
+  switch(state.screen){
+    case "prazos": return topbar("Painel de Prazos","Terça, 18 de agosto de 2026") + `<div class="content">${state.loading?skPrazos():screenPrazos()}</div>`;
+    case "triagem": return topbar("Triagem de demandas") + `<div class="content">${state.loading?skTriagem():screenTriagem()}</div>`;
+    case "minhas": return topbar("Minhas Demandas","Atribuídas a você") + `<div class="content">${state.loading?skMinhas():screenMinhas()}</div>`;
+    case "recorrencias": return topbar("Manutenções Recorrentes") + `<div class="content">${state.loading?skList():screenRecorrencias()}</div>`;
+    case "admin": return topbar("Administração","Categorias e locais") + `<div class="content">${screenAdmin()}</div>`;
+    case "detalhe": return topbar("Detalhe da demanda") + `<div class="content">${state.loading?skDetalhe():screenDetalhe()}</div>`;
+  }
+}
+
+/* =============================================================================
+   TELA — Painel de Prazos
+   ============================================================================= */
+function screenPrazos(){
+  const ativos = DEMANDAS.filter(d=>!["concluida","cancelada","aberta"].includes(d.status));
+  const vencidas = ativos.filter(d=>d.prazoOff<0).sort((a,b)=>a.prazoOff-b.prazoOff);
+  const vencendo = ativos.filter(d=>d.prazoOff>=0 && d.prazoOff<=3).sort((a,b)=>a.prazoOff-b.prazoOff);
+  const emExec = ativos.filter(d=>d.prazoOff>3 && d.status==="em_execucao").sort((a,b)=>a.prazoOff-b.prazoOff);
+
+  const group = (marker, title, list, emptyMsg) => `
+    <section class="deadline-group">
+      <div class="dg-head">
+        <span class="dg-marker" style="background:${marker}"></span>
+        <h3>${title}</h3><span class="dg-count">${list.length}</span>
+      </div>
+      ${list.length ? `<div class="rowlist">${list.map(deadlineRow).join("")}</div>`
+        : `<div class="empty">${ic("checkCircle")}<p>${emptyMsg}</p></div>`}
+    </section>`;
+
+  const kpi = (cls, icon, num, lbl) => `
+    <button class="kpi ${cls}">
+      <div class="kpi-top"><span class="kpi-ic">${ic(icon)}</span><span class="kpi-num">${num}</span></div>
+      <span class="kpi-lbl">${lbl}</span>
+    </button>`;
+
+  return `
+    <div class="page-head" style="margin-bottom:2px">
+      <div class="ph-text">
+        <div class="eyebrow">${ic("layout","ic-sm")} Painel da liderança</div>
+        <h1>Prazos</h1><p class="sub">O que precisa de atenção agora, atualizado em tempo real.</p>
+      </div>
+      <span class="live-pill"><span class="live-dot"></span> Ao vivo</span>
+    </div>
+    <div class="kpis">
+      ${kpi("k-vencida","alert",vencidas.length,vencidas.length===1?"demanda vencida":"demandas vencidas")}
+      ${kpi("k-vencendo","clock",vencendo.length,"vencendo em 3 dias")}
+      ${kpi("k-exec","wrench",emExec.length,"em execução")}
+    </div>
+    <div class="filters">
+      ${ic("filter","ic-sm")}
+      <select class="select"><option>Todas as categorias</option>${CATEGORIAS.map(c=>`<option>${c}</option>`).join("")}</select>
+      <select class="select"><option>Todos os executores</option>${Object.values(EXECUTORES).map(e=>`<option>${e.nome}</option>`).join("")}</select>
+    </div>
+    <div id="prazos-groups">
+      ${group("var(--venc-vencida)","Vencidas", vencidas, "Nenhuma demanda vencida")}
+      ${group("var(--venc-vencendo)","Vencendo (próximos 3 dias)", vencendo, "Nada vencendo nos próximos dias")}
+      ${group("var(--accent)","Em execução", emExec, "Nenhuma demanda em execução")}
+    </div>`;
+}
+
+function deadlineRow(d, isNew){
+  const p = prazoLabel(d.prazoOff, d.status);
+  const e = d.executor ? EXECUTORES[d.executor] : null;
+  const sev = d.prazoOff<0 ? "sev-vencida" : (d.prazoOff<=3 ? "sev-vencendo" : "sev-exec");
+  return `<button class="drow ${sev} ${isNew?'row-enter row-flash':''}" data-open="${d.id}">
+    <div class="cat-glyph sm drow-glyph">${ic(catIcon[d.categoria]||"wrench")}</div>
+    <div class="drow-main">
+      <div class="drow-title"><span class="t">${esc(d.titulo)}</span></div>
+      <div class="drow-sub">
+        <span class="meta">${ic("mapPin","ic-sm")}${d.local||d.localOriginal}</span>
+        ${e?`<span class="meta">${ic("user","ic-sm")}${e.nome}</span>`:''}
+        ${statusChip(d.status)}
+      </div>
+    </div>
+    <div class="drow-right">
+      <span class="prazo ${p.cls} drow-prazo-lg">${ic(p.ic,"ic-sm")}${p.txt}</span>
+      <span class="meta mono">${d.id}</span>
+    </div>
+  </button>`;
+}
+
+/* Simulação de tempo real: nova demanda aparece sozinha */
+let liveTimer = null;
+function scheduleLive(){
+  clearTimeout(liveTimer);
+  if(state.screen!=="prazos" || state.loading) return;
+  if(DEMANDAS.some(d=>d.id==="CN-0146")) return;
+  liveTimer = setTimeout(()=>{
+    if(state.screen!=="prazos") return;
+    const nova = { id:"CN-0146", titulo:"Infiltração na parede da sala infantil", descricao:"Mancha de umidade aumentando.",
+      solicitanteNome:"Prof. Bruna", solicitanteWhatsapp:"5562988004455", localOriginal:"Sala infantil",
+      status:"triada", categoria:"Alvenaria", local:"Sala infantil", prioridade:"media", prazoOff:1, executor:"rafael",
+      fotos:[], hist:[{tipo:"criada",quando:0,actor:null,desc:"Demanda aberta pelo formulário público"},{tipo:"triada",quando:0,actor:"Ana (liderança)",desc:"Alvenaria · atribuída a Rafael Costa"}] };
+    DEMANDAS.unshift(nova);
+    const groups = document.getElementById("prazos-groups");
+    if(!groups) return;
+    // re-render apenas o grupo "Vencendo": recomputa e injeta com animação
+    const vencendo = DEMANDAS.filter(d=>!["concluida","cancelada","aberta"].includes(d.status) && d.prazoOff>=0 && d.prazoOff<=3).sort((a,b)=>a.prazoOff-b.prazoOff);
+    const list = groups.querySelectorAll(".rowlist")[1];
+    const countEl = groups.querySelectorAll(".dg-count")[1];
+    if(list){
+      list.insertAdjacentHTML("afterbegin", deadlineRow(nova, true));
+      if(countEl) countEl.textContent = vencendo.length;
+      bindRows();
+    }
+  }, 3800);
+}
+
+/* =============================================================================
+   TELA — Triagem
+   ============================================================================= */
+function screenTriagem(){
+  const abertas = DEMANDAS.filter(d=>d.status==="aberta").sort((a,b)=>(a.hist[0].quando)-(b.hist[0].quando));
+  if(!abertas.length){
+    return `<div class="page-head"><div class="ph-text"><h1>Triagem</h1></div></div>
+      <div class="empty" style="margin-top:20px">${ic("inbox")}<p>Nenhuma demanda aguardando triagem</p></div>`;
+  }
+  if(!abertas.some(d=>d.id===state.triageSel)) state.triageSel = abertas[0].id;
+  const sel = getDemanda(state.triageSel);
+
+  const list = abertas.map(d=>{
+    const idade = d.hist[0].quando;
+    return `<button class="tcard ${d.id===state.triageSel?'on':''}" data-triage="${d.id}">
+      <div class="tc-title">${esc(d.titulo)}</div>
+      <div class="tc-meta">
+        <span class="meta">${ic("mapPin","ic-sm")}${esc(d.localOriginal)}</span>
+      </div>
+      <div class="tc-meta" style="margin-top:6px">
+        <span class="tc-age mono">${d.id}</span>
+        <span class="tc-age">· aberta ${relTime(idade)}</span>
+      </div>
+    </button>`;
+  }).join("");
+
+  return `
+    <div class="page-head" style="margin-bottom:20px">
+      <div class="ph-text"><h1>Triagem</h1><p class="sub">${abertas.length} ${abertas.length===1?'demanda aguardando':'demandas aguardando'} categoria, prazo e executor.</p></div>
+    </div>
+    <div class="triage-wrap">
+      <div class="triage-list">
+        <div class="label" style="padding:0 2px 2px">Aguardando triagem</div>
+        ${list}
+      </div>
+      <div class="card card-pad">${triageForm(sel)}</div>
+    </div>`;
+}
+
+function triageForm(d){
+  const p = prazoDefault();
+  return `
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:6px">
+      <div>
+        <div class="label" style="margin-bottom:5px">${d.id}</div>
+        <h2 style="font-size:20px">${esc(d.titulo)}</h2>
+      </div>
+      ${statusChip("aberta")}
+    </div>
+    <p style="color:var(--text-2);font-size:14.5px;margin:8px 0 6px">${esc(d.descricao)}</p>
+    <div class="card" style="background:var(--surface-raise);box-shadow:none;padding:12px 14px;margin:14px 0 22px">
+      <div class="kv" style="grid-template-columns:120px 1fr;gap:8px 14px">
+        <dt>Solicitante</dt><dd>${esc(d.solicitanteNome)}</dd>
+        <dt>WhatsApp</dt><dd class="mono">${fmtPhone(d.solicitanteWhatsapp)}</dd>
+        <dt>Local informado</dt><dd>${esc(d.localOriginal)}</dd>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label class="label">Categoria <span class="req">*</span></label>
+        <select class="select" style="width:100%">${CATS.filter(c=>c.ativa).map(c=>`<option>${c.nome}</option>`).join("")}</select>
+      </div>
+      <div class="field">
+        <label class="label">Local <span class="req">*</span></label>
+        <select class="select" style="width:100%">${LOCS.filter(l=>l.ativo).map(l=>`<option>${l.nome}</option>`).join("")}</select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="label">Prioridade</label>
+      <div class="seg" role="group" data-seg="prio">
+        <button type="button" class="p-baixa" data-v="baixa">Baixa</button>
+        <button type="button" class="on p-media" data-v="media"><span class="dot" style="width:7px;height:7px;border-radius:50%;background:var(--pri-media);display:inline-block"></span>Média</button>
+        <button type="button" class="p-alta" data-v="alta">Alta</button>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label class="label">Prazo <span class="req">*</span></label>
+        <input class="input mono" type="text" value="${p}" />
+        <div class="field-help">Data limite para conclusão.</div>
+      </div>
+      <div class="field">
+        <label class="label">Executor responsável <span class="req">*</span></label>
+        <select class="select" style="width:100%"><option value="">Selecione…</option>${Object.entries(EXECUTORES).map(([k,e])=>`<option>${e.nome}</option>`).join("")}</select>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-primary" data-triage-save>${ic("check","ic-sm")} Salvar triagem</button>
+      <button class="btn btn-danger" data-triage-cancel style="margin-left:auto">${ic("x","ic-sm")} Cancelar demanda</button>
+    </div>`;
+}
+function prazoDefault(){ const d = prazoDate(5); return fmtDateFull(d); }
+function fmtPhone(w){ // 5562988440132 -> (62) 98844-0132
+  const n = w.replace(/\D/g,'');
+  const ddd = n.slice(2,4), a = n.slice(4,9), b = n.slice(9);
+  return `(${ddd}) ${a}-${b}`;
+}
+
+/* =============================================================================
+   TELA — Minhas Demandas (executor)
+   ============================================================================= */
+function screenMinhas(){
+  const minhas = DEMANDAS.filter(d=>d.executor==="marcos");
+  const grupos = [
+    { st:"em_execucao", list: minhas.filter(d=>d.status==="em_execucao") },
+    { st:"aguardando",  list: minhas.filter(d=>d.status==="aguardando") },
+    { st:"triada",      list: minhas.filter(d=>d.status==="triada") },
+    { st:"concluida",   list: minhas.filter(d=>d.status==="concluida") },
+  ];
+  if(!minhas.length){
+    return `<div class="empty" style="margin-top:20px">${ic("hardHat")}<p>Nenhuma demanda atribuída a você</p></div>`;
+  }
+  const blocks = grupos.filter(g=>g.list.length).map(g=>`
+    <section class="status-block">
+      <div class="sb-head">${statusChip(g.st)}<span class="dg-count">${g.list.length}</span></div>
+      <div class="card-grid">${g.list.sort((a,b)=>(a.prazoOff??99)-(b.prazoOff??99)).map(execCard).join("")}</div>
+    </section>`).join("");
+
+  return `
+    <div class="page-head" style="margin-bottom:22px">
+      <div class="ph-text"><h1>Minhas demandas</h1><p class="sub">Toque em uma demanda para atualizar o status ou anexar fotos.</p></div>
+    </div>
+    ${blocks}`;
+}
+
+function execCard(d){
+  const p = prazoLabel(d.prazoOff, d.status);
+  return `<button class="dcard" data-open="${d.id}">
+    <div class="dc-top">
+      <div class="cat-glyph sm">${ic(catIcon[d.categoria]||"wrench")}</div>
+      ${d.prioridade?prioTag(d.prioridade):''}
+    </div>
+    <div class="dc-title">${esc(d.titulo)}</div>
+    <div class="dc-meta">
+      <span class="meta">${ic("mapPin","ic-sm")}${d.local}</span>
+      <span class="meta">${ic(catIcon[d.categoria]||"wrench","ic-sm")}${d.categoria}</span>
+    </div>
+    <div class="dc-foot">
+      <span class="prazo ${p.cls}">${ic(p.ic,"ic-sm")}${p.txt}</span>
+      <span class="meta mono">${d.id}</span>
+    </div>
+  </button>`;
+}
+
+/* =============================================================================
+   TELA — Detalhe
+   ============================================================================= */
+function screenDetalhe(){
+  const d = getDemanda(state.demandaId) || DEMANDAS[0];
+  const p = prazoLabel(d.prazoOff, d.status);
+  const e = d.executor ? EXECUTORES[d.executor] : null;
+  const isExec = state.role==="executor";
+
+  const fotos = d.fotos.map(f=>`
+    <div class="photo" style="background:${f.cor}">
+      <span class="ph-tag">${f.tag}</span>${ic("image")}
+    </div>`).join("");
+
+  const timeline = d.hist.slice().reverse().map((h,i)=>{
+    const nodeCls = h.tipo==="concluida" ? "done" : (h.tipo==="criada" ? "" : "accent");
+    const nodeIc = { criada:"plus", triada:"clipboard", status:"wrench", foto:"camera", concluida:"check", cancelada:"x" }[h.tipo] || "clock";
+    return `<div class="tl-item">
+      <div class="tl-node ${nodeCls}">${ic(nodeIc,"ic-sm")}</div>
+      <div class="tl-title">${tlTitle(h.tipo)}</div>
+      <div class="tl-desc">${esc(h.desc)}</div>
+      <div class="tl-time">${h.actor?`<span class="tl-actor">${esc(h.actor)}</span> · `:'<span class="tl-actor">Sistema</span> · '}${relTime(h.quando)}</div>
+    </div>`;
+  }).join("");
+
+  // ações do executor
+  const quick = isExec ? `
+    <div class="card card-pad">
+      <div class="label" style="margin-bottom:12px">Atualizar status</div>
+      <div class="quick-actions">
+        <button class="qbtn ${d.status==='em_execucao'?'on-exec':''}" data-setstatus="em_execucao">${ic("play")}Em execução</button>
+        <button class="qbtn ${d.status==='aguardando'?'on-agua':''}" data-setstatus="aguardando">${ic("pause")}Aguardando</button>
+        <button class="qbtn ${d.status==='concluida'?'on-conc':''}" data-setstatus="concluida">${ic("check")}Concluir</button>
+      </div>
+    </div>` : "";
+
+  const leadActions = !isExec ? `
+    <div class="card card-pad">
+      <div class="label" style="margin-bottom:12px">Ações da liderança</div>
+      <div style="display:flex;flex-direction:column;gap:9px">
+        <button class="btn btn-ghost btn-block" style="justify-content:flex-start">${ic("user","ic-sm")} Reatribuir executor</button>
+        <button class="btn btn-ghost btn-block" style="justify-content:flex-start">${ic("calendar","ic-sm")} Alterar prazo / prioridade</button>
+        <button class="btn btn-danger btn-block" style="justify-content:flex-start">${ic("x","ic-sm")} Cancelar demanda</button>
+      </div>
+    </div>` : "";
+
+  return `
+    <button class="back-link" data-back>${ic("arrowLeft","ic-sm")} Voltar</button>
+    <div class="page-head" style="margin-bottom:20px;align-items:flex-start">
+      <div class="ph-text">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <span class="label mono" style="letter-spacing:.08em">${d.id}</span>${statusChip(d.status)}${prioTag(d.prioridade)}
+        </div>
+        <div style="display:flex;align-items:center;gap:13px">
+          ${d.categoria?`<div class="cat-glyph">${ic(catIcon[d.categoria]||"wrench")}</div>`:''}
+          <h1 style="font-size:27px;line-height:34px">${esc(d.titulo)}</h1>
+        </div>
+      </div>
+      <span class="prazo ${p.cls}" style="font-size:16px;white-space:nowrap">${ic(p.ic,"ic-sm")}${p.txt}${d.prazoOff!=null&&d.status!=='concluida'?` · ${fmtDateFull(prazoDate(d.prazoOff))}`:''}</span>
+    </div>
+
+    <div class="detail-grid">
+      <div style="display:flex;flex-direction:column;gap:22px">
+        <div class="card card-pad">
+          <p style="font-size:15.5px;line-height:1.6;margin-bottom:18px">${esc(d.descricao)}</p>
+          <dl class="kv">
+            <dt>Categoria</dt><dd>${d.categoria?`${d.categoria}`:'—'}</dd>
+            <dt>Local</dt><dd>${d.local||d.localOriginal}</dd>
+            <dt>Executor</dt><dd>${e?e.nome:'—'}</dd>
+            <dt>Solicitante</dt><dd>${esc(d.solicitanteNome)}</dd>
+            <dt>WhatsApp</dt><dd class="mono">${fmtPhone(d.solicitanteWhatsapp)}</dd>
+          </dl>
+        </div>
+
+        <div class="card card-pad">
+          <div class="label" style="margin-bottom:14px">Fotos</div>
+          <div class="photos">
+            ${fotos}
+            <button class="photo-add">${ic("camera")}Anexar foto</button>
+          </div>
+        </div>
+
+        <div class="card card-pad">
+          <div class="label" style="margin-bottom:18px">Histórico</div>
+          <div class="timeline">${timeline}</div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:22px">
+        ${quick}
+        <div class="card card-pad">
+          <div class="label" style="margin-bottom:6px">Avisar o solicitante</div>
+          ${waBox(d)}
+        </div>
+        ${leadActions}
+      </div>
+    </div>`;
+}
+function tlTitle(t){ return { criada:"Demanda aberta", triada:"Triada", status:"Status alterado", foto:"Fotos anexadas", concluida:"Demanda concluída", cancelada:"Demanda cancelada" }[t] || "Evento"; }
+
+function waMessage(d, tipo){
+  const primeiro = d.solicitanteNome.split(" ")[0];
+  const prazoTxt = d.prazoOff!=null ? fmtDateFull(prazoDate(d.prazoOff)) : "a definir";
+  if(tipo==="em_execucao") return `Olá, ${primeiro}! Aqui é da Central CN Obras. Sua solicitação "${d.titulo}" (${d.id}) já está *em execução*. Previsão de conclusão: ${prazoTxt}. Qualquer novidade, avisamos por aqui.`;
+  if(tipo==="aguardando") return `Olá, ${primeiro}! Sobre a solicitação "${d.titulo}" (${d.id}): ela está *aguardando* — precisamos de uma peça/etapa antes de continuar. Assim que possível retomamos e te avisamos.`;
+  return `Olá, ${primeiro}! A solicitação "${d.titulo}" (${d.id}) foi *concluída*. Obrigado por avisar a Central CN Obras! Qualquer coisa, é só abrir uma nova solicitação.`;
+}
+function waBox(d){
+  const msg = waMessage(d, state.waTipo);
+  const link = `https://wa.me/${d.solicitanteWhatsapp}?text=${encodeURIComponent(msg)}`;
+  const opt = (v,l)=>`<button type="button" class="seg-mini ${state.waTipo===v?'on':''}" data-wa="${v}">${l}</button>`;
+  return `
+    <div class="seg" style="width:100%;margin:8px 0 6px" data-seg="wa">
+      ${optSeg("em_execucao","Em execução")}${optSeg("aguardando","Aguardando")}${optSeg("concluida","Concluída")}
+    </div>
+    <div class="wa-msg">${esc(msg)}</div>
+    <div class="wa-actions">
+      <a class="btn wa-open" href="${link}" target="_blank" rel="noopener">${ic("message","ic-sm")} Abrir no WhatsApp</a>
+      <button class="btn btn-ghost" data-copy="${esc(msg)}">${ic("copy","ic-sm")} Copiar</button>
+    </div>`;
+}
+function optSeg(v,l){ return `<button type="button" data-wa="${v}" class="${state.waTipo===v?'on':''}" style="flex:1;font-size:12.5px;padding:7px 8px">${l}</button>`; }
+
+/* =============================================================================
+   TELA — Recorrências
+   ============================================================================= */
+function screenRecorrencias(){
+  const perLabel = { mensal:"Mensal", bimestral:"Bimestral", trimestral:"Trimestral", semestral:"Semestral", anual:"Anual" };
+  if(!RECORRENCIAS.length){
+    return `<div class="empty" style="margin-top:20px">${ic("repeat")}<p>Nenhuma manutenção recorrente cadastrada</p></div>`;
+  }
+  const rows = RECORRENCIAS.map(r=>{
+    const e = EXECUTORES[r.executor];
+    return `<div class="card rec-card" style="opacity:${r.ativa?1:.62}">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px">
+          <div style="font-weight:600;font-size:15.5px">${esc(r.titulo)}</div>
+          <span class="badge-soft">${ic("repeat","ic-sm")}${perLabel[r.periodicidade]}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+          <span class="meta">${ic(catIcon[r.categoria]||"wrench","ic-sm")}${r.categoria}</span>
+          <span class="meta">${ic("mapPin","ic-sm")}${r.local}</span>
+          <span class="meta">${ic("user","ic-sm")}${e.nome}</span>
+          <span class="meta">${ic("clock","ic-sm")}prazo de ${r.prazoDias} dias</span>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:18px">
+        <div class="rec-next">
+          <div class="rn-label">Próxima geração</div>
+          <div class="rn-date mono">${r.ativa && r.proxOff!=null ? fmtDateFull(prazoDate(r.proxOff)) : '—'}</div>
+        </div>
+        <button class="toggle ${r.ativa?'on':''}" data-rec-toggle="${r.id}" aria-label="Ativar/desativar"></button>
+        <button class="icon-btn" data-rec-edit="${r.id}" aria-label="Editar">${ic("edit","ic-sm")}</button>
+      </div>
+    </div>`;
+  }).join("");
+
+  return `
+    <div class="page-head" style="margin-bottom:22px">
+      <div class="ph-text"><h1>Recorrências</h1><p class="sub">O sistema gera a demanda automaticamente a cada período, já triada.</p></div>
+      <button class="btn btn-primary">${ic("plus","ic-sm")} Nova recorrência</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">${rows}</div>`;
+}
+
+/* =============================================================================
+   TELA — Admin
+   ============================================================================= */
+function screenAdmin(){
+  const col = (titulo, itens, key) => `
+    <div class="card card-pad">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <h2 style="font-size:19px">${titulo}</h2>
+        <span class="dg-count">${itens.filter(i=>i.ativa??i.ativo).length} ativas</span>
+      </div>
+      <div class="taglist">
+        ${itens.map((it,idx)=>{
+          const on = it.ativa ?? it.ativo;
+          return `<div class="tagrow ${on?'':'off'}">
+            <span class="tag-name">${esc(it.nome)}</span>
+            <div class="tag-actions">
+              <button class="icon-btn" style="width:32px;height:32px" data-admin-toggle="${key}:${idx}" aria-label="Ativar/desativar" title="${on?'Desativar':'Ativar'}">${ic("power","ic-sm")}</button>
+              <button class="icon-btn" style="width:32px;height:32px" aria-label="Editar">${ic("edit","ic-sm")}</button>
+            </div>
+          </div>`;
+        }).join("")}
+      </div>
+      <div class="inline-add">
+        <input class="input" placeholder="Adicionar ${key==='cat'?'categoria':'local'}…" />
+        <button class="btn btn-ghost">${ic("plus","ic-sm")}</button>
+      </div>
+    </div>`;
+
+  return `
+    <div class="page-head" style="margin-bottom:22px">
+      <div class="ph-text"><h1>Administração</h1><p class="sub">Categorias e locais usados na triagem. Desativados não aparecem em novos formulários.</p></div>
+    </div>
+    <div class="admin-cols">
+      ${col("Categorias", CATS, "cat")}
+      ${col("Locais", LOCS, "loc")}
+    </div>`;
+}
+
+/* =============================================================================
+   TELA — Formulário público
+   ============================================================================= */
+function renderPublic(){
+  if(state.publicSubmitted) return publicSuccess();
+  return `
+  <div class="public-screen">
+    <div class="public-topbar">
+      <div class="side-logo" style="width:34px;height:34px">${ic("wrench")}</div>
+      <div><div style="font-weight:700;font-size:15px">Central CN Obras</div><div style="font-size:12.5px;color:var(--text-2)">Abertura de solicitação</div></div>
+    </div>
+    <div class="public-wrap">
+      <div class="public-card">
+        <div class="public-hero">
+          <h1>Abrir uma solicitação de manutenção</h1>
+          <p>Descreva o que precisa de reparo na estrutura da igreja. A liderança recebe na hora e você acompanha pelo WhatsApp.</p>
+        </div>
+        <div class="card card-pad">
+          <div class="field">
+            <label class="label">Título da solicitação <span class="req">*</span></label>
+            <input class="input" placeholder="Ex.: Vazamento no forro do salão" />
+          </div>
+          <div class="field">
+            <label class="label">Descrição <span class="req">*</span></label>
+            <textarea class="textarea" placeholder="Conte o que está acontecendo, desde quando, e o que já foi tentado."></textarea>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label class="label">Seu nome <span class="req">*</span></label>
+              <input class="input" placeholder="Nome completo" />
+            </div>
+            <div class="field">
+              <label class="label">WhatsApp <span class="req">*</span></label>
+              <input class="input mono" placeholder="(62) 90000-0000" />
+            </div>
+          </div>
+          <div class="field">
+            <label class="label">Local <span class="req">*</span></label>
+            <input class="input" placeholder="Ex.: Salão social, perto do palco" />
+            <div class="field-help">Onde na igreja é o problema.</div>
+          </div>
+          <div class="field" style="margin-bottom:22px">
+            <label class="label">Foto (opcional)</label>
+            <button class="photo-add" style="aspect-ratio:auto;padding:22px;width:100%;flex-direction:row;gap:10px">${ic("camera")} Adicionar uma foto do problema</button>
+          </div>
+          <button class="btn btn-primary btn-lg btn-block" data-public-submit>${ic("send","ic-sm")} Enviar solicitação</button>
+          <p style="text-align:center;font-size:12.5px;color:var(--text-2);margin-top:14px">Não é preciso login. Você recebe um número de protocolo ao enviar.</p>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+function publicSuccess(){
+  return `
+  <div class="public-screen">
+    <div class="public-topbar">
+      <div class="side-logo" style="width:34px;height:34px">${ic("wrench")}</div>
+      <div><div style="font-weight:700;font-size:15px">Central CN Obras</div><div style="font-size:12.5px;color:var(--text-2)">Abertura de solicitação</div></div>
+    </div>
+    <div class="public-wrap">
+      <div class="public-card">
+        <div class="card success">
+          <div class="ok-ring">${ic("check")}</div>
+          <h2 style="font-size:22px">Solicitação enviada!</h2>
+          <p style="color:var(--text-2);margin:10px 0 4px;max-width:38ch;margin-inline:auto">A liderança já foi avisada. Guarde seu número de protocolo para acompanhar:</p>
+          <div class="protocol">${ic("clipboard","ic-sm")} CN-0147</div>
+          <p style="color:var(--text-2);font-size:14px;max-width:40ch;margin-inline:auto">Você receberá atualizações pelo WhatsApp conforme o andamento do reparo.</p>
+          <div style="margin-top:24px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+            <button class="btn btn-primary" data-public-again>${ic("plus","ic-sm")} Abrir outra solicitação</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* =============================================================================
+   TELA — Login (Clerk-themed)
+   ============================================================================= */
+function renderLogin(){
+  return `
+  <div class="login-screen">
+    <div class="login-aside">
+      <div class="la-logo">${ic("wrench","ic-lg")}</div>
+      <h2>Toda demanda com um responsável e um prazo.</h2>
+      <p class="la-quote">A central de manutenção predial da igreja — triagem, execução e prazos num só lugar.</p>
+      <div class="la-feats">
+        <div class="la-feat">${ic("layout","ic-sm")} Painel de prazos em tempo real</div>
+        <div class="la-feat">${ic("hardHat","ic-sm")} Executor atualiza status em campo</div>
+        <div class="la-feat">${ic("repeat","ic-sm")} Manutenções recorrentes automáticas</div>
+      </div>
+    </div>
+    <div class="login-main">
+      <div class="login-box">
+        <div style="text-align:center;margin-bottom:26px">
+          <div class="side-logo" style="width:44px;height:44px;margin:0 auto 14px">${ic("wrench","ic-lg")}</div>
+          <h2 style="font-size:22px">Entrar na Central</h2>
+          <p style="color:var(--text-2);font-size:14px;margin-top:6px">Acesso para liderança e executores</p>
+        </div>
+        <div class="field">
+          <label class="label">E-mail</label>
+          <input class="input" type="email" placeholder="voce@cnobras.org" />
+        </div>
+        <div class="field" style="margin-bottom:22px">
+          <label class="label">Senha</label>
+          <input class="input" type="password" placeholder="••••••••" />
+        </div>
+        <button class="btn btn-primary btn-lg btn-block" data-login-lider>${ic("login","ic-sm")} Entrar</button>
+        <div class="divider">acesso rápido do protótipo</div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-ghost btn-block" data-login-lider>${ic("layout","ic-sm")} Liderança</button>
+          <button class="btn btn-ghost btn-block" data-login-exec>${ic("hardHat","ic-sm")} Executor</button>
+        </div>
+        <div class="clerk-badge">${ic("shield","ic-sm")} Autenticação segura via Clerk</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* =============================================================================
+   SKELETONS
+   ============================================================================= */
+function skRow(){ return `<div class="sk-row"><div style="display:flex;flex-direction:column;gap:8px"><div class="sk" style="height:15px;width:60%"></div><div class="sk" style="height:12px;width:40%"></div></div><div class="sk" style="height:15px;width:80px"></div></div>`; }
+function skGroup(){ return `<section class="deadline-group"><div class="dg-head"><span class="dg-marker" style="background:var(--border-strong)"></span><div class="sk" style="height:14px;width:120px"></div></div><div class="rowlist">${skRow()+skRow()+skRow()}</div></section>`; }
+function skPrazos(){ return `<div class="sk" style="height:34px;width:180px;margin-bottom:22px"></div>${skGroup()+skGroup()+skGroup()}`; }
+function skList(){ return `<div class="sk" style="height:34px;width:200px;margin-bottom:22px"></div><div style="display:flex;flex-direction:column;gap:12px">${Array(4).fill('<div class="card" style="height:86px"><div class="sk" style="height:100%;border-radius:12px;opacity:.5"></div></div>').join("")}</div>`; }
+function skMinhas(){ return `<div class="sk" style="height:34px;width:200px;margin-bottom:22px"></div><div class="card-grid">${Array(6).fill('<div class="card" style="height:150px"><div class="sk" style="height:100%;border-radius:12px;opacity:.5"></div></div>').join("")}</div>`; }
+function skTriagem(){ return `<div class="sk" style="height:34px;width:150px;margin-bottom:22px"></div><div class="triage-wrap"><div style="display:flex;flex-direction:column;gap:10px">${Array(3).fill('<div class="card" style="height:92px"><div class="sk" style="height:100%;border-radius:12px;opacity:.5"></div></div>').join("")}</div><div class="card" style="height:520px"><div class="sk" style="height:100%;border-radius:12px;opacity:.5"></div></div></div>`; }
+function skDetalhe(){ return `<div class="sk" style="height:20px;width:80px;margin-bottom:18px"></div><div class="sk" style="height:36px;width:70%;margin-bottom:22px"></div><div class="detail-grid"><div class="card" style="height:360px"><div class="sk" style="height:100%;border-radius:12px;opacity:.5"></div></div><div class="card" style="height:260px"><div class="sk" style="height:100%;border-radius:12px;opacity:.5"></div></div></div>`; }
+
+/* =============================================================================
+   NAVEGAÇÃO com skeleton
+   ============================================================================= */
+function go(screen, opts={}){
+  state.screen = screen;
+  Object.assign(state, opts);
+  state.sidebarOpen = false;
+  const withData = ["prazos","triagem","minhas","recorrencias","detalhe"].includes(screen);
+  if(withData){
+    state.loading = true;
+    render();
+    setTimeout(()=>{ state.loading = false; render(); if(screen==="prazos") scheduleLive(); }, 620);
+  } else {
+    state.loading = false;
+    render();
+  }
+}
+
+/* =============================================================================
+   BIND
+   ============================================================================= */
+function bindRows(){
+  document.querySelectorAll("[data-open]").forEach(el=>{
+    el.onclick = ()=> go("detalhe", { demandaId: el.getAttribute("data-open") });
+  });
+}
+function bind(){
+  // proto bar
+  document.querySelectorAll("[data-proto]").forEach(b=>{
+    b.onclick = ()=>{
+      const mode = b.getAttribute("data-proto");
+      const role = b.getAttribute("data-role");
+      clearTimeout(liveTimer);
+      if(mode==="app"){ state.mode="app"; state.role=role; state.screen = role==="lideranca"?"prazos":"minhas"; go(state.screen); }
+      else { state.mode=mode; state.publicSubmitted=false; render(); }
+    };
+  });
+  // sidebar nav
+  document.querySelectorAll("[data-nav]").forEach(b=> b.onclick = ()=> go(b.getAttribute("data-nav")));
+  document.querySelectorAll("[data-open-side]").forEach(b=> b.onclick = ()=>{ state.sidebarOpen=true; render(); });
+  document.querySelectorAll("[data-close-side]").forEach(b=> b.onclick = ()=>{ state.sidebarOpen=false; render(); });
+  bindRows();
+  // detalhe back
+  document.querySelectorAll("[data-back]").forEach(b=> b.onclick = ()=> go(state.role==="lideranca"?"prazos":"minhas"));
+  // triagem
+  document.querySelectorAll("[data-triage]").forEach(b=> b.onclick = ()=>{ state.triageSel=b.getAttribute("data-triage"); render(); });
+  document.querySelectorAll("[data-seg='prio'] button").forEach(b=> b.onclick = ()=>{
+    b.parentElement.querySelectorAll("button").forEach(x=>{ x.classList.remove("on"); x.className = x.className.replace(/\bp-\w+\b/,'')+' '+('p-'+x.getAttribute('data-v')); });
+    b.classList.add("on");
+  });
+  const saveBtn = document.querySelector("[data-triage-save]");
+  if(saveBtn) saveBtn.onclick = ()=>{
+    const d = getDemanda(state.triageSel);
+    if(d){ d.status="triada"; d.prazoOff=5; d.executor="marcos"; d.categoria=d.categoria||"Hidráulica"; d.local=d.local||"Salão social"; d.prioridade=d.prioridade||"media"; d.hist.push({tipo:"triada",quando:0,actor:"Ana (liderança)",desc:"Demanda triada e atribuída"}); }
+    toast("Triagem salva — demanda movida para Triada");
+    go("triagem");
+  };
+  const cancelBtn = document.querySelector("[data-triage-cancel]");
+  if(cancelBtn) cancelBtn.onclick = ()=>{
+    const d = getDemanda(state.triageSel);
+    if(d){ d.status="cancelada"; }
+    toast("Demanda cancelada");
+    go("triagem");
+  };
+  // detalhe: status
+  document.querySelectorAll("[data-setstatus]").forEach(b=> b.onclick = ()=>{
+    const d = getDemanda(state.demandaId);
+    const st = b.getAttribute("data-setstatus");
+    if(d){
+      d.status = st;
+      if(st==="concluida"){ d.concluidaOff=0; d.hist.push({tipo:"concluida",quando:0,actor:"Marcos Silva",desc:"Demanda concluída"}); }
+      else d.hist.push({tipo:"status",quando:0,actor:"Marcos Silva",desc:"Status alterado para "+STATUS_LABEL[st]});
+    }
+    toast("Status atualizado: "+STATUS_LABEL[st]);
+    render();
+  });
+  // wa seg
+  document.querySelectorAll("[data-wa]").forEach(b=> b.onclick = ()=>{ state.waTipo=b.getAttribute("data-wa"); render(); });
+  document.querySelectorAll("[data-copy]").forEach(b=> b.onclick = ()=>{
+    const t = b.getAttribute("data-copy");
+    if(navigator.clipboard) navigator.clipboard.writeText(t).catch(()=>{});
+    toast("Mensagem copiada");
+  });
+  // recorrências
+  document.querySelectorAll("[data-rec-toggle]").forEach(b=> b.onclick = ()=>{
+    const r = RECORRENCIAS.find(x=>x.id===b.getAttribute("data-rec-toggle"));
+    if(r){ r.ativa=!r.ativa; if(!r.ativa) r.proxOff=null; else if(r.proxOff==null) r.proxOff=20; }
+    render();
+  });
+  // admin toggle
+  document.querySelectorAll("[data-admin-toggle]").forEach(b=> b.onclick = ()=>{
+    const [key,idx] = b.getAttribute("data-admin-toggle").split(":");
+    const arr = key==="cat"?CATS:LOCS; const it = arr[+idx];
+    if(key==="cat") it.ativa=!it.ativa; else it.ativo=!it.ativo;
+    render();
+  });
+  // public
+  const ps = document.querySelector("[data-public-submit]");
+  if(ps) ps.onclick = ()=>{
+    ps.innerHTML = `<span class="sk" style="width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,.5)"></span> Enviando…`;
+    ps.disabled = true;
+    setTimeout(()=>{ state.publicSubmitted=true; render(); }, 700);
+  };
+  const pa = document.querySelector("[data-public-again]");
+  if(pa) pa.onclick = ()=>{ state.publicSubmitted=false; render(); };
+  // login
+  const ll = document.querySelectorAll("[data-login-lider]"); ll.forEach(b=> b.onclick = ()=>{ state.mode="app"; state.role="lideranca"; go("prazos"); });
+  const le = document.querySelector("[data-login-exec]"); if(le) le.onclick = ()=>{ state.mode="app"; state.role="executor"; go("minhas"); };
+}
+
+/* ---------- Toast ---------- */
+let toastTimer;
+function toast(msg){
+  let t = document.getElementById("toast");
+  if(!t){ t = document.createElement("div"); t.id="toast"; document.body.appendChild(t);
+    t.style.cssText = "position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text-1);color:#F2EFEA;padding:12px 18px;border-radius:10px;font-size:14px;font-weight:500;box-shadow:var(--shadow-lg);z-index:200;opacity:0;transition:opacity .2s, transform .2s;display:flex;align-items:center;gap:9px;max-width:90vw"; }
+  t.innerHTML = ic("checkCircle","ic-sm")+"<span>"+msg+"</span>";
+  requestAnimationFrame(()=>{ t.style.opacity="1"; t.style.transform="translateX(-50%) translateY(0)"; });
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>{ t.style.opacity="0"; t.style.transform="translateX(-50%) translateY(20px)"; }, 2200);
+}
+
+/* ---------- init ---------- */
+render();
+scheduleLive();
+</script>

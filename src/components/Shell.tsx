@@ -1,0 +1,89 @@
+import { ReactNode } from "react";
+import { NavLink } from "react-router-dom";
+import { UserButton } from "@clerk/clerk-react";
+import {
+  HardHat,
+  LayoutDashboard,
+  Inbox,
+  Repeat,
+  LineChart,
+  ListChecks,
+  type LucideIcon,
+} from "lucide-react";
+import { Papel } from "../lib/auth-types";
+import { DEMO } from "../lib/env";
+import { iniciais } from "../lib/format";
+
+interface Item {
+  to: string;
+  label: string;
+  icone: LucideIcon;
+}
+
+const LINKS: Record<Papel, Item[]> = {
+  lideranca: [
+    { to: "/", label: "Prazos", icone: LayoutDashboard },
+    { to: "/triagem", label: "Triagem", icone: Inbox },
+    { to: "/recorrencias", label: "Recorrências", icone: Repeat },
+    { to: "/inteligencia", label: "Aprendizado", icone: LineChart },
+  ],
+  executor: [{ to: "/", label: "Minhas Demandas", icone: ListChecks }],
+};
+
+export function Shell({
+  papel,
+  nome,
+  children,
+}: {
+  papel: Papel;
+  nome: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="min-h-full">
+      <header className="sticky top-0 z-10 border-b border-border bg-surface/90 backdrop-blur">
+        <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
+          <div className="flex items-center gap-2 font-semibold text-text-1">
+            <span className="grid h-8 w-8 place-items-center rounded bg-accent text-white">
+              <HardHat className="h-5 w-5" />
+            </span>
+            <span className="hidden sm:inline">CN Obras</span>
+          </div>
+
+          <nav className="ml-auto flex items-center gap-1 overflow-x-auto">
+            {LINKS[papel].map((l) => (
+              <NavLink
+                key={l.to}
+                to={l.to}
+                end={l.to === "/"}
+                className={({ isActive }) =>
+                  `inline-flex items-center gap-1.5 rounded px-3 py-1.5 text-sm font-medium transition ${
+                    isActive
+                      ? "bg-accent-subtle text-accent-active"
+                      : "text-text-2 hover:bg-surface-raise hover:text-text-1"
+                  }`
+                }
+              >
+                <l.icone className="h-4 w-4" />
+                <span className="hidden sm:inline">{l.label}</span>
+              </NavLink>
+            ))}
+          </nav>
+
+          <div className="flex items-center gap-2 border-l border-border pl-2">
+            <span className="hidden text-sm text-text-2 md:inline">{nome}</span>
+            {DEMO ? (
+              <span className="grid h-8 w-8 place-items-center rounded-full bg-accent-subtle text-xs font-semibold text-accent-active">
+                {iniciais(nome)}
+              </span>
+            ) : (
+              <UserButton afterSignOutUrl="/" />
+            )}
+          </div>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
+    </div>
+  );
+}
