@@ -2,7 +2,6 @@ import { ReactNode } from "react";
 import { NavLink, Link } from "react-router-dom";
 import { UserButton } from "@clerk/clerk-react";
 import {
-  HardHat,
   LayoutDashboard,
   Inbox,
   Repeat,
@@ -52,9 +51,7 @@ export function Shell({
       <header className="sticky top-0 z-10 border-b border-border bg-surface/90 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
           <div className="flex items-center gap-2 font-semibold text-text-1">
-            <span className="grid h-8 w-8 place-items-center rounded bg-accent text-white">
-              <HardHat className="h-5 w-5" />
-            </span>
+            <img src="/pwa-192.png" alt="CN Obras" className="h-8 w-8 rounded" />
             <span className="hidden sm:inline">CN Obras</span>
           </div>
 
