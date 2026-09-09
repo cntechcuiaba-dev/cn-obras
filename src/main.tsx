@@ -27,9 +27,15 @@ if (DEMO) {
   if (!chaveClerk) throw new Error("Falta VITE_CLERK_PUBLISHABLE_KEY no .env.local.");
   if (!convex) throw new Error("Falta VITE_CONVEX_URL no .env.local.");
 
+  // Instância de produção sem domínio próprio (ex.: *.vercel.app) não consegue
+  // apontar o CNAME clerk.<dominio> — o Clerk usa proxy reverso pelo próprio
+  // domínio no lugar disso. Em dev (*.clerk.accounts.dev) o DNS funciona normal,
+  // então o proxy só entra quando a variável está definida.
+  const proxyUrlClerk = import.meta.env.VITE_CLERK_PROXY_URL as string | undefined;
+
   root.render(
     <React.StrictMode>
-      <ClerkProvider publishableKey={chaveClerk}>
+      <ClerkProvider publishableKey={chaveClerk} proxyUrl={proxyUrlClerk}>
         <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
           <BrowserRouter>
             <App />
