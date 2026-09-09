@@ -3,7 +3,7 @@
 // Convex real. Como DEMO é constante durante toda a vida do app, o ramo de hooks é
 // estável por componente (seguro apesar do lint de rules-of-hooks).
 import { useMemo } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { DEMO } from "./env";
 import { useDemo } from "../demo/DemoProvider";
@@ -211,6 +211,10 @@ export function usePromoverUsuario(): Fn {
 export function useAlternarAtivoUsuario(): Fn {
   if (DEMO) return async () => undefined;
   return useMutation(api.usuarios.alternarAtivo);
+}
+export function useConvidarUsuario(): Fn {
+  if (DEMO) return async () => ({ ok: true });
+  return useAction(api.convites.convidar);
 }
 export function useCriarEquipamento(): Fn {
   if (DEMO) return async () => undefined;

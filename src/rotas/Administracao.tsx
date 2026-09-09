@@ -8,6 +8,7 @@ import {
   Check,
   X as XIcon,
   Wrench,
+  Mail,
 } from "lucide-react";
 import {
   useCategoriasAdmin,
@@ -23,6 +24,7 @@ import {
   useAtualizarModelo,
   usePromoverUsuario,
   useAlternarAtivoUsuario,
+  useConvidarUsuario,
   useCriarEquipamento,
   useAtualizarEquipamento,
   useAlternarAtivoEquipamento,
@@ -503,20 +505,21 @@ function AbaUsuarios() {
   const alternarAtivo = useAlternarAtivoUsuario();
   const [erro, setErro] = useState<string | null>(null);
 
-  if (usuarios === undefined) return <Carregando />;
-  if (usuarios.length === 0) {
-    return (
-      <EstadoVazio icone={<ShieldCheck className="h-6 w-6" />}>
-        Nenhum usuário cadastrado ainda
-      </EstadoVazio>
-    );
-  }
-
   return (
     <div>
+      <ConvidarUsuario onErro={setErro} />
+
       {erro && (
         <p className="mb-4 rounded bg-pri-alta-bg px-3 py-2 text-sm text-pri-alta">{erro}</p>
       )}
+
+      {usuarios === undefined ? (
+        <Carregando />
+      ) : usuarios.length === 0 ? (
+        <EstadoVazio icone={<ShieldCheck className="h-6 w-6" />}>
+          Nenhum usuário cadastrado ainda
+        </EstadoVazio>
+      ) : (
       <div className="space-y-2">
         {usuarios.map((u: UsuarioAdmin) => (
           <div
@@ -572,6 +575,54 @@ function AbaUsuarios() {
           </div>
         ))}
       </div>
+      )}
     </div>
+  );
+}
+
+function ConvidarUsuario({ onErro }: { onErro: (m: string | null) => void }) {
+  const convidar = useConvidarUsuario();
+  const [email, setEmail] = useState("");
+  const [enviando, setEnviando] = useState(false);
+  const [sucesso, setSucesso] = useState<string | null>(null);
+
+  async function enviar(e: FormEvent) {
+    e.preventDefault();
+    onErro(null);
+    setSucesso(null);
+    setEnviando(true);
+    try {
+      await convidar({ email });
+      setSucesso(`Convite enviado para ${email}.`);
+      setEmail("");
+    } catch (err) {
+      onErro(err instanceof Error ? err.message : "Erro ao enviar convite.");
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  return (
+    <form onSubmit={enviar} className="card mb-4 flex flex-wrap items-end gap-3 p-4">
+      <label className="block min-w-[220px] flex-1">
+        <span className="label">Convidar integrante</span>
+        <input
+          type="email"
+          className="input"
+          placeholder="email@exemplo.com"
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            setSucesso(null);
+          }}
+          required
+        />
+      </label>
+      <button type="submit" className="btn-primary" disabled={enviando || email === ""}>
+        <Mail className="h-4 w-4" />
+        {enviando ? "Enviando…" : "Convidar"}
+      </button>
+      {sucesso && <p className="w-full text-sm text-st-concluida">{sucesso}</p>}
+    </form>
   );
 }
