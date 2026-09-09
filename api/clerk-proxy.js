@@ -46,22 +46,6 @@ export default async function handler(req, res) {
 
   const upstream = await fetch(targetUrl, { method, headers, body, redirect: "manual" });
 
-  if (targetPath.includes("oauth_callback")) {
-    const setCookiesDebug =
-      typeof upstream.headers.getSetCookie === "function" ? upstream.headers.getSetCookie() : [];
-    console.log(
-      "[clerk-proxy debug]",
-      JSON.stringify({
-        targetPath,
-        status: upstream.status,
-        location: upstream.headers.get("location"),
-        setCookieCount: setCookiesDebug.length,
-        setCookieAttrs: setCookiesDebug.map((c) => c.split(";").slice(1).join(";").trim()),
-        setCookieNames: setCookiesDebug.map((c) => c.split("=")[0]),
-      }),
-    );
-  }
-
   res.status(upstream.status);
   upstream.headers.forEach((value, key) => {
     const lower = key.toLowerCase();

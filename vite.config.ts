@@ -9,6 +9,13 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "favicon-16.png", "favicon-32.png", "apple-touch-icon.png"],
+      workbox: {
+        // Sem isso, o service worker intercepta QUALQUER navegação (inclusive o
+        // callback do OAuth do Clerk em /__clerk/...) e devolve o index.html do
+        // cache em vez de deixar a requisição seguir pra rede — o login com
+        // Google nunca completava porque a troca de código nunca saía do navegador.
+        navigateFallbackDenylist: [/^\/__clerk\//, /^\/api\//],
+      },
       manifest: {
         name: "Central CN Obras",
         short_name: "CN Obras",
