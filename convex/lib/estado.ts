@@ -1,6 +1,7 @@
 import { MutationCtx } from "../_generated/server";
 import { Doc, Id } from "../_generated/dataModel";
 import { registrarHistorico } from "./historico";
+import { ConvexError } from "convex/values";
 
 // ÚNICO lugar do projeto que escreve o campo `status`. Nenhuma outra function grava
 // esse campo — se isso for violado, a máquina de estados deixa de existir sem
@@ -33,10 +34,10 @@ export interface Transicao {
 
 export async function transicionar(ctx: MutationCtx, t: Transicao): Promise<void> {
   const d = await ctx.db.get(t.demandaId);
-  if (!d) throw new Error("Demanda não encontrada.");
+  if (!d) throw new ConvexError("Demanda não encontrada.");
 
   if (!PERMITIDAS[d.status].includes(t.para)) {
-    throw new Error(
+    throw new ConvexError(
       `Transição inválida: "${d.status}" não pode ir para "${t.para}".`,
     );
   }

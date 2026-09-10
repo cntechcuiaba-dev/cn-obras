@@ -1,5 +1,5 @@
 import { mutation, query } from "./_generated/server";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { origemConsumo } from "./schema";
 import { getUsuarioAtual, requireRole, podeAcessarDemanda } from "./lib/auth";
 import { registrarHistorico } from "./lib/historico";
@@ -17,13 +17,13 @@ export const registrarValorRecebido = mutation({
   handler: async (ctx, args) => {
     const usuario = await getUsuarioAtual(ctx);
     const d = await ctx.db.get(args.demandaId);
-    if (!d) throw new Error("Demanda não encontrada.");
-    if (!d.orcamento) throw new Error("Esta demanda não tem orçamento solicitado.");
+    if (!d) throw new ConvexError("Demanda não encontrada.");
+    if (!d.orcamento) throw new ConvexError("Esta demanda não tem orçamento solicitado.");
     // escrita do bloco orcamento: liderança ou responsável (E2)
     if (usuario.papel !== "lideranca" && d.responsavelId !== usuario._id) {
-      throw new Error("Sem permissão para registrar o orçamento.");
+      throw new ConvexError("Sem permissão para registrar o orçamento.");
     }
-    if (args.valor < 0) throw new Error("O valor não pode ser negativo.");
+    if (args.valor < 0) throw new ConvexError("O valor não pode ser negativo.");
 
     await ctx.db.patch(args.demandaId, {
       orcamento: { ...d.orcamento, valorRecebido: args.valor, recebidoEm: Date.now() },
@@ -43,9 +43,9 @@ export const aprovar = mutation({
   handler: async (ctx, args) => {
     const usuario = await requireRole(ctx, ["lideranca"]);
     const d = await ctx.db.get(args.demandaId);
-    if (!d) throw new Error("Demanda não encontrada.");
+    if (!d) throw new ConvexError("Demanda não encontrada.");
     if (!d.orcamento?.valorRecebido && d.orcamento?.valorRecebido !== 0) {
-      throw new Error("Registre o valor recebido antes de aprovar.");
+      throw new ConvexError("Registre o valor recebido antes de aprovar.");
     }
     if (d.orcamento.aprovadoEm) return;
 
@@ -67,10 +67,10 @@ export const registrarCobranca = mutation({
   handler: async (ctx, args) => {
     const usuario = await getUsuarioAtual(ctx);
     const d = await ctx.db.get(args.demandaId);
-    if (!d) throw new Error("Demanda não encontrada.");
-    if (!d.orcamento) throw new Error("Esta demanda não tem orçamento solicitado.");
+    if (!d) throw new ConvexError("Demanda não encontrada.");
+    if (!d.orcamento) throw new ConvexError("Esta demanda não tem orçamento solicitado.");
     if (!podeAcessarDemanda(d, usuario)) {
-      throw new Error("Sem permissão para cobrar este orçamento.");
+      throw new ConvexError("Sem permissão para cobrar este orçamento.");
     }
 
     const feitas = d.orcamento.cobrancasFeitas + 1;
@@ -104,13 +104,13 @@ export const registrarConsumo = mutation({
   handler: async (ctx, args) => {
     const usuario = await getUsuarioAtual(ctx);
     const d = await ctx.db.get(args.demandaId);
-    if (!d) throw new Error("Demanda não encontrada.");
+    if (!d) throw new ConvexError("Demanda não encontrada.");
     if (!podeAcessarDemanda(d, usuario)) {
-      throw new Error("Sem permissão para registrar consumo nesta demanda.");
+      throw new ConvexError("Sem permissão para registrar consumo nesta demanda.");
     }
     const item = args.item.trim();
-    if (!item) throw new Error("Informe o item consumido.");
-    if (args.quantidade <= 0) throw new Error("A quantidade deve ser positiva.");
+    if (!item) throw new ConvexError("Informe o item consumido.");
+    if (args.quantidade <= 0) throw new ConvexError("A quantidade deve ser positiva.");
 
     await ctx.db.insert("consumos", {
       demandaId: args.demandaId,
@@ -136,8 +136,8 @@ export const consumosDaDemanda = query({
   handler: async (ctx, args) => {
     const usuario = await getUsuarioAtual(ctx);
     const d = await ctx.db.get(args.demandaId);
-    if (!d) throw new Error("Demanda não encontrada.");
-    if (!podeAcessarDemanda(d, usuario)) throw new Error("Sem permissão.");
+    if (!d) throw new ConvexError("Demanda não encontrada.");
+    if (!podeAcessarDemanda(d, usuario)) throw new ConvexError("Sem permissão.");
 
     return await ctx.db
       .query("consumos")

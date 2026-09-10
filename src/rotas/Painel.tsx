@@ -16,6 +16,7 @@ import {
 import { DEMO } from "../lib/env";
 import { Carregando } from "../components/ui";
 import { formatarData, rotuloPrazo, linkWhatsapp } from "../lib/format";
+import { mensagemErro } from "../lib/erros";
 
 // [E3 / RF14a-i] Um movimento. Sem grupos, sem contadores, sem badges numéricos.
 
@@ -164,7 +165,7 @@ function AvisoPendenteCard({ aviso }: { aviso: AvisoPendente }) {
             try {
               await marcar({ avisoId: aviso._id });
             } catch (e) {
-              setErro(e instanceof Error ? e.message : "Erro.");
+              setErro(mensagemErro(e, "Erro."));
             }
           }}
         >
@@ -208,7 +209,7 @@ function AprovacaoCard({ aprovacao }: { aprovacao: AprovacaoPendente }) {
           try {
             await aprovar({ demandaId: aprovacao._id });
           } catch (e) {
-            setErro(e instanceof Error ? e.message : "Erro.");
+            setErro(mensagemErro(e, "Erro."));
           }
         }}
       >

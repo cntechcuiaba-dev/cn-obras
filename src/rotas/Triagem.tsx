@@ -13,6 +13,7 @@ import {
 import { CabecalhoSecao, Carregando, EstadoVazio } from "../components/ui";
 import { formatarData } from "../lib/format";
 import { Prioridade } from "../lib/labels";
+import { mensagemErro } from "../lib/erros";
 
 export default function Triagem() {
   const abertas = useAbertas();
@@ -137,7 +138,7 @@ function FormularioTriagem({
       });
       onPronto();
     } catch (err) {
-      setErro(err instanceof Error ? err.message : "Erro ao triar.");
+      setErro(mensagemErro(err, "Erro ao triar."));
     } finally {
       setSalvando(false);
     }

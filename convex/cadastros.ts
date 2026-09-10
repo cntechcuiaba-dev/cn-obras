@@ -1,5 +1,5 @@
 import { mutation, query } from "./_generated/server";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { requireRole } from "./lib/auth";
 
 // categorias / locais / modelosMensagem: leitura por liderança e executor; escrita só liderança.
@@ -45,7 +45,7 @@ export const criarCategoria = mutation({
   handler: async (ctx, args) => {
     await requireRole(ctx, ["lideranca"]);
     const nome = args.nome.trim();
-    if (!nome) throw new Error("Nome da categoria é obrigatório.");
+    if (!nome) throw new ConvexError("Nome da categoria é obrigatório.");
     return await ctx.db.insert("categorias", { nome, ativa: true });
   },
 });
@@ -63,7 +63,7 @@ export const criarLocal = mutation({
   handler: async (ctx, args) => {
     await requireRole(ctx, ["lideranca"]);
     const nome = args.nome.trim();
-    if (!nome) throw new Error("Nome do local é obrigatório.");
+    if (!nome) throw new ConvexError("Nome do local é obrigatório.");
     return await ctx.db.insert("locais", { nome, ativo: true });
   },
 });
@@ -90,12 +90,12 @@ export const atualizarModelo = mutation({
 
     if (args.nome !== undefined) {
       const nome = args.nome.trim();
-      if (!nome) throw new Error("O nome do modelo é obrigatório.");
+      if (!nome) throw new ConvexError("O nome do modelo é obrigatório.");
       patch.nome = nome;
     }
     if (args.texto !== undefined) {
       const texto = args.texto.trim();
-      if (!texto) throw new Error("O texto do modelo é obrigatório.");
+      if (!texto) throw new ConvexError("O texto do modelo é obrigatório.");
       patch.texto = texto;
     }
     if (Object.keys(patch).length === 0) return;

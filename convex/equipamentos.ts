@@ -1,5 +1,5 @@
 import { mutation, query } from "./_generated/server";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { requireRole } from "./lib/auth";
 
 // Equipamento que pode ter manutenção periódica (ar-condicionado, bebedouro,
@@ -34,8 +34,8 @@ export const criar = mutation({
     await requireRole(ctx, ["lideranca"]);
     const nome = args.nome.trim();
     const tipo = args.tipo.trim();
-    if (!nome) throw new Error("Nome do equipamento é obrigatório.");
-    if (!tipo) throw new Error("Tipo do equipamento é obrigatório.");
+    if (!nome) throw new ConvexError("Nome do equipamento é obrigatório.");
+    if (!tipo) throw new ConvexError("Tipo do equipamento é obrigatório.");
 
     return await ctx.db.insert("equipamentos", {
       nome,
@@ -64,12 +64,12 @@ export const atualizar = mutation({
 
     if (resto.nome !== undefined) {
       const nome = resto.nome.trim();
-      if (!nome) throw new Error("Nome do equipamento é obrigatório.");
+      if (!nome) throw new ConvexError("Nome do equipamento é obrigatório.");
       patch.nome = nome;
     }
     if (resto.tipo !== undefined) {
       const tipo = resto.tipo.trim();
-      if (!tipo) throw new Error("Tipo do equipamento é obrigatório.");
+      if (!tipo) throw new ConvexError("Tipo do equipamento é obrigatório.");
       patch.tipo = tipo;
     }
     if (resto.localId !== undefined) patch.localId = resto.localId;

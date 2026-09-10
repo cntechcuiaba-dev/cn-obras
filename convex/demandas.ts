@@ -1,5 +1,5 @@
 import { mutation, query, internalMutation, QueryCtx, MutationCtx } from "./_generated/server";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { Doc, Id } from "./_generated/dataModel";
 import { requireRole, getUsuarioAtual, podeAcessarDemanda } from "./lib/auth";
 import { registrarHistorico } from "./lib/historico";
@@ -48,19 +48,19 @@ export const abrirDemanda = mutation({
     const local = args.localTextoOriginal.trim();
     const whatsappDigitos = args.solicitanteWhatsapp.replace(/\D/g, "");
 
-    if (titulo.length < 3) throw new Error("Descreva o problema em pelo menos 3 caracteres.");
-    if (!descricao) throw new Error("A descrição é obrigatória.");
-    if (!nome) throw new Error("Informe seu nome.");
+    if (titulo.length < 3) throw new ConvexError("Descreva o problema em pelo menos 3 caracteres.");
+    if (!descricao) throw new ConvexError("A descrição é obrigatória.");
+    if (!nome) throw new ConvexError("Informe seu nome.");
     if (whatsappDigitos.length < 10 || whatsappDigitos.length > 13) {
-      throw new Error("Informe um WhatsApp válido com DDD.");
+      throw new ConvexError("Informe um WhatsApp válido com DDD.");
     }
 
     // Local vem por escolha OU por descrição — uma das duas tem que existir.
     const localEscolhido = args.localId ? await ctx.db.get(args.localId) : null;
     if (args.localId && (!localEscolhido || !localEscolhido.ativo)) {
-      throw new Error("Local inválido.");
+      throw new ConvexError("Local inválido.");
     }
-    if (!localEscolhido && !local) throw new Error("Informe o local.");
+    if (!localEscolhido && !local) throw new ConvexError("Informe o local.");
 
     const demandaId = await criarDemanda(
       ctx,
@@ -119,10 +119,10 @@ export const detalheDemanda = query({
   handler: async (ctx, args) => {
     const usuario = await getUsuarioAtual(ctx);
     const d = await ctx.db.get(args.demandaId);
-    if (!d) throw new Error("Demanda não encontrada.");
+    if (!d) throw new ConvexError("Demanda não encontrada.");
     // [E4 / RF13] responsável OU integrante da equipe
     if (!podeAcessarDemanda(d, usuario)) {
-      throw new Error("Sem permissão para ver esta demanda.");
+      throw new ConvexError("Sem permissão para ver esta demanda.");
     }
 
     const agora = Date.now();
@@ -207,10 +207,10 @@ export const mudarStatus = mutation({
   handler: async (ctx, args) => {
     const usuario = await requireRole(ctx, ["executor", "lideranca"]);
     const d = await ctx.db.get(args.demandaId);
-    if (!d) throw new Error("Demanda não encontrada.");
+    if (!d) throw new ConvexError("Demanda não encontrada.");
     // [E4] responsável ou equipe podem atualizar status; a equipe executa junto.
     if (!podeAcessarDemanda(d, usuario)) {
-      throw new Error("Você só pode atualizar demandas atribuídas a você.");
+      throw new ConvexError("Você só pode atualizar demandas atribuídas a você.");
     }
 
     const agora = Date.now();
@@ -221,7 +221,7 @@ export const mudarStatus = mutation({
     if (args.novoStatus === "aguardando") {
       // P5: motivo estruturado exigido DURANTE a parada.
       if (!args.motivoImpedimento) {
-        throw new Error("Informe o motivo do impedimento ao pausar a demanda.");
+        throw new ConvexError("Informe o motivo do impedimento ao pausar a demanda.");
       }
       campos.motivoImpedimento = args.motivoImpedimento;
       campos.impedimentoDesde = agora;
@@ -230,19 +230,19 @@ export const mudarStatus = mutation({
       // [E2] orçamento é compromisso embutido: sem os quatro campos, não entra.
       if (args.motivoImpedimento === "aguardando_orcamento") {
         if (!args.orcamento) {
-          throw new Error(
+          throw new ConvexError(
             "Para aguardar orçamento, informe fornecedor, data de solicitação, " +
               "data de cobrança e responsável pela cobrança.",
           );
         }
         if (!args.orcamento.fornecedor.trim()) {
-          throw new Error("Informe o fornecedor do orçamento.");
+          throw new ConvexError("Informe o fornecedor do orçamento.");
         }
         if (args.orcamento.cobrarEm < args.orcamento.solicitadoEm) {
-          throw new Error("A data de cobrança não pode ser anterior à solicitação.");
+          throw new ConvexError("A data de cobrança não pode ser anterior à solicitação.");
         }
         const cobrador = await ctx.db.get(args.orcamento.responsavelCobrancaId);
-        if (!cobrador) throw new Error("Responsável pela cobrança não encontrado.");
+        if (!cobrador) throw new ConvexError("Responsável pela cobrança não encontrado.");
 
         campos.orcamento = {
           fornecedor: args.orcamento.fornecedor.trim(),
@@ -260,7 +260,7 @@ export const mudarStatus = mutation({
     } else {
       // concluida — P10: exige confirmar que o resultado esperado foi atingido.
       if (args.resultadoConfirmado !== true) {
-        throw new Error(
+        throw new ConvexError(
           "Para concluir, confirme que o resultado esperado foi atingido. " +
             "Se não foi, mantenha em execução ou registre um impedimento.",
         );
@@ -269,13 +269,13 @@ export const mudarStatus = mutation({
       // Zero é resposta válida; vazio não é.
       const gastou = await passouPorGasto(ctx, args.demandaId);
       if (gastou && d.custo === undefined && args.custo === undefined) {
-        throw new Error(
+        throw new ConvexError(
           "Esta demanda passou por material ou orçamento. Lance o valor gasto " +
             "antes de concluir — zero é resposta válida, vazio não é.",
         );
       }
       if (args.custo) {
-        if (args.custo.valor < 0) throw new Error("O valor não pode ser negativo.");
+        if (args.custo.valor < 0) throw new ConvexError("O valor não pode ser negativo.");
         campos.custo = { ...args.custo, lancadoEm: agora };
       }
 
@@ -317,10 +317,10 @@ export const anexarFoto = mutation({
   handler: async (ctx, args) => {
     const usuario = await getUsuarioAtual(ctx);
     const d = await ctx.db.get(args.demandaId);
-    if (!d) throw new Error("Demanda não encontrada.");
+    if (!d) throw new ConvexError("Demanda não encontrada.");
     // [E4] a equipe executa junto: pode anexar foto
     if (!podeAcessarDemanda(d, usuario)) {
-      throw new Error("Sem permissão para anexar fotos nesta demanda.");
+      throw new ConvexError("Sem permissão para anexar fotos nesta demanda.");
     }
     await registrarHistorico(ctx, {
       demandaId: args.demandaId,

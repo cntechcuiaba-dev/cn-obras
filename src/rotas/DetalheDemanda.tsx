@@ -36,6 +36,7 @@ import { Carregando, StatusChip, PrazoBadge, PrioridadeChip } from "../component
 import { MOTIVO_IMPEDIMENTO, MotivoImpedimento, Prioridade } from "../lib/labels";
 import { formatarData, formatarDataHora, linkWhatsapp, preencherModelo } from "../lib/format";
 import { mascararMoeda, valorMoedaParaNumero } from "../lib/mascaras";
+import { mensagemErro } from "../lib/erros";
 
 export default function DetalheDemanda() {
   const { id } = useParams();
@@ -95,7 +96,7 @@ export default function DetalheDemanda() {
       setMostrarConclusao(false);
       setConfirmado(false);
     } catch (err) {
-      setErro(err instanceof Error ? err.message : "Erro.");
+      setErro(mensagemErro(err, "Erro."));
     }
   }
 
@@ -559,7 +560,7 @@ function SecaoConsumos({
       setValorUnitario("");
       setMostrarForm(false);
     } catch (err) {
-      setErro(err instanceof Error ? err.message : "Erro ao registrar.");
+      setErro(mensagemErro(err, "Erro ao registrar."));
     } finally {
       setSalvando(false);
     }
@@ -702,7 +703,7 @@ function BlocoOrcamento({
     try {
       await fn();
     } catch (e) {
-      onErro(e instanceof Error ? e.message : "Erro.");
+      onErro(mensagemErro(e, "Erro."));
     }
   }
 
@@ -823,7 +824,7 @@ function PainelAjuste({
       });
       onPronto();
     } catch (err) {
-      onErro(err instanceof Error ? err.message : "Erro ao ajustar.");
+      onErro(mensagemErro(err, "Erro ao ajustar."));
     } finally {
       setSalvando(false);
     }

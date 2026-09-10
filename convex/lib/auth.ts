@@ -1,5 +1,6 @@
 import { QueryCtx, MutationCtx } from "../_generated/server";
 import { Doc } from "../_generated/dataModel";
+import { ConvexError } from "convex/values";
 
 type Ctx = QueryCtx | MutationCtx;
 export type Papel = "lideranca" | "executor";
@@ -7,7 +8,7 @@ export type Papel = "lideranca" | "executor";
 // RNF02/RNF04: toda função protegida começa exigindo identidade.
 export async function requireIdentity(ctx: Ctx) {
   const identity = await ctx.auth.getUserIdentity();
-  if (!identity) throw new Error("Não autenticado.");
+  if (!identity) throw new ConvexError("Não autenticado.");
   return identity;
 }
 
@@ -19,7 +20,7 @@ export async function getUsuarioAtual(ctx: Ctx): Promise<Doc<"usuarios">> {
     .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
     .unique();
   if (!usuario) {
-    throw new Error("Usuário não provisionado. Faça login novamente.");
+    throw new ConvexError("Usuário não provisionado. Faça login novamente.");
   }
   return usuario;
 }
@@ -40,9 +41,9 @@ export async function requireRole(
   papeis: Papel[],
 ): Promise<Doc<"usuarios">> {
   const usuario = await getUsuarioAtual(ctx);
-  if (!usuario.ativo) throw new Error("Usuário inativo.");
+  if (!usuario.ativo) throw new ConvexError("Usuário inativo.");
   if (!papeis.includes(usuario.papel)) {
-    throw new Error("Sem permissão para esta ação.");
+    throw new ConvexError("Sem permissão para esta ação.");
   }
   return usuario;
 }

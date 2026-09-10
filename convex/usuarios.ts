@@ -1,5 +1,5 @@
 import { mutation, query } from "./_generated/server";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { requireIdentity, requireRole, getUsuarioAtual } from "./lib/auth";
 
 // Chamada no primeiro login. SEMPRE cria como "executor"; promoção é manual (RF28).
@@ -61,7 +61,7 @@ export const promover = mutation({
   handler: async (ctx, args) => {
     await requireRole(ctx, ["lideranca"]);
     const alvo = await ctx.db.get(args.usuarioId);
-    if (!alvo) throw new Error("Usuário não encontrado.");
+    if (!alvo) throw new ConvexError("Usuário não encontrado.");
     await ctx.db.patch(args.usuarioId, { papel: "lideranca" });
   },
 });
@@ -73,10 +73,10 @@ export const alternarAtivo = mutation({
   handler: async (ctx, args) => {
     const eu = await requireRole(ctx, ["lideranca"]);
     if (args.usuarioId === eu._id && !args.ativo) {
-      throw new Error("Você não pode desativar a própria conta.");
+      throw new ConvexError("Você não pode desativar a própria conta.");
     }
     const alvo = await ctx.db.get(args.usuarioId);
-    if (!alvo) throw new Error("Usuário não encontrado.");
+    if (!alvo) throw new ConvexError("Usuário não encontrado.");
     await ctx.db.patch(args.usuarioId, { ativo: args.ativo });
   },
 });

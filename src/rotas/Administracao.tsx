@@ -40,6 +40,7 @@ import {
 import { CabecalhoSecao, Carregando, EstadoVazio } from "../components/ui";
 import { LOGO_PADRAO } from "../components/Logo";
 import { formatarData } from "../lib/format";
+import { mensagemErro } from "../lib/erros";
 
 // RF26/RF27/RF21: cadastro/ativação de categorias, locais e equipamentos, edição
 // dos modelos de mensagem e promoção/desativação de usuários. Tudo que antes só
@@ -183,7 +184,7 @@ function ListaComCadastro({
       await onCriar(nome);
       setNome("");
     } catch (err) {
-      setErro(err instanceof Error ? err.message : "Erro ao criar.");
+      setErro(mensagemErro(err, "Erro ao criar."));
     } finally {
       setSalvando(false);
     }
@@ -378,7 +379,7 @@ function FormularioEquipamento({
       }
       onPronto();
     } catch (err) {
-      onErro(err instanceof Error ? err.message : "Erro ao salvar.");
+      onErro(mensagemErro(err, "Erro ao salvar."));
     } finally {
       setSalvando(false);
     }
@@ -511,7 +512,7 @@ function AbaModelos() {
                       await atualizar({ modeloId: m._id, texto });
                       setEditandoId(null);
                     } catch (err) {
-                      setErro(err instanceof Error ? err.message : "Erro.");
+                      setErro(mensagemErro(err, "Erro."));
                     }
                   }}
                 >
@@ -584,7 +585,7 @@ function AbaUsuarios() {
                     try {
                       await promover({ usuarioId: u._id });
                     } catch (err) {
-                      setErro(err instanceof Error ? err.message : "Erro.");
+                      setErro(mensagemErro(err, "Erro."));
                     }
                   }}
                 >
@@ -598,7 +599,7 @@ function AbaUsuarios() {
                   try {
                     await alternarAtivo({ usuarioId: u._id, ativo: !u.ativo });
                   } catch (err) {
-                    setErro(err instanceof Error ? err.message : "Erro.");
+                    setErro(mensagemErro(err, "Erro."));
                   }
                 }}
               >
@@ -630,7 +631,7 @@ function ConvidarUsuario({ onErro }: { onErro: (m: string | null) => void }) {
       setSucesso(`Convite enviado para ${email}.`);
       setEmail("");
     } catch (err) {
-      onErro(err instanceof Error ? err.message : "Erro ao enviar convite.");
+      onErro(mensagemErro(err, "Erro ao enviar convite."));
     } finally {
       setEnviando(false);
     }
@@ -699,7 +700,7 @@ function AbaIdentidade() {
       const r = (await definir({ storageId })) as { ok: boolean; erro?: string };
       if (r && r.ok === false) setErro(r.erro ?? "Imagem recusada.");
     } catch (e) {
-      setErro(e instanceof Error ? e.message : "Erro ao enviar.");
+      setErro(mensagemErro(e, "Erro ao enviar."));
     } finally {
       setEnviando(false);
     }
@@ -753,7 +754,7 @@ function AbaIdentidade() {
                   try {
                     await remover({});
                   } catch (e) {
-                    setErro(e instanceof Error ? e.message : "Erro ao remover.");
+                    setErro(mensagemErro(e, "Erro ao remover."));
                   }
                 }}
               >

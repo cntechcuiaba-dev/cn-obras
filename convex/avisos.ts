@@ -1,5 +1,5 @@
 import { mutation, query, MutationCtx, QueryCtx } from "./_generated/server";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { getUsuarioAtual } from "./lib/auth";
 
@@ -94,9 +94,9 @@ export const marcarEnviado = mutation({
   handler: async (ctx, args) => {
     const usuario = await getUsuarioAtual(ctx);
     const aviso = await ctx.db.get(args.avisoId);
-    if (!aviso) throw new Error("Aviso não encontrado.");
+    if (!aviso) throw new ConvexError("Aviso não encontrado.");
     if (aviso.responsavelId !== usuario._id && usuario.papel !== "lideranca") {
-      throw new Error("Só o responsável marca o aviso como enviado.");
+      throw new ConvexError("Só o responsável marca o aviso como enviado.");
     }
     if (aviso.enviadoEm !== undefined) return;
 

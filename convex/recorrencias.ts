@@ -1,5 +1,5 @@
 import { mutation, query, internalMutation } from "./_generated/server";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { periodicidade } from "./schema";
 import { requireRole } from "./lib/auth";
 import { criarDemanda } from "./lib/estado";
@@ -55,9 +55,9 @@ export const criar = mutation({
   },
   handler: async (ctx, args) => {
     await requireRole(ctx, ["lideranca"]);
-    if (!args.titulo.trim()) throw new Error("Título é obrigatório.");
+    if (!args.titulo.trim()) throw new ConvexError("Título é obrigatório.");
     if (args.antecedenciaDias < 0) {
-      throw new Error("Antecedência em dias não pode ser negativa.");
+      throw new ConvexError("Antecedência em dias não pode ser negativa.");
     }
     return await ctx.db.insert("manutencoesRecorrentes", {
       ...args,
@@ -88,10 +88,10 @@ export const editar = mutation({
     const { id, ...resto } = args;
 
     if (resto.titulo !== undefined && !resto.titulo.trim()) {
-      throw new Error("Título é obrigatório.");
+      throw new ConvexError("Título é obrigatório.");
     }
     if (resto.antecedenciaDias !== undefined && resto.antecedenciaDias < 0) {
-      throw new Error("Antecedência em dias não pode ser negativa.");
+      throw new ConvexError("Antecedência em dias não pode ser negativa.");
     }
 
     const patch = Object.fromEntries(

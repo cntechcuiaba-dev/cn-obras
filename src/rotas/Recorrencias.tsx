@@ -13,6 +13,7 @@ import {
 import { CabecalhoSecao, Carregando, EstadoVazio } from "../components/ui";
 import { PERIODICIDADE } from "../lib/labels";
 import { formatarData } from "../lib/format";
+import { mensagemErro } from "../lib/erros";
 
 export default function Recorrencias() {
   const recs = useRecorrencias();
@@ -172,7 +173,7 @@ function FormularioRecorrencia({
       }
       onPronto();
     } catch (err) {
-      setErro(err instanceof Error ? err.message : "Erro ao salvar.");
+      setErro(mensagemErro(err, "Erro ao salvar."));
     }
   }
 

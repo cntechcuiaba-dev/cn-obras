@@ -4,6 +4,7 @@ import { useAbrir, useGerarUrlPublico, useLocaisPublicos } from "../lib/dados";
 import { DEMO } from "../lib/env";
 import { mascararTelefone } from "../lib/mascaras";
 import { Logo } from "../components/Logo";
+import { mensagemErro } from "../lib/erros";
 
 const VAZIO = {
   titulo: "",
@@ -58,7 +59,7 @@ export default function FormularioPublico() {
       });
       setProtocolo(r.protocolo);
     } catch (err) {
-      setErro(err instanceof Error ? err.message : "Erro ao enviar.");
+      setErro(mensagemErro(err, "Erro ao enviar."));
     } finally {
       setEnviando(false);
     }

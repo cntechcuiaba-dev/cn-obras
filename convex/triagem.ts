@@ -1,5 +1,5 @@
 import { mutation, query } from "./_generated/server";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { prioridadeDemanda } from "./schema";
 import { requireRole } from "./lib/auth";
 import { transicionar } from "./lib/estado";
@@ -40,17 +40,17 @@ export const triar = mutation({
   handler: async (ctx, args) => {
     const usuario = await requireRole(ctx, ["lideranca"]);
     const d = await ctx.db.get(args.demandaId);
-    if (!d) throw new Error("Demanda não encontrada.");
+    if (!d) throw new ConvexError("Demanda não encontrada.");
     if (d.status !== "aberta") {
-      throw new Error("Só é possível triar uma demanda com status 'aberta'.");
+      throw new ConvexError("Só é possível triar uma demanda com status 'aberta'.");
     }
     const resultado = args.resultadoEsperado.trim();
     if (!resultado) {
-      throw new Error("Defina o resultado esperado (o que caracteriza a demanda como resolvida).");
+      throw new ConvexError("Defina o resultado esperado (o que caracteriza a demanda como resolvida).");
     }
 
     const responsavel = await ctx.db.get(args.responsavelId);
-    if (!responsavel) throw new Error("Responsável não encontrado.");
+    if (!responsavel) throw new ConvexError("Responsável não encontrado.");
 
     // [E4] o responsável não se repete na equipe — o movimento tem dono único.
     const equipe = (args.equipeIds ?? []).filter((id) => id !== args.responsavelId);
@@ -98,7 +98,7 @@ export const atualizar = mutation({
   handler: async (ctx, args) => {
     const usuario = await requireRole(ctx, ["lideranca"]);
     const d = await ctx.db.get(args.demandaId);
-    if (!d) throw new Error("Demanda não encontrada.");
+    if (!d) throw new ConvexError("Demanda não encontrada.");
 
     const patch: Record<string, unknown> = {};
     const mudancas: string[] = [];
@@ -155,7 +155,7 @@ export const cancelar = mutation({
   handler: async (ctx, args) => {
     const usuario = await requireRole(ctx, ["lideranca"]);
     const d = await ctx.db.get(args.demandaId);
-    if (!d) throw new Error("Demanda não encontrada.");
+    if (!d) throw new ConvexError("Demanda não encontrada.");
 
     await transicionar(ctx, {
       demandaId: args.demandaId,
