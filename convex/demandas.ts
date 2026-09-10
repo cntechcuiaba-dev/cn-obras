@@ -6,15 +6,25 @@ import { registrarHistorico } from "./lib/historico";
 import { criarDemanda, transicionar } from "./lib/estado";
 import { gerarAvisoSeInteressaAoSolicitante } from "./avisos";
 import { nivelRisco, isAtiva, DIAS_VENCENDO, DIA_MS } from "./lib/risco";
+import { aplicarLimite } from "./lib/limite";
 
 // ---------- Upload de fotos ----------
 
-// Abertura pública pode anexar foto (RF02) — logo o upload URL é público.
-// Risco conhecido: qualquer um gera URL de upload. Aceitável no MVP; endurecer depois
-// (rate-limit / captcha) se virar porta de lixo (blueprint, riscos).
+const TAMANHO_MAX_ANEXO = 8 * 1024 * 1024; // 8 MB
+const TIPOS_ANEXO_ACEITOS = ["image/png", "image/jpeg", "image/webp", "image/gif"];
+
+// Abertura pública pode anexar foto (RF02) — logo o upload URL é público, sem
+// sessão pra amarrar limite nenhum. Auditoria de segurança apontou isso como
+// porta de lixo real (storage sem limite de tamanho/tipo/volume): o rate-limit
+// aqui barra o volume; o tamanho/tipo do arquivo é conferido em abrirDemanda,
+// onde o storageId é de fato referenciado (mesmo princípio da logo em
+// configuracao.ts — o upload em si não valida nada, quem valida é quem grava).
 export const gerarUrlUploadPublico = mutation({
   args: {},
-  handler: async (ctx) => await ctx.storage.generateUploadUrl(),
+  handler: async (ctx) => {
+    await aplicarLimite(ctx, "upload_publico", 10, 10 * 60 * 1000);
+    return await ctx.storage.generateUploadUrl();
+  },
 });
 
 export const gerarUrlUpload = mutation({
@@ -42,6 +52,8 @@ export const abrirDemanda = mutation({
   },
   handler: async (ctx, args) => {
     // Prevenção no servidor (princípio 2 / blueprint "porta de lixo"): valida onde grava.
+    await aplicarLimite(ctx, "abrir_demanda", 20, 10 * 60 * 1000);
+
     const titulo = args.titulo.trim();
     const descricao = args.descricao.trim();
     const nome = args.solicitanteNome.trim();
@@ -53,6 +65,32 @@ export const abrirDemanda = mutation({
     if (!nome) throw new ConvexError("Informe seu nome.");
     if (whatsappDigitos.length < 10 || whatsappDigitos.length > 13) {
       throw new ConvexError("Informe um WhatsApp válido com DDD.");
+    }
+    if ((args.anexosAbertura?.length ?? 0) > 1) {
+      throw new ConvexError("Envie no máximo uma foto por solicitação.");
+    }
+    // O upload público (gerarUrlUploadPublico) não valida nada no momento do
+    // envio — é aqui, onde o storageId passa a ser referenciado de fato, que
+    // arquivo grande ou de tipo errado é descartado.
+    //
+    // Descarta em vez de lançar: mutation que lança faz rollback da transação
+    // inteira, e o storage.delete iria junto — o arquivo recusado ficaria
+    // órfão (mesmo motivo de configuracao.ts:definirLogo retornar resultado
+    // em vez de lançar). Como a foto é opcional, seguir sem ela é melhor do
+    // que barrar a solicitação inteira por causa dela.
+    const anexosValidos: typeof args.anexosAbertura = [];
+    let anexoRecusado = false;
+    for (const storageId of args.anexosAbertura ?? []) {
+      const meta = await ctx.db.system.get(storageId);
+      if (!meta) continue;
+      const tamanhoOk = meta.size <= TAMANHO_MAX_ANEXO;
+      const tipoOk = !meta.contentType || TIPOS_ANEXO_ACEITOS.includes(meta.contentType);
+      if (tamanhoOk && tipoOk) {
+        anexosValidos!.push(storageId);
+      } else {
+        await ctx.storage.delete(storageId);
+        anexoRecusado = true;
+      }
     }
 
     // Local vem por escolha OU por descrição — uma das duas tem que existir.
@@ -73,14 +111,18 @@ export const abrirDemanda = mutation({
         // do local escolhido serve de texto original.
         localTextoOriginal: local || localEscolhido!.nome,
         localId: localEscolhido?._id,
-        anexosAbertura: args.anexosAbertura,
+        anexosAbertura: anexosValidos!.length ? anexosValidos : undefined,
       },
       "aberta",
       "Demanda aberta pelo formulário público",
     );
 
     // Identificador amigável exibido ao solicitante (RF04).
-    return { demandaId, protocolo: `CN-${demandaId.slice(-6).toUpperCase()}` };
+    return {
+      demandaId,
+      protocolo: `CN-${demandaId.slice(-6).toUpperCase()}`,
+      anexoRecusado,
+    };
   },
 });
 

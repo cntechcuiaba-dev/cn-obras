@@ -19,4 +19,11 @@ crons.daily(
   internal.demandas.avaliarRiscosDoDia,
 );
 
+// Limpeza do rate-limit dos endpoints públicos (ver lib/limite.ts).
+crons.daily(
+  "limpar rate-limit",
+  { hourUTC: 7, minuteUTC: 0 },
+  internal.limite.limparEventosAntigos,
+);
+
 export default crons;

@@ -213,4 +213,13 @@ export default defineSchema({
     logoStorageId: v.optional(v.id("_storage")),
     atualizadoEm: v.number(),
   }),
+
+  // Rate-limit dos endpoints públicos (sem sessão, sem IP disponível numa
+  // mutation do Convex): cada linha é UM evento, e o índice conta quantos
+  // caíram na janela recente (todo índice do Convex carrega _creationTime
+  // por baixo, então dá pra filtrar por tempo sem campo extra). Ver
+  // lib/limite.ts. Limpo diariamente por cron — ver limite.ts.
+  limitePublico: defineTable({
+    tipo: v.string(),
+  }).index("by_tipo", ["tipo"]),
 });

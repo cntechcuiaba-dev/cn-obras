@@ -28,6 +28,7 @@ export default function FormularioPublico() {
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [protocolo, setProtocolo] = useState<string | null>(null);
+  const [anexoRecusado, setAnexoRecusado] = useState(false);
 
   function set<K extends keyof typeof VAZIO>(k: K, v: string) {
     setForm((f) => ({ ...f, [k]: v }));
@@ -58,6 +59,7 @@ export default function FormularioPublico() {
         anexosAbertura: anexos as any,
       });
       setProtocolo(r.protocolo);
+      setAnexoRecusado(Boolean(r.anexoRecusado));
     } catch (err) {
       setErro(mensagemErro(err, "Erro ao enviar."));
     } finally {
@@ -77,6 +79,12 @@ export default function FormularioPublico() {
           <p className="mt-3 font-mono text-2xl font-semibold tnum text-accent">
             {protocolo}
           </p>
+          {anexoRecusado && (
+            <p className="mt-3 rounded bg-pri-alta-bg px-3 py-2 text-sm text-pri-alta">
+              A solicitação foi enviada, mas a foto não pôde ser anexada
+              (tamanho ou formato não aceito).
+            </p>
+          )}
           <button
             className="btn-ghost mt-6"
             onClick={() => {
@@ -84,6 +92,7 @@ export default function FormularioPublico() {
               setLocalId("");
               setFoto(null);
               setProtocolo(null);
+              setAnexoRecusado(false);
             }}
           >
             Abrir outra solicitação
