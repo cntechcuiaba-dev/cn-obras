@@ -47,12 +47,19 @@ export function Shell({
   children: ReactNode;
 }) {
   return (
-    <div className="min-h-full">
+    <div className="relative min-h-full">
+      {/* Brilho suave no topo: faz o espaço vazio da tela inicial (que é
+          proposital — um movimento por vez) ler como respiro, não como
+          página inacabada. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-80 bg-gradient-to-b from-accent-subtle/50 to-transparent"
+      />
       <header className="sticky top-0 z-10 border-b border-border/70 bg-surface/90 shadow-header backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
-          <div className="flex items-center gap-2 font-semibold text-text-1">
-            <img src="/pwa-192.png" alt="CN Obras" className="h-8 w-8 rounded" />
-            <span className="hidden sm:inline">CN Obras</span>
+          <div className="flex flex-none items-center gap-2 font-semibold text-text-1">
+            <img src="/pwa-192.png" alt="CN Obras" className="h-8 w-8 rounded-lg" />
+            <span className="hidden whitespace-nowrap sm:inline">CN Obras</span>
           </div>
 
           <nav className="ml-auto flex items-center gap-1 overflow-x-auto">
@@ -69,13 +76,13 @@ export function Shell({
                   }`
                 }
               >
-                <l.icone className="h-4 w-4" />
-                <span className="hidden sm:inline">{l.label}</span>
+                <l.icone className="h-4 w-4 flex-none" />
+                <span className="hidden whitespace-nowrap lg:inline">{l.label}</span>
               </NavLink>
             ))}
           </nav>
 
-          <div className="flex items-center gap-2 border-l border-border pl-2">
+          <div className="flex flex-none items-center gap-2 border-l border-border pl-2">
             {/* Admin é aberta por escolha, não ação do dia a dia — fica fora da
                 nav de movimento, como ícone dedicado (mesmo espírito do RF14i). */}
             {papel === "lideranca" && (
@@ -97,9 +104,11 @@ export function Shell({
               className="inline-flex items-center gap-1.5 rounded px-2.5 py-1.5 text-sm font-medium text-accent transition-all duration-150 hover:bg-accent-subtle"
             >
               <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Nova</span>
+              <span className="hidden whitespace-nowrap sm:inline">Nova</span>
             </a>
-            <span className="hidden text-sm text-text-2 md:inline">{nome}</span>
+            <span className="hidden whitespace-nowrap text-sm text-text-2 xl:inline">
+              {nome}
+            </span>
             {DEMO ? (
               <span className="grid h-8 w-8 place-items-center rounded-full bg-accent-subtle text-xs font-semibold text-accent-active">
                 {iniciais(nome)}
@@ -111,7 +120,7 @@ export function Shell({
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl animate-fade-in px-4 py-8">{children}</main>
+      <main className="relative mx-auto max-w-5xl animate-fade-in px-4 py-8">{children}</main>
     </div>
   );
 }

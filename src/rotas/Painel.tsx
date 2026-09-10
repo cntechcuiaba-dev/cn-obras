@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useMutation } from "convex/react";
 import {
   CheckCircle2, MapPin, User, Lock, ArrowRight, ShieldCheck,
-  MessageCircle, BadgeCheck, Check,
+  MessageCircle, BadgeCheck, Check, Target,
 } from "lucide-react";
 import { api } from "../../convex/_generated/api";
 import {
@@ -33,10 +33,12 @@ export default function Painel() {
 
       {item === null ? (
         <>
-          <div className="card mt-3 flex flex-col items-center gap-3 p-10 text-center">
-            <CheckCircle2 className="h-10 w-10 text-st-concluida" />
-            <p className="text-lg font-semibold">Nada esperando por você agora.</p>
-            <p className="text-sm text-text-2">
+          <div className="card mt-3 flex animate-rise-in flex-col items-center gap-3 p-12 text-center">
+            <span className="grid h-14 w-14 place-items-center rounded-full bg-st-concluida-bg ring-8 ring-st-concluida-bg/40">
+              <CheckCircle2 className="h-7 w-7 text-st-concluida" />
+            </span>
+            <p className="mt-1 text-lg font-semibold">Nada esperando por você agora.</p>
+            <p className="max-w-xs text-sm leading-relaxed text-text-2">
               Quando algo precisar da sua ação, aparece aqui.
             </p>
           </div>
@@ -257,44 +259,60 @@ function ItemPrincipal({
   const prazo = rotuloPrazo(item.prazo);
 
   return (
-    <article className="card mt-3 p-6">
-      <h1 className="text-2xl font-bold leading-tight">{item.titulo}</h1>
+    <article className="card-hero mt-3 animate-rise-in">
+      <div className="p-6 sm:p-8">
+        <h1 className="text-2xl font-bold leading-[1.15] sm:text-[28px]">{item.titulo}</h1>
 
-      {/* [RF14d] por que é este — frase gerada da fórmula */}
-      <p className="mt-3 border-l-2 border-accent bg-accent-subtle/50 py-2 pl-3 text-sm text-text-1">
-        {item.porque}
-      </p>
+        {/* [RF14d] por que é este — frase gerada da fórmula */}
+        <div className="mt-4 flex items-start gap-2.5 rounded-lg bg-accent-tint px-4 py-3 ring-1 ring-inset ring-accent/12">
+          <Target className="mt-0.5 h-4 w-4 flex-none text-accent" />
+          <p className="text-sm font-medium leading-relaxed text-accent-deep">
+            {item.porque}
+          </p>
+        </div>
 
-      <p className="mt-4 text-sm text-text-2">{item.descricao}</p>
+        <p className="mt-5 leading-relaxed text-text-2">{item.descricao}</p>
 
-      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-text-2">
-        {(item.localNome ?? item.localTextoOriginal) && (
-          <span className="inline-flex items-center gap-1">
-            <MapPin className="h-3.5 w-3.5" />
-            {item.localNome ?? item.localTextoOriginal}
+        <div className="mt-5 flex flex-wrap items-center gap-2">
+          {(item.localNome ?? item.localTextoOriginal) && (
+            <Meta icone={MapPin}>{item.localNome ?? item.localTextoOriginal}</Meta>
+          )}
+          {item.responsavelNome && <Meta icone={User}>{item.responsavelNome}</Meta>}
+          {item.categoriaNome && <Meta>{item.categoriaNome}</Meta>}
+          <span
+            className={`inline-flex items-center rounded-full px-2.5 py-1 font-mono text-xs tnum ${
+              prazo.tom === "vencida"
+                ? "bg-pri-alta-bg font-semibold text-venc-vencida"
+                : "bg-surface-raise text-text-2 ring-1 ring-inset ring-border"
+            }`}
+          >
+            {prazo.texto}
           </span>
-        )}
-        {item.responsavelNome && (
-          <span className="inline-flex items-center gap-1">
-            <User className="h-3.5 w-3.5" />
-            {item.responsavelNome}
-          </span>
-        )}
-        {item.categoriaNome && <span>{item.categoriaNome}</span>}
-        <span
-          className={`font-mono tnum ${
-            prazo.tom === "vencida" ? "font-semibold text-venc-vencida" : ""
-          }`}
-        >
-          {prazo.texto}
-        </span>
+        </div>
       </div>
 
       {/* [RF14f] todo item tem ação executável */}
-      <button className="btn-primary mt-6 w-full sm:w-auto" onClick={onAgir}>
-        {item.acao.rotulo}
-        <ArrowRight className="h-4 w-4" />
-      </button>
+      <div className="border-t border-border/70 bg-surface-raise/60 px-6 py-4 sm:px-8">
+        <button className="btn-primary group w-full sm:w-auto" onClick={onAgir}>
+          {item.acao.rotulo}
+          <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+        </button>
+      </div>
     </article>
+  );
+}
+
+function Meta({
+  icone: Icone,
+  children,
+}: {
+  icone?: typeof MapPin;
+  children: React.ReactNode;
+}) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-raise px-2.5 py-1 text-xs text-text-2 ring-1 ring-inset ring-border">
+      {Icone && <Icone className="h-3.5 w-3.5" />}
+      {children}
+    </span>
   );
 }

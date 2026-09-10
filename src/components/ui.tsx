@@ -90,9 +90,13 @@ export function EstadoVazio({
   children: ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border py-10 text-center text-sm text-text-2">
-      {icone}
-      <p>{children}</p>
+    <div className="flex animate-fade-in flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border bg-surface/50 py-14 text-center text-sm text-text-2">
+      {icone && (
+        <span className="grid h-12 w-12 place-items-center rounded-full bg-surface-raise text-text-2 ring-1 ring-inset ring-border">
+          {icone}
+        </span>
+      )}
+      <p className="max-w-xs leading-relaxed">{children}</p>
     </div>
   );
 }

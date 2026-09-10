@@ -25,14 +25,21 @@ export default function TodasDemandas() {
           Nenhuma demanda ativa
         </EstadoVazio>
       ) : (
-        <div className="space-y-2">
-          {demandas.map((d) => (
-            <LinhaDemanda
+        <div className="space-y-2.5">
+          {demandas.map((d, i) => (
+            <div
               key={d._id}
-              demanda={d}
-              agora={agora}
-              onClick={() => navigate(`/demanda/${d._id}`)}
-            />
+              className="animate-rise-in"
+              // Entrada escalonada: a lista "assenta" em vez de aparecer seca.
+              // Teto baixo no atraso pra não travar a leitura em listas longas.
+              style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}
+            >
+              <LinhaDemanda
+                demanda={d}
+                agora={agora}
+                onClick={() => navigate(`/demanda/${d._id}`)}
+              />
+            </div>
           ))}
         </div>
       )}

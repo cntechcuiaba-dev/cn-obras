@@ -14,6 +14,14 @@ body,
 
 body {
   @apply bg-bg text-text-1 font-sans antialiased;
+  font-feature-settings: "cv11", "ss01";
+}
+
+/* Títulos de produto: tracking negativo dá o aperto tipográfico que
+   diferencia software comercial de página gerada. */
+h1,
+h2 {
+  @apply tracking-tightest;
 }
 
 /* Prazos e datas usam numerais tabulares (design system). */
@@ -38,7 +46,16 @@ body {
     @apply btn bg-transparent text-pri-alta border border-pri-alta/30 hover:bg-pri-alta-bg hover:border-pri-alta/50;
   }
   .card {
-    @apply bg-surface border border-border rounded-lg shadow-card transition-shadow duration-200;
+    @apply bg-surface border border-border rounded-xl shadow-card transition-shadow duration-200;
+  }
+  /* Card-assinatura: é o "um movimento" do produto, o centro da tela inicial.
+     Precisa ler como peça principal, não como mais um card da lista. */
+  .card-hero {
+    @apply relative overflow-hidden rounded-2xl border border-accent/15 bg-surface shadow-hero;
+  }
+  .card-hero::before {
+    content: "";
+    @apply absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-accent-deep via-accent to-accent/40;
   }
   /* Para cards clicáveis (envoltos em <button>/<a>) — profundidade + leve
      "levantada" ao passar o mouse, sinalizando interatividade. */
