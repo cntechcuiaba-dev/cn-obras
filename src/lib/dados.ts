@@ -257,6 +257,13 @@ export function useAlternarAtivoEquipamento(): Fn {
   return useMutation(api.equipamentos.alternarAtivo);
 }
 
+// Só pra decidir se o painel oferece "assumir liderança" (bootstrap) — em
+// demo sempre há liderança fictícia, então a pergunta nem se aplica.
+export function useExisteLideranca(): boolean | undefined {
+  if (DEMO) return true;
+  return useQuery(api.usuarios.existeLideranca, {});
+}
+
 // [E3 / RF14a-i] Painel de um movimento.
 export function useProximoMovimento(): MovimentoRet | undefined {
   if (DEMO) {

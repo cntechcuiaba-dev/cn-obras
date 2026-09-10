@@ -1,4 +1,4 @@
-import { mutation, query } from "./_generated/server";
+import { mutation, query, QueryCtx, MutationCtx } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { requireIdentity, requireRole, getUsuarioAtual } from "./lib/auth";
 
@@ -89,15 +89,32 @@ export const listarUsuarios = query({
   },
 });
 
+async function jaHaLideranca(ctx: QueryCtx | MutationCtx): Promise<boolean> {
+  const todos = await ctx.db.query("usuarios").collect();
+  return todos.some((u) => u.papel === "lideranca");
+}
+
+// A tela do painel só oferece "assumir liderança" (bootstrap) quando isso é
+// genuinamente o primeiro acesso do sistema. Sem essa checagem, o botão
+// aparecia pra qualquer executor com o painel vazio — clicar não fazia nada
+// (a mutation já recusa se já existe liderança), mas oferecer a opção pra
+// quem foi convidado como executor é confuso: só o admin promove alguém,
+// via Administração > Usuários.
+export const existeLideranca = query({
+  args: {},
+  handler: async (ctx) => {
+    await requireIdentity(ctx);
+    return await jaHaLideranca(ctx);
+  },
+});
+
 // Atalho de bootstrap: o primeiro usuário do sistema vira liderança automaticamente,
 // senão ninguém consegue promover ninguém. Idempotente.
 export const promoverPrimeiroComoLideranca = mutation({
   args: {},
   handler: async (ctx) => {
     const usuario = await getUsuarioAtual(ctx);
-    const total = await ctx.db.query("usuarios").collect();
-    const jaHaLideranca = total.some((u) => u.papel === "lideranca");
-    if (!jaHaLideranca) {
+    if (!(await jaHaLideranca(ctx))) {
       await ctx.db.patch(usuario._id, { papel: "lideranca" });
       return "promovido";
     }

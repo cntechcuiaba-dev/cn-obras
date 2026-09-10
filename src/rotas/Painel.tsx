@@ -10,6 +10,7 @@ import {
   useProximoMovimento,
   useMarcarAvisoEnviado,
   useAprovarOrcamento,
+  useExisteLideranca,
   type AvisoPendente,
   type AprovacaoPendente,
 } from "../lib/dados";
@@ -223,7 +224,15 @@ function AprovacaoCard({ aprovacao }: { aprovacao: AprovacaoPendente }) {
 // enquanto não existir nenhuma).
 function BootstrapLideranca() {
   const promover = useMutation(api.usuarios.promoverPrimeiroComoLideranca);
+  const existeLideranca = useExisteLideranca();
   const [msg, setMsg] = useState<string | null>(null);
+
+  // Só é bootstrap de verdade quando ainda não existe liderança nenhuma no
+  // sistema. Fora disso (ex.: executor entrou por convite manual, criado
+  // direto no Clerk enquanto convites não funcionam), oferecer "assumir
+  // liderança" é confuso — quem promove alguém é o admin, em Administração.
+  if (existeLideranca !== false) return null;
+
   return (
     <div className="card mt-4 flex flex-col items-start gap-2 p-4 text-sm">
       <p className="text-text-2">
