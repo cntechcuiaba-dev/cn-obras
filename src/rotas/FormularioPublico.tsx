@@ -1,6 +1,6 @@
 import { FormEvent, useState } from "react";
 import { Camera, CheckCircle2, Send, X } from "lucide-react";
-import { useAbrir, useGerarUrlPublico } from "../lib/dados";
+import { useAbrir, useGerarUrlPublico, useLocaisPublicos } from "../lib/dados";
 import { DEMO } from "../lib/env";
 import { mascararTelefone } from "../lib/mascaras";
 import { Logo } from "../components/Logo";
@@ -13,10 +13,15 @@ const VAZIO = {
   localTextoOriginal: "",
 };
 
+// Valor do <select> quando o solicitante não encontra o próprio local na lista.
+const OUTRO_LOCAL = "__outro__";
+
 export default function FormularioPublico() {
   const abrir = useAbrir();
   const gerarUrl = useGerarUrlPublico();
+  const locais = useLocaisPublicos();
 
+  const [localId, setLocalId] = useState("");
   const [form, setForm] = useState(VAZIO);
   const [foto, setFoto] = useState<File | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -44,8 +49,10 @@ export default function FormularioPublico() {
         const { storageId } = await res.json();
         anexos = [storageId];
       }
+      const escolheuDaLista = localId !== "" && localId !== OUTRO_LOCAL;
       const r = await abrir({
         ...form,
+        localId: escolheuDaLista ? localId : undefined,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         anexosAbertura: anexos as any,
       });
@@ -73,6 +80,7 @@ export default function FormularioPublico() {
             className="btn-ghost mt-6"
             onClick={() => {
               setForm(VAZIO);
+              setLocalId("");
               setFoto(null);
               setProtocolo(null);
             }}
@@ -133,15 +141,48 @@ export default function FormularioPublico() {
               />
             </Campo>
           </div>
+          {/* [RF01] A lista ajuda quem conhece os nomes oficiais; o texto livre
+              continua existindo porque é onde vem a precisão que o cadastro não
+              tem ("perto do palco", "pia grande") — e para quem não achar o
+              próprio local. A triagem (RF06) confirma o local de verdade. */}
           <Campo label="Local">
-            <input
+            <select
               className="input"
-              placeholder="Ex: Salão social, perto do palco"
-              value={form.localTextoOriginal}
-              onChange={(e) => set("localTextoOriginal", e.target.value)}
+              value={localId}
+              onChange={(e) => setLocalId(e.target.value)}
               required
-            />
+            >
+              <option value="" disabled>
+                {locais === undefined ? "Carregando…" : "Selecione o local"}
+              </option>
+              {(locais ?? []).map((l) => (
+                <option key={l._id} value={l._id}>
+                  {l.nome}
+                </option>
+              ))}
+              <option value={OUTRO_LOCAL}>Não encontrei / outro lugar</option>
+            </select>
           </Campo>
+
+          {localId !== "" && (
+            <Campo
+              label={
+                localId === OUTRO_LOCAL ? "Qual o local?" : "Ponto exato (opcional)"
+              }
+            >
+              <input
+                className="input"
+                placeholder={
+                  localId === OUTRO_LOCAL
+                    ? "Ex: Depósito atrás da cozinha"
+                    : "Ex: perto do palco, na parede do fundo"
+                }
+                value={form.localTextoOriginal}
+                onChange={(e) => set("localTextoOriginal", e.target.value)}
+                required={localId === OUTRO_LOCAL}
+              />
+            </Campo>
+          )}
 
           <div>
             <span className="label">Foto (opcional)</span>

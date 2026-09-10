@@ -22,6 +22,16 @@ export const listarLocais = query({
   },
 });
 
+// Usada pelo formulário público (RF01), que não tem sessão. Devolve só id e
+// nome dos locais ativos — o mínimo pro dropdown, sem expor o resto do cadastro.
+export const listarLocaisPublico = query({
+  args: {},
+  handler: async (ctx) => {
+    const todos = await ctx.db.query("locais").collect();
+    return todos.filter((l) => l.ativo).map((l) => ({ _id: l._id, nome: l.nome }));
+  },
+});
+
 export const listarModelos = query({
   args: {},
   handler: async (ctx) => {

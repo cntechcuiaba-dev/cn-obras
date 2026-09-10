@@ -70,6 +70,10 @@ export default function Triagem() {
               <FormularioTriagem
                 key={selecionada}
                 demandaId={selecionada}
+                // O solicitante já pode ter escolhido o local no formulário
+                // público — a triagem começa com ele preenchido, mas continua
+                // sendo quem confirma (RF06).
+                localSugeridoId={abertas.find((d) => d._id === selecionada)?.localId}
                 onPronto={() => setSelecionada(null)}
               />
             ) : (
@@ -84,9 +88,11 @@ export default function Triagem() {
 
 function FormularioTriagem({
   demandaId,
+  localSugeridoId,
   onPronto,
 }: {
   demandaId: string;
+  localSugeridoId?: string;
   onPronto: () => void;
 }) {
   const categorias = useCategorias();
@@ -97,7 +103,7 @@ function FormularioTriagem({
   const cancelar = useCancelar();
 
   const [categoriaId, setCategoriaId] = useState("");
-  const [localId, setLocalId] = useState("");
+  const [localId, setLocalId] = useState(localSugeridoId ?? "");
   const [equipamentoId, setEquipamentoId] = useState("");
   const [prioridade, setPrioridade] = useState<Prioridade>("media");
   const [prazo, setPrazo] = useState("");

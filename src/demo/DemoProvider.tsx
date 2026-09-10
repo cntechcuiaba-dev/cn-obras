@@ -22,6 +22,7 @@ interface AbrirArgs {
   solicitanteNome: string;
   solicitanteWhatsapp: string;
   localTextoOriginal: string;
+  localId?: string;
 }
 interface TriarArgs {
   demandaId: string;
@@ -99,12 +100,13 @@ export function DemoProvider({ children }: { children: ReactNode }) {
           descricao: a.descricao,
           solicitanteNome: a.solicitanteNome,
           solicitanteWhatsapp: a.solicitanteWhatsapp.replace(/\D/g, ""),
-          localTextoOriginal: a.localTextoOriginal,
+          localTextoOriginal: a.localTextoOriginal || nomeLoc(a.localId) || "",
+          localId: a.localId,
           status: "aberta",
           historico: [evento("criada", "Demanda aberta pelo formulário público")],
           fotos: [],
           categoriaNome: null,
-          localNome: null,
+          localNome: nomeLoc(a.localId),
           responsavelNome: null,
         };
         setDemandas((prev) => [nova, ...prev]);

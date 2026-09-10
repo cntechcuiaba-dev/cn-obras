@@ -10,6 +10,8 @@ export interface DemandaView {
   prioridade?: Prioridade;
   prazo?: number;
   categoriaNome?: string | null;
+  // Sugestão vinda do formulário público; a triagem confirma (RF06).
+  localId?: string;
   localNome?: string | null;
   responsavelNome?: string | null;
   equipeNomes?: string[];

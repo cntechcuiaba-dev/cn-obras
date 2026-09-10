@@ -34,6 +34,10 @@ export const abrirDemanda = mutation({
     solicitanteNome: v.string(),
     solicitanteWhatsapp: v.string(),
     localTextoOriginal: v.string(),
+    // Sugestão do solicitante escolhida no dropdown (RF01 segue aceitando texto
+    // livre — quem não acha o próprio local descreve com as próprias palavras).
+    // A triagem (RF06) continua sendo quem confirma o local de verdade.
+    localId: v.optional(v.id("locais")),
     anexosAbertura: v.optional(v.array(v.id("_storage"))),
   },
   handler: async (ctx, args) => {
@@ -47,10 +51,16 @@ export const abrirDemanda = mutation({
     if (titulo.length < 3) throw new Error("Descreva o problema em pelo menos 3 caracteres.");
     if (!descricao) throw new Error("A descrição é obrigatória.");
     if (!nome) throw new Error("Informe seu nome.");
-    if (!local) throw new Error("Informe o local.");
     if (whatsappDigitos.length < 10 || whatsappDigitos.length > 13) {
       throw new Error("Informe um WhatsApp válido com DDD.");
     }
+
+    // Local vem por escolha OU por descrição — uma das duas tem que existir.
+    const localEscolhido = args.localId ? await ctx.db.get(args.localId) : null;
+    if (args.localId && (!localEscolhido || !localEscolhido.ativo)) {
+      throw new Error("Local inválido.");
+    }
+    if (!localEscolhido && !local) throw new Error("Informe o local.");
 
     const demandaId = await criarDemanda(
       ctx,
@@ -59,7 +69,10 @@ export const abrirDemanda = mutation({
         descricao,
         solicitanteNome: nome,
         solicitanteWhatsapp: whatsappDigitos,
-        localTextoOriginal: local,
+        // Guarda o que o solicitante disse; se ele só escolheu da lista, o nome
+        // do local escolhido serve de texto original.
+        localTextoOriginal: local || localEscolhido!.nome,
+        localId: localEscolhido?._id,
         anexosAbertura: args.anexosAbertura,
       },
       "aberta",

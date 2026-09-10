@@ -122,6 +122,12 @@ export function useLocais(): Cadastro[] | undefined {
   return asType<Cadastro[] | undefined>(useQuery(api.cadastros.listarLocais, {}));
 }
 
+// Locais para o formulário público (sem sessão) — só ativos, só id e nome.
+export function useLocaisPublicos(): Cadastro[] | undefined {
+  if (DEMO) return LOCAIS.filter((l) => l.ativo !== false);
+  return asType<Cadastro[] | undefined>(useQuery(api.cadastros.listarLocaisPublico, {}));
+}
+
 export function useExecutores(): Cadastro[] | undefined {
   if (DEMO) return EXECUTORES;
   return asType<Cadastro[] | undefined>(useQuery(api.usuarios.listarExecutores, {}));
