@@ -120,7 +120,7 @@ export default function Painel() {
               <button
                 key={b._id}
                 onClick={() => navigate(`/demanda/${b._id}`)}
-                className="card w-full px-4 py-3 text-left transition hover:bg-surface-raise"
+                className="card card-hover w-full px-4 py-3 text-left hover:bg-surface-raise"
               >
                 <p className="truncate text-sm font-medium">{b.titulo}</p>
                 <p className="mt-1 text-xs text-text-2">

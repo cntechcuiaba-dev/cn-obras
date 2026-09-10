@@ -55,6 +55,25 @@ export default {
       fontSize: {
         label: ["13px", { lineHeight: "16px", letterSpacing: "0.05em" }],
       },
+      boxShadow: {
+        card: "0 1px 2px 0 rgb(0 0 0 / 0.04), 0 1px 3px 0 rgb(0 0 0 / 0.06)",
+        "card-hover": "0 8px 20px -4px rgb(0 0 0 / 0.10), 0 3px 8px -2px rgb(0 0 0 / 0.05)",
+        header: "0 1px 2px 0 rgb(0 0 0 / 0.03), 0 2px 10px 0 rgb(0 0 0 / 0.04)",
+        popover: "0 14px 34px -6px rgb(0 0 0 / 0.16), 0 4px 10px -4px rgb(0 0 0 / 0.06)",
+      },
+      keyframes: {
+        "fade-in": {
+          from: { opacity: "0", transform: "translateY(4px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+        shimmer: {
+          "100%": { transform: "translateX(100%)" },
+        },
+      },
+      animation: {
+        "fade-in": "fade-in 0.35s ease-out",
+        shimmer: "shimmer 1.6s ease-in-out infinite",
+      },
     },
   },
   plugins: [],

@@ -75,7 +75,11 @@ export function PrazoBadge({
 }
 
 export function Skeleton({ className = "" }: { className?: string }) {
-  return <div className={`animate-pulse rounded bg-border/70 ${className}`} />;
+  return (
+    <div className={`relative overflow-hidden rounded bg-border/60 ${className}`}>
+      <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/70 to-transparent" />
+    </div>
+  );
 }
 
 export function EstadoVazio({
@@ -114,7 +118,7 @@ export function CabecalhoSecao({
   acao?: ReactNode;
 }) {
   return (
-    <div className="mb-6 flex items-end justify-between gap-4">
+    <div className="mb-6 flex animate-fade-in items-end justify-between gap-4">
       <div>
         {supra && (
           <p className="text-label uppercase text-accent mb-1">{supra}</p>

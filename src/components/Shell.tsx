@@ -48,7 +48,7 @@ export function Shell({
 }) {
   return (
     <div className="min-h-full">
-      <header className="sticky top-0 z-10 border-b border-border bg-surface/90 backdrop-blur">
+      <header className="sticky top-0 z-10 border-b border-border/70 bg-surface/90 shadow-header backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
           <div className="flex items-center gap-2 font-semibold text-text-1">
             <img src="/pwa-192.png" alt="CN Obras" className="h-8 w-8 rounded" />
@@ -62,9 +62,9 @@ export function Shell({
                 to={l.to}
                 end={l.to === "/"}
                 className={({ isActive }) =>
-                  `inline-flex items-center gap-1.5 rounded px-3 py-1.5 text-sm font-medium transition ${
+                  `inline-flex items-center gap-1.5 rounded px-3 py-1.5 text-sm font-medium transition-all duration-150 ${
                     isActive
-                      ? "bg-accent-subtle text-accent-active"
+                      ? "bg-accent-subtle text-accent-active shadow-sm"
                       : "text-text-2 hover:bg-surface-raise hover:text-text-1"
                   }`
                 }
@@ -82,7 +82,7 @@ export function Shell({
               <Link
                 to="/admin"
                 title="Administração"
-                className="grid h-8 w-8 place-items-center rounded text-text-2 transition hover:bg-surface-raise hover:text-text-1"
+                className="grid h-8 w-8 place-items-center rounded text-text-2 transition-all duration-150 hover:bg-surface-raise hover:text-text-1"
               >
                 <Settings className="h-4 w-4" />
               </Link>
@@ -94,7 +94,7 @@ export function Shell({
               target="_blank"
               rel="noreferrer"
               title="Abrir nova solicitação (formulário público)"
-              className="inline-flex items-center gap-1.5 rounded px-2.5 py-1.5 text-sm font-medium text-accent hover:bg-accent-subtle"
+              className="inline-flex items-center gap-1.5 rounded px-2.5 py-1.5 text-sm font-medium text-accent transition-all duration-150 hover:bg-accent-subtle"
             >
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">Nova</span>
@@ -111,7 +111,7 @@ export function Shell({
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
+      <main className="mx-auto max-w-5xl animate-fade-in px-4 py-8">{children}</main>
     </div>
   );
 }

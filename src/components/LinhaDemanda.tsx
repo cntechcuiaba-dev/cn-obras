@@ -21,7 +21,7 @@ export function LinhaDemanda({
   return (
     <button
       onClick={onClick}
-      className={`card flex w-full items-center gap-4 border-l-4 px-4 py-3 text-left transition hover:bg-surface-raise ${
+      className={`card card-hover group flex w-full items-center gap-4 border-l-4 px-4 py-3 text-left hover:bg-surface-raise ${
         BORDA_RISCO[demanda.risco ?? "em_dia"] ?? "border-l-border"
       }`}
     >
@@ -61,7 +61,7 @@ export function LinhaDemanda({
           status={demanda.status}
           concluidaEm={demanda.concluidaEm}
         />
-        <ChevronRight className="h-4 w-4 text-text-2" />
+        <ChevronRight className="h-4 w-4 text-text-2 transition-transform duration-200 group-hover:translate-x-0.5" />
       </div>
     </button>
   );

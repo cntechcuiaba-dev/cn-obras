@@ -15,6 +15,9 @@ const aparencia = {
   },
   elements: {
     footerAction: { display: "none" },
+    card: "shadow-card-hover border border-border",
+    socialButtonsBlockButton: "transition-all duration-150 hover:shadow-sm",
+    formButtonPrimary: "transition-all duration-150 active:scale-[0.97]",
   },
 };
 
@@ -23,7 +26,7 @@ export default function Login() {
 
   return (
     <div className="grid min-h-screen place-items-center bg-bg px-4 py-10">
-      <div className="w-full max-w-sm">
+      <div className="w-full max-w-sm animate-fade-in">
         <div className="mb-6 flex items-center justify-center gap-2 text-text-1">
           <img src="/pwa-192.png" alt="CN Obras" className="h-9 w-9 rounded" />
           <span className="text-lg font-semibold">Central CN Obras</span>

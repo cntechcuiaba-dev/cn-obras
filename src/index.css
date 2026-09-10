@@ -23,24 +23,32 @@ body {
 
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded font-medium transition
-      px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none;
+    @apply inline-flex items-center justify-center gap-2 rounded font-medium
+      px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none
+      transition-all duration-150 ease-out active:scale-[0.97];
   }
   .btn-primary {
-    @apply btn bg-accent text-white hover:bg-accent-hover active:bg-accent-active;
+    @apply btn bg-accent text-white shadow-sm hover:bg-accent-hover hover:shadow-md active:bg-accent-active;
   }
   .btn-ghost {
-    @apply btn bg-surface text-text-1 border border-border hover:border-border-strong hover:bg-surface-raise;
+    @apply btn bg-surface text-text-1 border border-border
+      hover:border-border-strong hover:bg-surface-raise hover:shadow-sm;
   }
   .btn-danger {
-    @apply btn bg-transparent text-pri-alta border border-pri-alta/30 hover:bg-pri-alta-bg;
+    @apply btn bg-transparent text-pri-alta border border-pri-alta/30 hover:bg-pri-alta-bg hover:border-pri-alta/50;
   }
   .card {
-    @apply bg-surface border border-border rounded-lg;
+    @apply bg-surface border border-border rounded-lg shadow-card transition-shadow duration-200;
+  }
+  /* Para cards clicáveis (envoltos em <button>/<a>) — profundidade + leve
+     "levantada" ao passar o mouse, sinalizando interatividade. */
+  .card-hover {
+    @apply transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-card-hover hover:border-border-strong;
   }
   .input {
     @apply w-full rounded border border-border bg-surface px-3 py-2 text-sm
-      outline-none focus:border-accent focus:ring-2 focus:ring-accent/20;
+      outline-none transition-all duration-150
+      focus:border-accent focus:ring-2 focus:ring-accent/20;
   }
   .label {
     @apply block text-label uppercase text-text-2 mb-1.5;

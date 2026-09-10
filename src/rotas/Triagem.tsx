@@ -42,7 +42,7 @@ export default function Triagem() {
               <button
                 key={d._id}
                 onClick={() => setSelecionada(d._id)}
-                className={`card w-full px-4 py-3 text-left transition hover:bg-surface-raise ${
+                className={`card card-hover w-full px-4 py-3 text-left hover:bg-surface-raise ${
                   selecionada === d._id ? "ring-2 ring-accent" : ""
                 }`}
               >
