@@ -64,7 +64,9 @@ export default function Administracao() {
         descricao="Categorias, locais, equipamentos, modelos de mensagem e usuários."
       />
 
-      <div className="mb-6 flex gap-1 border-b border-border">
+      {/* No celular as abas não cabem: rolam na horizontal em vez de quebrar
+          linha (que desalinhava a régua e escondia as últimas). */}
+      <div className="rolagem-limpa mb-6 flex gap-1 overflow-x-auto border-b border-border">
         {(
           [
             ["categorias", "Categorias"],
@@ -77,8 +79,17 @@ export default function Administracao() {
         ).map(([k, rotulo]) => (
           <button
             key={k}
-            onClick={() => setAba(k)}
-            className={`border-b-2 px-3 py-2 text-sm font-medium transition ${
+            onClick={(e) => {
+              setAba(k);
+              // No celular a aba escolhida pode estar fora de vista na faixa
+              // que rola — centraliza pra não sumir depois de tocada.
+              e.currentTarget.scrollIntoView({
+                inline: "center",
+                block: "nearest",
+                behavior: "smooth",
+              });
+            }}
+            className={`flex-none whitespace-nowrap border-b-2 px-3 py-2 text-sm font-medium transition ${
               aba === k
                 ? "border-accent text-accent-active"
                 : "border-transparent text-text-2 hover:text-text-1"
@@ -180,7 +191,9 @@ function ListaComCadastro({
 
   return (
     <div>
-      <form onSubmit={salvar} className="mb-4 flex gap-2">
+      {/* No celular o campo e o botão empilham — lado a lado o placeholder
+          ficava cortado e o botão espremido. */}
+      <form onSubmit={salvar} className="mb-4 flex flex-col gap-2 sm:flex-row">
         <input
           className="input"
           placeholder={placeholder}
@@ -188,7 +201,11 @@ function ListaComCadastro({
           onChange={(e) => setNome(e.target.value)}
           required
         />
-        <button type="submit" className="btn-primary flex-none" disabled={salvando}>
+        <button
+          type="submit"
+          className="btn-primary w-full flex-none sm:w-auto"
+          disabled={salvando}
+        >
           <Plus className="h-4 w-4" /> Adicionar
         </button>
       </form>
@@ -242,12 +259,15 @@ function AbaEquipamentos() {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-text-2">
           Ar-condicionados, bebedouros e outros equipamentos com manutenção periódica.
         </p>
         {!criando && (
-          <button className="btn-primary flex-none" onClick={() => setCriando(true)}>
+          <button
+            className="btn-primary w-full flex-none sm:w-auto"
+            onClick={() => setCriando(true)}
+          >
             <Plus className="h-4 w-4" /> Novo equipamento
           </button>
         )}

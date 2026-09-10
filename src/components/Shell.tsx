@@ -63,7 +63,7 @@ export function Shell({
             <span className="hidden whitespace-nowrap sm:inline">CN Obras</span>
           </div>
 
-          <nav className="ml-auto flex items-center gap-1 overflow-x-auto">
+          <nav className="rolagem-limpa ml-auto flex items-center gap-1 overflow-x-auto">
             {LINKS[papel].map((l) => (
               <NavLink
                 key={l.to}

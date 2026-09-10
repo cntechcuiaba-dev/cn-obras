@@ -29,6 +29,16 @@ h2 {
   font-variant-numeric: tabular-nums;
 }
 
+/* Faixas que rolam na horizontal no celular (menu do topo, abas da
+   administração): o gesto continua, a barra some — ela cortava o layout. */
+.rolagem-limpa {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.rolagem-limpa::-webkit-scrollbar {
+  display: none;
+}
+
 @layer components {
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded font-medium
