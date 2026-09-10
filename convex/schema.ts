@@ -205,4 +205,12 @@ export default defineSchema({
   })
     .index("by_responsavel_pendente", ["responsavelId", "enviadoEm"])
     .index("by_demanda", ["demandaId"]),
+
+  // Identidade visual do cliente (white-label). Tabela de linha única: a
+  // liderança envia a própria logo e ela passa a aparecer no login, no
+  // cabeçalho e no formulário público. Sem linha = usa a logo padrão.
+  configuracao: defineTable({
+    logoStorageId: v.optional(v.id("_storage")),
+    atualizadoEm: v.number(),
+  }),
 });

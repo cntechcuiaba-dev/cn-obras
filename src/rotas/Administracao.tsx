@@ -9,6 +9,7 @@ import {
   X as XIcon,
   Wrench,
   Mail,
+  Image as ImageIcon,
 } from "lucide-react";
 import {
   useCategoriasAdmin,
@@ -28,18 +29,29 @@ import {
   useCriarEquipamento,
   useAtualizarEquipamento,
   useAlternarAtivoEquipamento,
+  useLogo,
+  useGerarUrlLogo,
+  useDefinirLogo,
+  useRemoverLogo,
   type CadastroAdmin,
   type UsuarioAdmin,
   type EquipamentoAdmin,
 } from "../lib/dados";
 import { CabecalhoSecao, Carregando, EstadoVazio } from "../components/ui";
+import { LOGO_PADRAO } from "../components/Logo";
 import { formatarData } from "../lib/format";
 
 // RF26/RF27/RF21: cadastro/ativação de categorias, locais e equipamentos, edição
 // dos modelos de mensagem e promoção/desativação de usuários. Tudo que antes só
 // existia via seed.
 
-type Aba = "categorias" | "locais" | "equipamentos" | "modelos" | "usuarios";
+type Aba =
+  | "categorias"
+  | "locais"
+  | "equipamentos"
+  | "modelos"
+  | "usuarios"
+  | "identidade";
 
 export default function Administracao() {
   const [aba, setAba] = useState<Aba>("categorias");
@@ -60,6 +72,7 @@ export default function Administracao() {
             ["equipamentos", "Equipamentos"],
             ["modelos", "Modelos de mensagem"],
             ["usuarios", "Usuários"],
+            ["identidade", "Identidade visual"],
           ] as [Aba, string][]
         ).map(([k, rotulo]) => (
           <button
@@ -81,6 +94,7 @@ export default function Administracao() {
       {aba === "equipamentos" && <AbaEquipamentos />}
       {aba === "modelos" && <AbaModelos />}
       {aba === "usuarios" && <AbaUsuarios />}
+      {aba === "identidade" && <AbaIdentidade />}
     </div>
   );
 }
@@ -624,5 +638,125 @@ function ConvidarUsuario({ onErro }: { onErro: (m: string | null) => void }) {
       </button>
       {sucesso && <p className="w-full text-sm text-st-concluida">{sucesso}</p>}
     </form>
+  );
+}
+
+// ---------------- Identidade visual (white-label) ----------------
+
+const TAMANHO_MAX_LOGO = 2 * 1024 * 1024;
+const TIPOS_LOGO = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
+
+function AbaIdentidade() {
+  const logoUrl = useLogo();
+  const gerarUrl = useGerarUrlLogo();
+  const definir = useDefinirLogo();
+  const remover = useRemoverLogo();
+  const [enviando, setEnviando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+
+  async function enviar(arquivo: File) {
+    setErro(null);
+    if (!TIPOS_LOGO.includes(arquivo.type)) {
+      setErro("Formato não aceito. Use PNG, JPG, WEBP ou SVG.");
+      return;
+    }
+    if (arquivo.size > TAMANHO_MAX_LOGO) {
+      setErro("A imagem passa de 2 MB.");
+      return;
+    }
+    setEnviando(true);
+    try {
+      const url = (await gerarUrl()) as string;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": arquivo.type },
+        body: arquivo,
+      });
+      if (!res.ok) throw new Error("Falha ao enviar a imagem.");
+      const { storageId } = await res.json();
+      // Recusa de validação volta como resultado (não como exceção) para o
+      // servidor conseguir apagar o arquivo recusado — ver convex/configuracao.ts.
+      const r = (await definir({ storageId })) as { ok: boolean; erro?: string };
+      if (r && r.ok === false) setErro(r.erro ?? "Imagem recusada.");
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : "Erro ao enviar.");
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  return (
+    <div className="max-w-2xl">
+      <div className="card p-6">
+        <h2 className="font-semibold">Logo</h2>
+        <p className="mt-1 text-sm text-text-2">
+          Aparece na tela de login, no cabeçalho do sistema e no formulário público.
+        </p>
+
+        <div className="mt-5 flex flex-wrap items-center gap-6">
+          {/* Prévia nos dois tamanhos em que ela realmente aparece. */}
+          <div className="flex items-center gap-4 rounded-lg bg-surface-raise p-4 ring-1 ring-inset ring-border">
+            <img
+              src={logoUrl ?? LOGO_PADRAO}
+              alt="Prévia da logo"
+              className="h-20 w-20 rounded-lg object-contain"
+            />
+            <img
+              src={logoUrl ?? LOGO_PADRAO}
+              alt=""
+              className="h-8 w-8 rounded-lg object-contain"
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="btn-primary cursor-pointer">
+              <ImageIcon className="h-4 w-4" />
+              {enviando ? "Enviando…" : logoUrl ? "Trocar logo" : "Enviar logo"}
+              <input
+                type="file"
+                accept={TIPOS_LOGO.join(",")}
+                className="hidden"
+                disabled={enviando}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void enviar(f);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+            {logoUrl && (
+              <button
+                className="btn-ghost"
+                disabled={enviando}
+                onClick={async () => {
+                  setErro(null);
+                  try {
+                    await remover({});
+                  } catch (e) {
+                    setErro(e instanceof Error ? e.message : "Erro ao remover.");
+                  }
+                }}
+              >
+                <XIcon className="h-4 w-4" /> Voltar à logo padrão
+              </button>
+            )}
+          </div>
+        </div>
+
+        {erro && (
+          <p className="mt-4 rounded bg-pri-alta-bg px-3 py-2 text-sm text-pri-alta">{erro}</p>
+        )}
+
+        <div className="mt-6 border-t border-border pt-4">
+          <p className="label">Especificações</p>
+          <ul className="space-y-1 text-sm text-text-2">
+            <li>· Quadrada (proporção 1:1), a partir de 256×256 px</li>
+            <li>· PNG, JPG, WEBP ou SVG, até 2 MB</li>
+            <li>· Fundo transparente funciona melhor sobre fundo claro e escuro</li>
+            <li>· Evite margem sobrando: a imagem já é exibida dentro de um espaço próprio</li>
+          </ul>
+        </div>
+      </div>
+    </div>
   );
 }

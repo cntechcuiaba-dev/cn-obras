@@ -184,6 +184,28 @@ export function useEquipamentosAdmin(): EquipamentoAdmin[] | undefined {
   );
 }
 
+// Identidade visual (white-label). Consulta pública: o login e o formulário
+// público precisam da logo antes de existir sessão.
+export function useLogo(): string | null | undefined {
+  if (DEMO) return null;
+  const config = asType<{ logoUrl: string | null } | undefined>(
+    useQuery(api.configuracao.obter, {}),
+  );
+  return config === undefined ? undefined : config.logoUrl;
+}
+export function useGerarUrlLogo(): Fn {
+  if (DEMO) return async () => "";
+  return useMutation(api.configuracao.gerarUrlUploadLogo);
+}
+export function useDefinirLogo(): Fn {
+  if (DEMO) return async () => undefined;
+  return useMutation(api.configuracao.definirLogo);
+}
+export function useRemoverLogo(): Fn {
+  if (DEMO) return async () => undefined;
+  return useMutation(api.configuracao.removerLogo);
+}
+
 export function useCriarCategoria(): Fn {
   if (DEMO) return async () => undefined;
   return useMutation(api.cadastros.criarCategoria);

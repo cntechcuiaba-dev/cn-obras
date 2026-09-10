@@ -3,6 +3,7 @@ import { Camera, CheckCircle2, Send, X } from "lucide-react";
 import { useAbrir, useGerarUrlPublico } from "../lib/dados";
 import { DEMO } from "../lib/env";
 import { mascararTelefone } from "../lib/mascaras";
+import { Logo } from "../components/Logo";
 
 const VAZIO = {
   titulo: "",
@@ -185,7 +186,7 @@ function Casca({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-bg px-4 py-8">
       <div className="mx-auto mb-6 flex max-w-md items-center gap-2 text-text-1">
-        <img src="/pwa-192.png" alt="CN Obras" className="h-8 w-8 rounded" />
+        <Logo className="h-9 w-9" alt="CN Obras" />
         <span className="font-semibold">Central CN Obras</span>
       </div>
       {children}

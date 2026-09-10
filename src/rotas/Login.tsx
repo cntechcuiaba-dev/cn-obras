@@ -2,6 +2,7 @@ import { SignIn, SignUp } from "@clerk/clerk-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Target, Bell, LineChart } from "lucide-react";
+import { Logo } from "../components/Logo";
 
 // Sem domínio próprio, o Account Portal hospedado do Clerk (accounts.<dominio>)
 // não resolve — por isso login e cadastro ficam os dois embutidos aqui, trocando
@@ -60,9 +61,9 @@ export default function Login() {
           className="pointer-events-none absolute -bottom-32 -left-20 h-96 w-96 rounded-full bg-accent-deep/40 blur-3xl"
         />
 
-        <div className="relative flex items-center gap-2.5">
-          <img src="/pwa-192.png" alt="" className="h-9 w-9 rounded-lg" />
-          <span className="font-semibold tracking-tight">Central CN Obras</span>
+        <div className="relative flex items-center gap-3.5">
+          <Logo className="h-16 w-16 shadow-lg ring-1 ring-white/10" />
+          <span className="text-lg font-semibold tracking-tight">Central CN Obras</span>
         </div>
 
         <div className="relative mt-auto max-w-md">
@@ -97,8 +98,8 @@ export default function Login() {
       {/* Coluna de autenticação. */}
       <main className="flex items-center justify-center bg-bg px-4 py-12">
         <div className="w-full max-w-sm animate-fade-in">
-          <div className="mb-8 flex items-center justify-center gap-2 lg:hidden">
-            <img src="/pwa-192.png" alt="" className="h-9 w-9 rounded-lg" />
+          <div className="mb-8 flex flex-col items-center gap-3 text-center lg:hidden">
+            <Logo className="h-20 w-20 shadow-card" />
             <span className="text-lg font-semibold">Central CN Obras</span>
           </div>
 
