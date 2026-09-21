@@ -1,4 +1,5 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import {
   Settings,
   Plus,
@@ -10,6 +11,9 @@ import {
   Wrench,
   Mail,
   Image as ImageIcon,
+  Link2,
+  Copy,
+  Download,
 } from "lucide-react";
 import {
   useCategoriasAdmin,
@@ -41,6 +45,7 @@ import { CabecalhoSecao, Carregando, EstadoVazio } from "../components/ui";
 import { LOGO_PADRAO } from "../components/Logo";
 import { formatarData } from "../lib/format";
 import { mensagemErro } from "../lib/erros";
+import { urlPublica } from "../lib/publico";
 
 // RF26/RF27/RF21: cadastro/ativação de categorias, locais e equipamentos, edição
 // dos modelos de mensagem e promoção/desativação de usuários. Tudo que antes só
@@ -75,7 +80,7 @@ export default function Administracao() {
             ["equipamentos", "Equipamentos"],
             ["modelos", "Modelos de mensagem"],
             ["usuarios", "Usuários"],
-            ["identidade", "Identidade visual"],
+            ["identidade", "Marca e divulgação"],
           ] as [Aba, string][]
         ).map(([k, rotulo]) => (
           <button
@@ -669,6 +674,108 @@ function ConvidarUsuario({ onErro }: { onErro: (m: string | null) => void }) {
 const TAMANHO_MAX_LOGO = 2 * 1024 * 1024;
 const TIPOS_LOGO = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
 
+// O link do formulário é a única coisa do sistema que circula fora dele —
+// cartaz no mural, grupo de WhatsApp, recado no culto. Sem um lugar que o
+// mostre, a liderança dependia de lembrar o endereço de cabeça.
+function SecaoLinkPublico() {
+  const [copiado, setCopiado] = useState(false);
+  const [falhouCopiar, setFalhouCopiar] = useState(false);
+  const refQR = useRef<HTMLDivElement>(null);
+  const refUrl = useRef<HTMLParagraphElement>(null);
+  const url = urlPublica();
+
+  // A área de transferência falha calada em navegador antigo, em conexão sem
+  // HTTPS ou quando o usuário nega a permissão — e o botão ficava mudo. Na
+  // falha, seleciona o endereço na tela para dar pra copiar com Ctrl+C.
+  async function copiar() {
+    try {
+      await navigator.clipboard.writeText(url);
+      setFalhouCopiar(false);
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 2000);
+    } catch {
+      setFalhouCopiar(true);
+      const no = refUrl.current;
+      if (no) {
+        const faixa = document.createRange();
+        faixa.selectNodeContents(no);
+        const sel = window.getSelection();
+        sel?.removeAllRanges();
+        sel?.addRange(faixa);
+      }
+    }
+  }
+
+  function baixarQR() {
+    const svg = refQR.current?.querySelector("svg");
+    if (!svg) return;
+    const blob = new Blob([new XMLSerializer().serializeToString(svg)], {
+      type: "image/svg+xml",
+    });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "qrcode-solicitacoes.svg";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  return (
+    <div className="card mb-4 p-6">
+      <h2 className="flex items-center gap-2 font-semibold">
+        <Link2 className="h-4 w-4 text-text-2" aria-hidden />
+        Link para solicitações
+      </h2>
+      <p className="mt-1 text-sm text-text-2">
+        É este endereço que a congregação usa para abrir uma solicitação. Não
+        pede login. O endereço do sistema, com login, é outro.
+      </p>
+
+      <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-start">
+        <div className="min-w-0 flex-1">
+          <p
+            ref={refUrl}
+            className="break-all rounded-lg bg-surface-raise px-4 py-3 font-mono text-sm ring-1 ring-inset ring-border"
+          >
+            {url}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button className="btn-primary" onClick={copiar}>
+              {copiado ? (
+                <Check className="h-4 w-4" aria-hidden />
+              ) : (
+                <Copy className="h-4 w-4" aria-hidden />
+              )}
+              {copiado ? "Copiado" : "Copiar link"}
+            </button>
+            <button className="btn-ghost" onClick={baixarQR}>
+              <Download className="h-4 w-4" aria-hidden />
+              Baixar QR code
+            </button>
+          </div>
+          {falhouCopiar ? (
+            <p role="status" className="mt-2 text-xs text-pri-alta">
+              Não consegui copiar sozinho. O endereço já está selecionado —
+              use Ctrl+C (ou toque e segure, no celular).
+            </p>
+          ) : (
+            <p role="status" className="sr-only">
+              {copiado ? "Link copiado." : ""}
+            </p>
+          )}
+        </div>
+
+        {/* Para imprimir e colar no mural: quem vê o cartaz aponta a câmera. */}
+        <div
+          ref={refQR}
+          className="flex-none self-center rounded-lg bg-white p-3 ring-1 ring-inset ring-border sm:self-start"
+        >
+          <QRCodeSVG value={url} size={132} level="M" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AbaIdentidade() {
   const logoUrl = useLogo();
   const gerarUrl = useGerarUrlLogo();
@@ -710,6 +817,7 @@ function AbaIdentidade() {
 
   return (
     <div className="max-w-2xl">
+      <SecaoLinkPublico />
       <div className="card p-6">
         <h2 className="font-semibold">Logo</h2>
         <p className="mt-1 text-sm text-text-2">

@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Target, Bell, LineChart } from "lucide-react";
 import { Logo } from "../components/Logo";
 import { MARCA } from "../lib/marca";
+import { ROTA_PUBLICA } from "../lib/publico";
 
 // Sem domínio próprio, o Account Portal hospedado do Clerk (accounts.<dominio>)
 // não resolve — por isso login e cadastro ficam os dois embutidos aqui, trocando
@@ -151,7 +152,7 @@ export default function Login() {
             Quer abrir uma solicitação?{" "}
             <Link
               className="font-medium text-accent transition-colors hover:text-accent-active hover:underline"
-              to="/nova"
+              to={ROTA_PUBLICA}
             >
               Formulário público
             </Link>

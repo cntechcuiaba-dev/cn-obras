@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Logo } from "./Logo";
 import { MARCA } from "../lib/marca";
+import { ROTA_PUBLICA } from "../lib/publico";
 import { Papel } from "../lib/auth-types";
 import { DEMO } from "../lib/env";
 import { iniciais } from "../lib/format";
@@ -189,7 +190,7 @@ export function Shell({
             {/* Abrir demanda continua sendo o mesmo formulário público (RF01) —
                 aqui é só o atalho, que faltava para quem está logado. */}
             <a
-              href="/nova"
+              href={ROTA_PUBLICA}
               target="_blank"
               rel="noreferrer"
               title="Abrir nova solicitação (formulário público)"

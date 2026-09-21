@@ -15,6 +15,7 @@ import { Shell } from "./components/Shell";
 import { Carregando } from "./components/ui";
 import { Papel, UsuarioAtual } from "./lib/auth-types";
 import FormularioPublico from "./rotas/FormularioPublico";
+import { ROTA_PUBLICA } from "./lib/publico";
 import Login from "./rotas/Login";
 import Painel from "./rotas/Painel";
 import TodasDemandas from "./rotas/TodasDemandas";
@@ -45,7 +46,10 @@ export default function App() {
     <>
       <RolagemAoTopo />
       <Routes>
-        <Route path="/nova" element={<FormularioPublico />} />
+        <Route path={ROTA_PUBLICA} element={<FormularioPublico />} />
+        {/* /nova foi o endereço original. Continua valendo: link divulgado
+            não se recolhe depois de espalhado em grupo de WhatsApp. */}
+        <Route path="/nova" element={<Navigate to={ROTA_PUBLICA} replace />} />
         <Route path="/*" element={DEMO ? <AreaDemo /> : <AreaInterna />} />
       </Routes>
     </>
@@ -108,7 +112,7 @@ function BannerDemo() {
           </button>
         ))}
       </div>
-      <a href="/nova" className="text-xs font-medium text-accent hover:underline">
+      <a href={ROTA_PUBLICA} className="text-xs font-medium text-accent hover:underline">
         Formulário público →
       </a>
     </div>
