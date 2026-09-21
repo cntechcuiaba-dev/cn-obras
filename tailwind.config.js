@@ -1,3 +1,5 @@
+import marca from "./marca.config.js";
+
 /** @type {import('tailwindcss').Config} */
 // Design system — fonte única de verdade (docs/05-prototipo-visual.md).
 // Tema claro fixo: neutros quentes + azul-petróleo dessaturado.
@@ -14,16 +16,9 @@ export default {
         "text-2": "#6B6459",
         "text-1": "#2B2621",
 
-        accent: {
-          DEFAULT: "#35707F",
-          hover: "#2E6270",
-          active: "#245260",
-          subtle: "#E3EEF0",
-          // Tons extras para composições (painel hero, faixas de marca).
-          deep: "#1E4653",
-          deeper: "#132E37",
-          tint: "#F1F7F8",
-        },
+        // Paleta da marca do cliente — ver marca.config.js.
+        accent: marca.accent,
+
 
         // status da demanda (cor / fundo)
         "st-aberta": "#545E70",

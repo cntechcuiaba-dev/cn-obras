@@ -13,6 +13,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Logo } from "./Logo";
+import { MARCA } from "../lib/marca";
 import { Papel } from "../lib/auth-types";
 import { DEMO } from "../lib/env";
 import { iniciais } from "../lib/format";
@@ -148,8 +149,8 @@ export function Shell({
       <header className="sticky top-0 z-10 border-b border-border/70 bg-surface/90 shadow-header backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
           <div className="flex flex-none items-center gap-2 font-semibold text-text-1">
-            <Logo className="h-8 w-8" alt="CN Obras" />
-            <span className="hidden whitespace-nowrap sm:inline">CN Obras</span>
+            <Logo className="h-8 w-8" alt="" />
+            <span className="hidden whitespace-nowrap sm:inline">{MARCA.nomeCurto}</span>
           </div>
 
           <nav aria-label="Principal" className="rolagem-limpa ml-auto hidden items-center gap-1 overflow-x-auto md:flex">

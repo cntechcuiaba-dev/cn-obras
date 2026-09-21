@@ -4,6 +4,7 @@ import { useAbrir, useGerarUrlPublico, useLocaisPublicos } from "../lib/dados";
 import { DEMO } from "../lib/env";
 import { mascararTelefone } from "../lib/mascaras";
 import { Logo } from "../components/Logo";
+import { MARCA } from "../lib/marca";
 import { mensagemErro } from "../lib/erros";
 
 const VAZIO = {
@@ -114,10 +115,7 @@ export default function FormularioPublico() {
     <Casca>
       <form onSubmit={enviar} className="card mx-auto max-w-md p-6">
         <h1 className="text-xl font-bold">Abrir solicitação</h1>
-        <p className="mt-1 text-sm text-text-2">
-          Descreva o problema de manutenção. A liderança do CN Obras vai avaliar e dar
-          retorno.
-        </p>
+        <p className="mt-1 text-sm text-text-2">{MARCA.descricaoCurta}</p>
 
         <div className="mt-5 space-y-4">
           <Campo label="O que está acontecendo?">
@@ -253,8 +251,8 @@ function Casca({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-bg px-4 py-8">
       <div className="mx-auto mb-6 flex max-w-md items-center gap-2 text-text-1">
-        <Logo className="h-9 w-9" alt="CN Obras" />
-        <span className="font-semibold">Central CN Obras</span>
+        <Logo className="h-9 w-9" alt="" />
+        <span className="font-semibold">{MARCA.nome}</span>
       </div>
       {children}
     </div>

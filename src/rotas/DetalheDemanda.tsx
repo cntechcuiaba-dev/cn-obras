@@ -33,7 +33,7 @@ import { DEMO } from "../lib/env";
 import { DemandaView } from "../lib/tipos";
 
 type OrigemCusto = "estoque" | "compra_direta" | "orcamento";
-import { Carregando, StatusChip, PrazoBadge, PrioridadeChip } from "../components/ui";
+import { Carregando, StatusChip, PrazoBadge, PrioridadeChip, Trilha } from "../components/ui";
 import { MOTIVO_IMPEDIMENTO, MotivoImpedimento, Prioridade } from "../lib/labels";
 import { formatarData, formatarDataHora, linkWhatsapp, preencherModelo } from "../lib/format";
 import { mascararMoeda, valorMoedaParaNumero } from "../lib/mascaras";
@@ -184,6 +184,10 @@ export default function DetalheDemanda() {
             status={d.status}
             concluidaEm={d.concluidaEm}
           />
+        </div>
+
+        <div className="mt-5">
+          <Trilha status={d.status} />
         </div>
 
         <div className="mt-4 flex flex-wrap items-center gap-2">

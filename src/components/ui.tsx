@@ -134,3 +134,85 @@ export function CabecalhoSecao({
     </div>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Trilha — o traço de identidade do produto.
+//
+// A ideia central do app é "um movimento por vez": toda demanda percorre o
+// mesmo caminho (aberta → triada → em execução → concluída). A trilha desenha
+// esse caminho e marca onde a demanda está. É o único elemento visual daqui que
+// não serviria para outro produto, e por isso se repete no card do painel, no
+// detalhe e na lista — a mesma forma, em três tamanhos.
+//
+// "Aguardando" não é uma etapa a mais: é a etapa de execução travada, então
+// ocupa a mesma posição, mudando só a cor. Cancelada sai do caminho.
+const ETAPAS: { chave: StatusDemanda; rotulo: string }[] = [
+  { chave: "aberta", rotulo: "Aberta" },
+  { chave: "triada", rotulo: "Triada" },
+  { chave: "em_execucao", rotulo: "Em execução" },
+  { chave: "concluida", rotulo: "Concluída" },
+];
+
+function posicaoNaTrilha(status: StatusDemanda): number {
+  if (status === "aguardando") return 2; // travada na execução
+  const i = ETAPAS.findIndex((e) => e.chave === status);
+  return i === -1 ? 0 : i;
+}
+
+export function Trilha({
+  status,
+  tamanho = "media",
+}: {
+  status: StatusDemanda;
+  tamanho?: "media" | "grande" | "mini";
+}) {
+  const atual = posicaoNaTrilha(status);
+  const concluida = status === "concluida";
+  const travada = status === "aguardando";
+  const cancelada = status === "cancelada";
+
+  const altura =
+    tamanho === "grande" ? "h-1.5" : tamanho === "mini" ? "h-[3px]" : "h-1";
+  const largura = tamanho === "mini" ? "w-24" : "w-full";
+
+  const corAtual = cancelada
+    ? "bg-st-cancelada"
+    : travada
+      ? "bg-st-aguardando"
+      : concluida
+        ? "bg-st-concluida"
+        : "bg-accent";
+
+  // Na lista a trilha anda junto da etiqueta de status, que já diz o estado em
+  // palavras — anunciar as duas faz o leitor de tela repetir a mesma coisa em
+  // cada linha. Ali ela é reforço visual; nas outras, informação.
+  const rotulo = cancelada
+    ? "Demanda cancelada."
+    : `Etapa ${atual + 1} de ${ETAPAS.length}: ${
+        travada ? "aguardando" : ETAPAS[atual].rotulo
+      }.`;
+
+  return (
+    <div
+      className={`flex ${largura} gap-1`}
+      {...(tamanho === "mini"
+        ? { "aria-hidden": true }
+        : { role: "img", "aria-label": rotulo })}
+    >
+      {ETAPAS.map((etapa, i) => (
+        <span
+          key={etapa.chave}
+          className={`${altura} flex-1 rounded-full transition-colors duration-300 ${
+            cancelada
+              ? "bg-border"
+              : i < atual
+                ? "bg-accent/45"
+                : i === atual
+                  ? corAtual
+                  : "bg-border"
+          }`}
+        />
+      ))}
+    </div>
+  );
+}

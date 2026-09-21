@@ -3,13 +3,14 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Target, Bell, LineChart } from "lucide-react";
 import { Logo } from "../components/Logo";
+import { MARCA } from "../lib/marca";
 
 // Sem domínio próprio, o Account Portal hospedado do Clerk (accounts.<dominio>)
 // não resolve — por isso login e cadastro ficam os dois embutidos aqui, trocando
 // por estado local em vez de depender do link "Sign up" nativo do Clerk.
 const aparencia = {
   variables: {
-    colorPrimary: "#35707F",
+    colorPrimary: MARCA.accent.DEFAULT,
     colorBackground: "#FFFFFF",
     colorText: "#2B2621",
     borderRadius: "8px",
@@ -63,7 +64,7 @@ export default function Login() {
 
         <div className="relative flex items-center gap-3.5">
           <Logo className="h-16 w-16 shadow-lg ring-1 ring-white/10" />
-          <span className="text-lg font-semibold tracking-tight">Central CN Obras</span>
+          <span className="text-lg font-semibold tracking-tight">{MARCA.nome}</span>
         </div>
 
         <div className="relative mt-auto max-w-md">
@@ -90,9 +91,9 @@ export default function Login() {
           </ul>
         </div>
 
-        <p className="relative mt-auto pt-10 text-xs text-white/40">
-          Ministério de Obras · CN Tech Cuiabá
-        </p>
+        {MARCA.rodape && (
+          <p className="relative mt-auto pt-10 text-xs text-white/40">{MARCA.rodape}</p>
+        )}
       </aside>
 
       {/* Coluna de autenticação. */}
@@ -100,7 +101,7 @@ export default function Login() {
         <div className="w-full max-w-sm animate-fade-in">
           <div className="mb-8 flex flex-col items-center gap-3 text-center lg:hidden">
             <Logo className="h-20 w-20 shadow-card" />
-            <span className="text-lg font-semibold">Central CN Obras</span>
+            <span className="text-lg font-semibold">{MARCA.nome}</span>
           </div>
 
           <h2 className="text-2xl font-bold">

@@ -102,10 +102,8 @@ h2 {
   .card-hero {
     @apply relative overflow-hidden rounded-2xl border border-accent/15 bg-surface shadow-hero;
   }
-  .card-hero::before {
-    content: "";
-    @apply absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-accent-deep via-accent to-accent/40;
-  }
+  /* Sem faixa decorativa no topo: quem ocupa essa borda é a Trilha, que
+     mostra em que etapa a demanda está (ver components/ui.tsx). */
   /* Para cards clicáveis (envoltos em <button>/<a>) — profundidade + leve
      "levantada" ao passar o mouse, sinalizando interatividade. */
   .card-hover {

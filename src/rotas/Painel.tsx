@@ -15,7 +15,7 @@ import {
   type AprovacaoPendente,
 } from "../lib/dados";
 import { DEMO } from "../lib/env";
-import { Carregando } from "../components/ui";
+import { Carregando, Trilha } from "../components/ui";
 import { formatarData, rotuloPrazo, linkWhatsapp } from "../lib/format";
 import { mensagemErro } from "../lib/erros";
 
@@ -283,7 +283,10 @@ function ItemPrincipal({
 
   return (
     <article className="card-hero mt-3 animate-rise-in">
-      <div className="p-6 sm:p-8">
+      <div className="px-6 pt-6 sm:px-8 sm:pt-8">
+        <Trilha status={item.status} tamanho="grande" />
+      </div>
+      <div className="px-6 pb-6 pt-5 sm:px-8 sm:pb-8">
         <h1 className="text-2xl font-bold leading-[1.15] sm:text-[28px]">{item.titulo}</h1>
 
         {/* [RF14d] por que é este — frase gerada da fórmula */}

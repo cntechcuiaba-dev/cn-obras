@@ -1,6 +1,6 @@
 import { MapPin, User, ChevronRight, ShieldAlert } from "lucide-react";
 import { DemandaView } from "../lib/tipos";
-import { StatusChip, PrazoBadge } from "./ui";
+import { StatusChip, PrazoBadge, Trilha } from "./ui";
 
 // Ponto antes do título: o risco aparece sem faixa colorida na lateral.
 const PONTO_RISCO: Record<string, string> = {
@@ -60,6 +60,7 @@ export function LinhaDemanda({
             </span>
           )}
           <StatusChip status={demanda.status} />
+          <Trilha status={demanda.status} tamanho="mini" />
         </div>
       </div>
       <div className="flex flex-none items-center justify-between gap-3">

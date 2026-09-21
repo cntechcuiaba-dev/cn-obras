@@ -1,11 +1,22 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
+import marca from "./marca.config.js";
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     react(),
+    // O título da aba e o theme-color vivem no HTML, fora do alcance do React —
+    // sem isto a marca do cliente ficaria certa nas telas e errada na aba.
+    {
+      name: "marca-no-html",
+      transformIndexHtml(html: string) {
+        return html
+          .replace(/%MARCA_NOME%/g, marca.nome)
+          .replace(/%MARCA_ACCENT%/g, marca.accent.DEFAULT);
+      },
+    },
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "favicon-16.png", "favicon-32.png", "apple-touch-icon.png"],
@@ -17,10 +28,10 @@ export default defineConfig({
         navigateFallbackDenylist: [/^\/__clerk\//, /^\/api\//],
       },
       manifest: {
-        name: "Central CN Obras",
-        short_name: "CN Obras",
+        name: marca.nome,
+        short_name: marca.nomeCurto,
         description: "Gestão de demandas de manutenção predial",
-        theme_color: "#3D7A8C",
+        theme_color: marca.accent.DEFAULT,
         background_color: "#000000",
         display: "standalone",
         start_url: "/",
