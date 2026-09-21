@@ -1,5 +1,5 @@
-import { useState, useEffect, FormEvent } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef, FormEvent } from "react";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
   Play,
@@ -11,6 +11,7 @@ import {
   Target,
   SlidersHorizontal,
   Plus,
+  Ellipsis,
 } from "lucide-react";
 import {
   useDetalhe,
@@ -54,6 +55,9 @@ export default function DetalheDemanda() {
   const [mostrarAjuste, setMostrarAjuste] = useState(false);
   const [mostrarConclusao, setMostrarConclusao] = useState(false);
   const [confirmado, setConfirmado] = useState(false);
+  const [maisAcoes, setMaisAcoes] = useState(false);
+  const [aviso, setAviso] = useState<string | null>(null);
+  const refMais = useRef<HTMLDivElement>(null);
   const [erro, setErro] = useState<string | null>(null);
 
   // [E2] estado dos formulários de orçamento e custo
@@ -68,6 +72,33 @@ export default function DetalheDemanda() {
   const [custoValor, setCustoValor] = useState("");
   const [custoOrigem, setCustoOrigem] = useState<OrigemCusto>("compra_direta");
   const executores = useExecutores();
+  const [params] = useSearchParams();
+  const statusAtual = dados?.demanda.status;
+
+  // Vindo do painel ("Concluir →"), o painel de conclusão já chega aberto: o
+  // movimento é concluir, não caçar o botão numa página cheia de chips.
+  useEffect(() => {
+    if (
+      params.has("concluir") &&
+      (statusAtual === "em_execucao" || statusAtual === "aguardando")
+    ) {
+      setMostrarConclusao(true);
+    }
+  }, [params, statusAtual]);
+
+  useEffect(() => {
+    if (!maisAcoes) return;
+    const fora = (e: MouseEvent) => {
+      if (!refMais.current?.contains(e.target as Node)) setMaisAcoes(false);
+    };
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setMaisAcoes(false);
+    document.addEventListener("mousedown", fora);
+    window.addEventListener("keydown", esc);
+    return () => {
+      document.removeEventListener("mousedown", fora);
+      window.removeEventListener("keydown", esc);
+    };
+  }, [maisAcoes]);
 
   if (dados === undefined) return <Carregando />;
   if (dados === null)
@@ -88,15 +119,17 @@ export default function DetalheDemanda() {
         h.tipo === "impedimento_aguardando_orcamento",
     );
 
-  async function acao(fn: () => Promise<unknown>) {
+  async function acao(fn: () => Promise<unknown>): Promise<boolean> {
     setErro(null);
     try {
       await fn();
       setMostrarPausa(false);
       setMostrarConclusao(false);
       setConfirmado(false);
+      return true;
     } catch (err) {
-      setErro(mensagemErro(err, "Erro."));
+      setErro(mensagemErro(err, "Não foi possível salvar. Tente de novo."));
+      return false;
     }
   }
 
@@ -131,7 +164,7 @@ export default function DetalheDemanda() {
     : null;
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-3xl pb-20 sm:pb-0">
       <button
         className="mb-4 inline-flex items-center gap-1 text-sm text-text-2 hover:text-text-1"
         onClick={() => navigate(-1)}
@@ -208,6 +241,11 @@ export default function DetalheDemanda() {
             {erro}
           </p>
         )}
+        {aviso && (
+          <p role="status" className="mt-3 rounded bg-st-concluida-bg px-3 py-2 text-sm text-st-concluida">
+            {aviso}
+          </p>
+        )}
 
         {/* Demanda ainda não triada: a ação executável é triar, e só a liderança faz. */}
         {d.status === "aberta" && dados.papel === "lideranca" && (
@@ -245,45 +283,106 @@ export default function DetalheDemanda() {
             </div>
           )}
 
-        {/* Ações de execução */}
+        {/* [E3] A regra do painel ("um movimento") vale aqui também: um verbo
+            principal por status. O resto vira "Mais ações" — antes eram seis
+            botões de mesmo peso, e no celular o principal caía abaixo da dobra. */}
         {podeAgir && d.status !== "concluida" && d.status !== "cancelada" && (
-          <div className="mt-5 flex flex-wrap gap-2 border-t border-border pt-5">
+          <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-border pt-5">
             {(d.status === "triada" || d.status === "aguardando") && (
               <button
-                className="btn-primary"
+                className="btn-primary hidden sm:inline-flex"
                 onClick={() =>
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   acao(() => mudarStatus({ demandaId: d._id as any, novoStatus: "em_execucao" }))
                 }
               >
-                <Play className="h-4 w-4" /> Iniciar
+                <Play className="h-4 w-4" aria-hidden /> Iniciar
               </button>
             )}
             {d.status === "em_execucao" && (
-              <button className="btn-ghost" onClick={() => setMostrarPausa((v) => !v)}>
-                <Pause className="h-4 w-4" /> Pausar (impedimento)
-              </button>
-            )}
-            {(d.status === "em_execucao" || d.status === "aguardando") && (
               <button
-                className="btn-ghost"
+                className="btn-primary hidden sm:inline-flex"
+                aria-expanded={mostrarConclusao}
                 onClick={() => setMostrarConclusao((v) => !v)}
               >
-                <CheckCircle2 className="h-4 w-4" /> Concluir
+                <CheckCircle2 className="h-4 w-4" aria-hidden /> Concluir
               </button>
             )}
-            <label className="btn-ghost cursor-pointer">
-              <Camera className="h-4 w-4" /> Foto
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) void acao(() => enviarFoto(f, d.status === "concluida" ? "Depois" : "Antes"));
-                }}
-              />
-            </label>
+
+            <div className="relative" ref={refMais}>
+              <button
+                className="btn-ghost"
+                aria-expanded={maisAcoes}
+                aria-haspopup="menu"
+                onClick={() => setMaisAcoes((v) => !v)}
+              >
+                <Ellipsis className="h-4 w-4" aria-hidden /> Mais ações
+              </button>
+              {maisAcoes && (
+                <div
+                  role="menu"
+                  className="absolute left-0 top-full z-20 mt-1 w-60 rounded-xl border border-border bg-surface p-1.5 shadow-popover"
+                >
+                  {d.status === "em_execucao" && (
+                    <button
+                      role="menuitem"
+                      className="flex min-h-[44px] w-full items-center gap-2.5 rounded-lg px-3 text-left text-sm hover:bg-surface-raise"
+                      onClick={() => {
+                        setMaisAcoes(false);
+                        setMostrarPausa(true);
+                      }}
+                    >
+                      <Pause className="h-4 w-4 text-text-2" aria-hidden /> Pausar (impedimento)
+                    </button>
+                  )}
+                  {d.status === "aguardando" && (
+                    <button
+                      role="menuitem"
+                      className="flex min-h-[44px] w-full items-center gap-2.5 rounded-lg px-3 text-left text-sm hover:bg-surface-raise"
+                      onClick={() => {
+                        setMaisAcoes(false);
+                        setMostrarConclusao(true);
+                      }}
+                    >
+                      <CheckCircle2 className="h-4 w-4 text-text-2" aria-hidden /> Concluir
+                    </button>
+                  )}
+                  <label
+                    role="menuitem"
+                    className="flex min-h-[44px] w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 text-sm hover:bg-surface-raise focus-within:bg-surface-raise"
+                  >
+                    <Camera className="h-4 w-4 text-text-2" aria-hidden />
+                    {d.status === "em_execucao" ? "Foto do resultado" : "Foto do problema"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="sr-only"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        setMaisAcoes(false);
+                        if (f)
+                          void acao(() =>
+                            enviarFoto(f, d.status === "em_execucao" ? "Depois" : "Antes"),
+                          );
+                      }}
+                    />
+                  </label>
+                  {linkZap && d.solicitanteWhatsapp && (
+                    <button
+                      role="menuitem"
+                      className="flex min-h-[44px] w-full items-center gap-2.5 rounded-lg px-3 text-left text-sm hover:bg-surface-raise"
+                      onClick={() => {
+                        setMaisAcoes(false);
+                        void navigator.clipboard.writeText(linkZap);
+                        setAviso("Link do WhatsApp copiado.");
+                      }}
+                    >
+                      <Copy className="h-4 w-4 text-text-2" aria-hidden /> Copiar link do aviso
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -388,10 +487,10 @@ export default function DetalheDemanda() {
         {/* Painel conclusão: confirmar resultado */}
         {mostrarConclusao && (
           <div className="mt-4 rounded border border-border p-4">
-            <label className="flex items-start gap-2 text-sm">
+            <label className="flex min-h-[44px] items-start gap-3 text-sm">
               <input
                 type="checkbox"
-                className="mt-1"
+                className="mt-0.5 h-5 w-5 flex-none accent-accent"
                 checked={confirmado}
                 onChange={(e) => setConfirmado(e.target.checked)}
               />
@@ -437,8 +536,8 @@ export default function DetalheDemanda() {
             <button
               className="btn-primary mt-3"
               disabled={!confirmado || (precisaLancarCusto && custoValor === "")}
-              onClick={() =>
-                acao(() =>
+              onClick={async () => {
+                const ok = await acao(() =>
                   mudarStatus({
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     demandaId: d._id as any,
@@ -448,8 +547,10 @@ export default function DetalheDemanda() {
                       ? { valor: valorMoedaParaNumero(custoValor), origem: custoOrigem }
                       : undefined,
                   }),
-                )
-              }
+                );
+                // Fechar o ciclo: volta ao painel dizendo o que foi concluído.
+                if (ok) navigate("/", { state: { concluida: d.titulo } });
+              }}
             >
               Concluir demanda
             </button>
@@ -458,16 +559,10 @@ export default function DetalheDemanda() {
 
         {/* WhatsApp manual (RF22) */}
         {linkZap && d.solicitanteWhatsapp && (
-          <div className="mt-5 flex flex-wrap gap-2 border-t border-border pt-5">
-            <a className="btn-primary" href={linkZap} target="_blank" rel="noreferrer">
-              <MessageCircle className="h-4 w-4" /> Avisar solicitante (WhatsApp)
+          <div className="mt-5 border-t border-border pt-5">
+            <a className="btn-ghost" href={linkZap} target="_blank" rel="noreferrer">
+              <MessageCircle className="h-4 w-4" aria-hidden /> Avisar solicitante (WhatsApp)
             </a>
-            <button
-              className="btn-ghost"
-              onClick={() => navigator.clipboard.writeText(linkZap)}
-            >
-              <Copy className="h-4 w-4" /> Copiar link
-            </button>
           </div>
         )}
       </div>
@@ -492,6 +587,32 @@ export default function DetalheDemanda() {
 
       {/* [E2] Material consumido — sem saldo, sem inventário (decisão explícita) */}
       <SecaoConsumos demandaId={d._id} podeAgir={podeAgir} />
+
+      {/* No celular o verbo principal não pode depender de rolagem: fica fixo
+          acima da barra de navegação, como no painel — um movimento à mão. */}
+      {podeAgir &&
+        d.status !== "concluida" &&
+        d.status !== "cancelada" &&
+        !mostrarConclusao && (
+          <div className="fixed inset-x-0 bottom-[calc(56px+env(safe-area-inset-bottom))] z-20 border-t border-border/70 bg-surface/95 px-4 py-3 shadow-header backdrop-blur sm:hidden">
+            {(d.status === "triada" || d.status === "aguardando") && (
+              <button
+                className="btn-primary w-full"
+                onClick={() =>
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  acao(() => mudarStatus({ demandaId: d._id as any, novoStatus: "em_execucao" }))
+                }
+              >
+                <Play className="h-4 w-4" aria-hidden /> Iniciar
+              </button>
+            )}
+            {d.status === "em_execucao" && (
+              <button className="btn-primary w-full" onClick={() => setMostrarConclusao(true)}>
+                <CheckCircle2 className="h-4 w-4" aria-hidden /> Concluir
+              </button>
+            )}
+          </div>
+        )}
 
       {/* Linha do tempo (RF25) */}
       <div className="mt-6">

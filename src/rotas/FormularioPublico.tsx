@@ -85,6 +85,14 @@ export default function FormularioPublico() {
               (tamanho ou formato não aceito).
             </p>
           )}
+          <div className="mt-5 rounded-lg bg-surface-raise px-4 py-3 text-left text-sm text-text-2">
+            <p className="font-semibold text-text-1">O que acontece agora</p>
+            <ol className="mt-1.5 space-y-1">
+              <li>1. A liderança avalia e define prazo e responsável.</li>
+              <li>2. Você recebe retorno no WhatsApp informado.</li>
+              <li>3. Guarde o protocolo para perguntar a qualquer momento.</li>
+            </ol>
+          </div>
           <button
             className="btn-ghost mt-6"
             onClick={() => {
@@ -143,12 +151,15 @@ export default function FormularioPublico() {
               <input
                 className="input"
                 inputMode="numeric"
-                placeholder="(62) 99999-9999"
+                placeholder="(65) 99999-9999"
                 value={form.solicitanteWhatsapp}
                 onChange={(e) => set("solicitanteWhatsapp", mascararTelefone(e.target.value))}
                 maxLength={15}
                 required
               />
+              <span className="mt-1 block text-xs text-text-2">
+                Usado só para avisar sobre esta solicitação.
+              </span>
             </Campo>
           </div>
           {/* [RF01] A lista ajuda quem conhece os nomes oficiais; o texto livre
@@ -199,18 +210,23 @@ export default function FormularioPublico() {
             {foto ? (
               <div className="flex items-center justify-between rounded border border-border bg-surface-raise px-3 py-2 text-sm">
                 <span className="truncate">{foto.name}</span>
-                <button type="button" onClick={() => setFoto(null)}>
-                  <X className="h-4 w-4 text-text-2" />
+                <button
+                  type="button"
+                  aria-label="Remover foto"
+                  className="grid h-11 w-11 flex-none place-items-center"
+                  onClick={() => setFoto(null)}
+                >
+                  <X className="h-4 w-4 text-text-2" aria-hidden />
                 </button>
               </div>
             ) : (
-              <label className="btn-ghost w-full cursor-pointer">
-                <Camera className="h-4 w-4" />
+              <label className="btn-ghost w-full cursor-pointer focus-within:ring-2 focus-within:ring-accent focus-within:ring-offset-2">
+                <Camera className="h-4 w-4" aria-hidden />
                 Anexar foto
                 <input
                   type="file"
                   accept="image/*"
-                  className="hidden"
+                  className="sr-only"
                   onChange={(e) => setFoto(e.target.files?.[0] ?? null)}
                 />
               </label>

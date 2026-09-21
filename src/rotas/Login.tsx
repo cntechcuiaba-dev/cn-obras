@@ -9,7 +9,7 @@ import { Logo } from "../components/Logo";
 // por estado local em vez de depender do link "Sign up" nativo do Clerk.
 const aparencia = {
   variables: {
-    colorPrimary: "#3D7A8C",
+    colorPrimary: "#35707F",
     colorBackground: "#FFFFFF",
     colorText: "#2B2621",
     borderRadius: "8px",

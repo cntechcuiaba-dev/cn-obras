@@ -1,4 +1,4 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Inbox, MapPin, User } from "lucide-react";
 import {
@@ -14,6 +14,14 @@ import { CabecalhoSecao, Carregando, EstadoVazio } from "../components/ui";
 import { formatarData } from "../lib/format";
 import { Prioridade } from "../lib/labels";
 import { mensagemErro } from "../lib/erros";
+
+const DIAS_POR_PRIORIDADE: Record<Prioridade, number> = { alta: 2, media: 7, baixa: 21 };
+
+function prazoSugerido(prioridade: Prioridade): string {
+  const d = new Date();
+  d.setDate(d.getDate() + DIAS_POR_PRIORIDADE[prioridade]);
+  return d.toISOString().slice(0, 10);
+}
 
 export default function Triagem() {
   const abertas = useAbertas();
@@ -58,7 +66,7 @@ export default function Triagem() {
                     <User className="h-3.5 w-3.5" />
                     {d.solicitanteNome}
                   </span>
-                  <span className="text-text-2/70">
+                  <span>
                     aberta em {formatarData(d._creationTime)}
                   </span>
                 </div>
@@ -75,6 +83,7 @@ export default function Triagem() {
                 // público — a triagem começa com ele preenchido, mas continua
                 // sendo quem confirma (RF06).
                 localSugeridoId={abertas.find((d) => d._id === selecionada)?.localId}
+                resumo={abertas.find((d) => d._id === selecionada)}
                 onPronto={() => setSelecionada(null)}
               />
             ) : (
@@ -90,10 +99,12 @@ export default function Triagem() {
 function FormularioTriagem({
   demandaId,
   localSugeridoId,
+  resumo,
   onPronto,
 }: {
   demandaId: string;
   localSugeridoId?: string;
+  resumo?: { titulo: string; solicitanteNome?: string; localTextoOriginal?: string };
   onPronto: () => void;
 }) {
   const categorias = useCategorias();
@@ -107,12 +118,26 @@ function FormularioTriagem({
   const [localId, setLocalId] = useState(localSugeridoId ?? "");
   const [equipamentoId, setEquipamentoId] = useState("");
   const [prioridade, setPrioridade] = useState<Prioridade>("media");
-  const [prazo, setPrazo] = useState("");
+  // Prazo em branco fazia a liderança inventar data a cada triagem; a
+  // prioridade já diz a urgência, então ela propõe o prazo (e continua editável).
+  const [prazo, setPrazo] = useState(() => prazoSugerido("media"));
+  const [prazoTocado, setPrazoTocado] = useState(false);
   const [responsavelId, setResponsavelId] = useState("");
   const [equipeIds, setEquipeIds] = useState<string[]>([]);
   const [resultadoEsperado, setResultadoEsperado] = useState("");
   const [erro, setErro] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
+  const [confirmandoCancelar, setConfirmandoCancelar] = useState(false);
+  const [motivoCancelar, setMotivoCancelar] = useState("");
+  const formRef = useRef<HTMLFormElement>(null);
+
+  // Em tela estreita o formulário fica abaixo da lista inteira: ao escolher
+  // uma demanda, leva o olhar até ele em vez de deixar quem toca sem resposta.
+  useEffect(() => {
+    if (window.matchMedia("(max-width: 1023px)").matches) {
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, []);
 
   async function salvar(e: FormEvent) {
     e.preventDefault();
@@ -145,7 +170,17 @@ function FormularioTriagem({
   }
 
   return (
-    <form onSubmit={salvar} className="card space-y-4 p-5">
+    <form ref={formRef} onSubmit={salvar} className="card scroll-mt-20 space-y-4 p-5">
+      {/* A triagem descreve uma demanda que, no celular, ficou lá em cima na
+          lista: sem isto a liderança classifica de memória. */}
+      {resumo && (
+        <div className="-mx-5 -mt-5 rounded-t-xl border-b border-border bg-surface-raise px-5 py-3">
+          <p className="font-semibold leading-snug">{resumo.titulo}</p>
+          <p className="mt-0.5 text-xs text-text-2">
+            {[resumo.solicitanteNome, resumo.localTextoOriginal].filter(Boolean).join(" · ")}
+          </p>
+        </div>
+      )}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <label className="block">
           <span className="label">Categoria</span>
@@ -203,7 +238,11 @@ function FormularioTriagem({
           <select
             className="input"
             value={prioridade}
-            onChange={(e) => setPrioridade(e.target.value as Prioridade)}
+            onChange={(e) => {
+              const nova = e.target.value as Prioridade;
+              setPrioridade(nova);
+              if (!prazoTocado) setPrazo(prazoSugerido(nova));
+            }}
           >
             <option value="baixa">Baixa</option>
             <option value="media">Média</option>
@@ -216,9 +255,15 @@ function FormularioTriagem({
             type="date"
             className="input"
             value={prazo}
-            onChange={(e) => setPrazo(e.target.value)}
+            onChange={(e) => {
+              setPrazo(e.target.value);
+              setPrazoTocado(true);
+            }}
             required
           />
+          <span className="mt-1 block text-xs text-text-2">
+            Sugerido pela prioridade — ajuste se precisar.
+          </span>
         </label>
       </div>
 
@@ -261,7 +306,7 @@ function FormularioTriagem({
                         : [...atual, u._id],
                     )
                   }
-                  className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
+                  className={`alvo-toque rounded-full border px-3 py-1 text-xs font-medium transition ${
                     marcado
                       ? "border-accent bg-accent-subtle text-accent-active"
                       : "border-border text-text-2 hover:border-border-strong"
@@ -302,15 +347,55 @@ function FormularioTriagem({
         <button
           type="button"
           className="btn-danger"
-          onClick={async () => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            await cancelar({ demandaId: demandaId as any });
-            onPronto();
-          }}
+          aria-expanded={confirmandoCancelar}
+          onClick={() => setConfirmandoCancelar((v) => !v)}
         >
           Cancelar demanda
         </button>
       </div>
+
+      {/* Cancelar some com a demanda da fila: pede o motivo, que fica no histórico. */}
+      {confirmandoCancelar && (
+        <div className="space-y-3 rounded-lg border border-pri-alta/30 bg-pri-alta-bg/40 p-4">
+          <label className="block">
+            <span className="label">Motivo do cancelamento</span>
+            <input
+              className="input"
+              value={motivoCancelar}
+              onChange={(e) => setMotivoCancelar(e.target.value)}
+              placeholder="Ex: pedido duplicado, já resolvido"
+            />
+          </label>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className="btn bg-pri-alta text-white hover:opacity-90"
+              disabled={!motivoCancelar.trim() || salvando}
+              onClick={async () => {
+                setErro(null);
+                setSalvando(true);
+                try {
+                  await cancelar({
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    demandaId: demandaId as any,
+                    motivo: motivoCancelar.trim(),
+                  });
+                  onPronto();
+                } catch (err) {
+                  setErro(mensagemErro(err, "Não foi possível cancelar. Tente de novo."));
+                } finally {
+                  setSalvando(false);
+                }
+              }}
+            >
+              Confirmar cancelamento
+            </button>
+            <button type="button" className="btn-ghost" onClick={() => setConfirmandoCancelar(false)}>
+              Voltar
+            </button>
+          </div>
+        </div>
+      )}
     </form>
   );
 }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useMutation } from "convex/react";
 import {
   CheckCircle2, MapPin, User, Lock, ArrowRight, ShieldCheck,
@@ -23,6 +23,8 @@ import { mensagemErro } from "../lib/erros";
 
 export default function Painel() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const concluida = (location.state as { concluida?: string } | null)?.concluida;
   const dados = useProximoMovimento();
 
   if (dados === undefined) return <Carregando />;
@@ -31,7 +33,16 @@ export default function Painel() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <p className="text-label uppercase text-accent">Seu próximo movimento</p>
+      {concluida && (
+        <p
+          role="status"
+          className="mb-4 flex animate-rise-in items-start gap-2 rounded-lg bg-st-concluida-bg px-4 py-3 text-sm font-medium text-st-concluida"
+        >
+          <CheckCircle2 className="mt-0.5 h-4 w-4 flex-none" aria-hidden />
+          <span>Concluída: {concluida}. Bom trabalho.</span>
+        </p>
+      )}
+      <p className="text-label uppercase text-accent-active">Seu próximo movimento</p>
 
       {item === null ? (
         <>
@@ -54,7 +65,9 @@ export default function Painel() {
               // [RF14f] a ação leva ao lugar onde ela é executável
               item.acao.destino === "triagem"
                 ? `/triagem?demanda=${item._id}`
-                : `/demanda/${item._id}`,
+                : item.acao.rotulo === "Concluir"
+                  ? `/demanda/${item._id}?concluir=1`
+                  : `/demanda/${item._id}`,
             )
           }
         />
@@ -69,9 +82,9 @@ export default function Painel() {
               <li key={p._id}>
                 <button
                   onClick={() => navigate(`/demanda/${p._id}`)}
-                  className="flex w-full items-center justify-between gap-4 py-2.5 text-left text-sm hover:text-accent"
+                  className="group flex min-h-[44px] w-full items-center justify-between gap-4 py-2.5 text-left text-sm text-text-1 hover:text-accent-active"
                 >
-                  <span className="truncate">{p.titulo}</span>
+                  <span className="truncate underline-offset-4 group-hover:underline">{p.titulo}</span>
                   <span className="flex-none font-mono text-xs tnum text-text-2">
                     {p.prazo ? formatarData(p.prazo) : "sem prazo"}
                   </span>
@@ -166,7 +179,7 @@ function AvisoPendenteCard({ aviso }: { aviso: AvisoPendente }) {
             try {
               await marcar({ avisoId: aviso._id });
             } catch (e) {
-              setErro(mensagemErro(e, "Erro."));
+              setErro(mensagemErro(e, "Não foi possível concluir a ação. Tente de novo."));
             }
           }}
         >
@@ -210,7 +223,7 @@ function AprovacaoCard({ aprovacao }: { aprovacao: AprovacaoPendente }) {
           try {
             await aprovar({ demandaId: aprovacao._id });
           } catch (e) {
-            setErro(mensagemErro(e, "Erro."));
+            setErro(mensagemErro(e, "Não foi possível concluir a ação. Tente de novo."));
           }
         }}
       >
@@ -303,7 +316,10 @@ function ItemPrincipal({
 
       {/* [RF14f] todo item tem ação executável */}
       <div className="border-t border-border/70 bg-surface-raise/60 px-6 py-4 sm:px-8">
-        <button className="btn-primary group w-full sm:w-auto" onClick={onAgir}>
+        <button
+          className="btn-primary group w-full px-6 py-3 text-base sm:w-auto"
+          onClick={onAgir}
+        >
           {item.acao.rotulo}
           <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
         </button>

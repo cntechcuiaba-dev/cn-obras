@@ -90,7 +90,7 @@ export default function Administracao() {
                 behavior: "smooth",
               });
             }}
-            className={`flex-none whitespace-nowrap border-b-2 px-3 py-2 text-sm font-medium transition ${
+            className={`alvo-toque flex-none whitespace-nowrap border-b-2 px-3 py-2 text-sm font-medium transition ${
               aba === k
                 ? "border-accent text-accent-active"
                 : "border-transparent text-text-2 hover:text-text-1"
@@ -198,6 +198,7 @@ function ListaComCadastro({
         <input
           className="input"
           placeholder={placeholder}
+          aria-label={placeholder}
           value={nome}
           onChange={(e) => setNome(e.target.value)}
           required
@@ -229,13 +230,14 @@ function ListaComCadastro({
               >
                 <span className={`text-sm ${ativo ? "" : "text-text-2 line-through"}`}>
                   {item.nome}
+                  <span className="sr-only"> ({ativo ? rotulos.ativo : rotulos.inativo})</span>
                 </span>
                 <button
-                  className={`btn-ghost ${ativo ? "" : "opacity-60"}`}
+                  className="btn-ghost"
                   onClick={() => onAlternar(item._id, !ativo)}
                 >
-                  <Power className="h-4 w-4" />
-                  {ativo ? rotulos.ativo : rotulos.inativo}
+                  <Power className="h-4 w-4" aria-hidden />
+                  {ativo ? "Desativar" : "Reativar"}
                 </button>
               </div>
             );
@@ -320,11 +322,11 @@ function AbaEquipamentos() {
                     <Pencil className="h-4 w-4" /> Editar
                   </button>
                   <button
-                    className={`btn-ghost ${eq.ativo ? "" : "opacity-60"}`}
+                    className="btn-ghost"
                     onClick={() => alternar({ equipamentoId: eq._id, ativo: !eq.ativo })}
                   >
-                    <Power className="h-4 w-4" />
-                    {eq.ativo ? "Ativo" : "Inativo"}
+                    <Power className="h-4 w-4" aria-hidden />
+                    {eq.ativo ? "Desativar" : "Reativar"}
                   </button>
                 </div>
               </div>

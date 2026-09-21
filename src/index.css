@@ -29,6 +29,45 @@ h2 {
   font-variant-numeric: tabular-nums;
 }
 
+/* Seleção de texto e foco de teclado: partes que o navegador desenha e que,
+   sem tema, ficam com o padrão (laranja) de qualquer site. */
+::selection {
+  background: theme('colors.accent.subtle');
+  color: theme('colors.accent.deeper');
+}
+:focus-visible {
+  outline: 2px solid theme('colors.accent.DEFAULT');
+  outline-offset: 2px;
+}
+.input:focus-visible {
+  outline: none;
+}
+
+/* Quem pediu menos movimento não recebe entrada animada nem "levantada". */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Dedo, não mouse: alvo mínimo de 44px e texto de 16px nos campos (abaixo
+   disso o iOS dá zoom ao focar). */
+@media (pointer: coarse) {
+  .btn,
+  .input,
+  .alvo-toque {
+    min-height: 44px;
+  }
+  .input {
+    font-size: 16px;
+  }
+}
+
 /* Faixas que rolam na horizontal no celular (menu do topo, abas da
    administração): o gesto continua, a barra some — ela cortava o layout. */
 .rolagem-limpa {

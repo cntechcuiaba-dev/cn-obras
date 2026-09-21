@@ -1,5 +1,5 @@
 import { ReactNode, useEffect } from "react";
-import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import {
   Authenticated,
   Unauthenticated,
@@ -24,6 +24,16 @@ import Recorrencias from "./rotas/Recorrencias";
 import Inteligencia from "./rotas/Inteligencia";
 import Administracao from "./rotas/Administracao";
 
+// Trocar de rota mantinha a rolagem da tela anterior: quem saía de um detalhe
+// longo caía no meio da Triagem, achando que a tela tinha "pulado".
+function RolagemAoTopo() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
+
 function TelaCheia({ children }: { children: ReactNode }) {
   return (
     <div className="grid min-h-screen place-items-center bg-bg px-4">{children}</div>
@@ -32,10 +42,13 @@ function TelaCheia({ children }: { children: ReactNode }) {
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/nova" element={<FormularioPublico />} />
-      <Route path="/*" element={DEMO ? <AreaDemo /> : <AreaInterna />} />
-    </Routes>
+    <>
+      <RolagemAoTopo />
+      <Routes>
+        <Route path="/nova" element={<FormularioPublico />} />
+        <Route path="/*" element={DEMO ? <AreaDemo /> : <AreaInterna />} />
+      </Routes>
+    </>
   );
 }
 

@@ -1,12 +1,11 @@
 import { MapPin, User, ChevronRight, ShieldAlert } from "lucide-react";
 import { DemandaView } from "../lib/tipos";
-import { StatusChip, PrioridadeChip, PrazoBadge } from "./ui";
+import { StatusChip, PrazoBadge } from "./ui";
 
-const BORDA_RISCO: Record<string, string> = {
-  vencida: "border-l-venc-vencida",
-  vencendo: "border-l-venc-vencendo",
-  em_dia: "border-l-border",
-  sem_prazo: "border-l-border",
+// Ponto antes do título: o risco aparece sem faixa colorida na lateral.
+const PONTO_RISCO: Record<string, string> = {
+  vencida: "bg-venc-vencida",
+  vencendo: "bg-venc-vencendo",
 };
 
 export function LinhaDemanda({
@@ -21,13 +20,23 @@ export function LinhaDemanda({
   return (
     <button
       onClick={onClick}
-      className={`card card-hover group flex w-full items-center gap-4 border-l-4 px-4 py-3 text-left hover:bg-surface-raise ${
-        BORDA_RISCO[demanda.risco ?? "em_dia"] ?? "border-l-border"
-      }`}
+      className="card card-hover group flex w-full flex-col gap-2 px-4 py-3 text-left hover:bg-surface-raise sm:flex-row sm:items-center sm:gap-4"
     >
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <p className="truncate font-semibold text-text-1">{demanda.titulo}</p>
+        <div className="flex items-start gap-2">
+          {PONTO_RISCO[demanda.risco ?? ""] && (
+            <span
+              title={demanda.risco === "vencida" ? "Prazo vencido" : "Prazo próximo"}
+              className={`mt-[7px] h-2 w-2 flex-none rounded-full ${PONTO_RISCO[demanda.risco ?? ""]}`}
+            >
+              <span className="sr-only">
+                {demanda.risco === "vencida" ? "Prazo vencido." : "Prazo próximo."}
+              </span>
+            </span>
+          )}
+          <p className="line-clamp-2 font-semibold leading-snug text-text-1 sm:line-clamp-1">
+            {demanda.titulo}
+          </p>
           {demanda.riscoSinalizadoEm && (
             <span
               title="Risco sinalizado pela rotina diária"
@@ -51,10 +60,9 @@ export function LinhaDemanda({
             </span>
           )}
           <StatusChip status={demanda.status} />
-          <PrioridadeChip prioridade={demanda.prioridade} />
         </div>
       </div>
-      <div className="flex flex-none items-center gap-3">
+      <div className="flex flex-none items-center justify-between gap-3">
         <PrazoBadge
           prazo={demanda.prazo}
           agora={agora}

@@ -15,9 +15,9 @@ export default {
         "text-1": "#2B2621",
 
         accent: {
-          DEFAULT: "#3D7A8C",
-          hover: "#336A7A",
-          active: "#2A5866",
+          DEFAULT: "#35707F",
+          hover: "#2E6270",
+          active: "#245260",
           subtle: "#E3EEF0",
           // Tons extras para composições (painel hero, faixas de marca).
           deep: "#1E4653",
@@ -26,27 +26,27 @@ export default {
         },
 
         // status da demanda (cor / fundo)
-        "st-aberta": "#8A94A6",
+        "st-aberta": "#545E70",
         "st-aberta-bg": "#EEF1F5",
-        "st-triada": "#3D7A8C",
+        "st-triada": "#245260",
         "st-triada-bg": "#E3EEF0",
-        "st-execucao": "#C9821A",
+        "st-execucao": "#8A5608",
         "st-execucao-bg": "#FBEFDC",
-        "st-aguardando": "#B5643E",
+        "st-aguardando": "#93492A",
         "st-aguardando-bg": "#F6E9E2",
-        "st-concluida": "#4C8B5B",
+        "st-concluida": "#2F6B3E",
         "st-concluida-bg": "#E7F2E9",
-        "st-cancelada": "#9A968D",
+        "st-cancelada": "#6B675F",
         "st-cancelada-bg": "#F1EFEB",
 
         // prioridade
-        "pri-alta": "#C4453A",
+        "pri-alta": "#A8332A",
         "pri-alta-bg": "#FBE6E4",
-        "pri-media": "#C9821A",
+        "pri-media": "#8A5608",
 
         // vencimento (Painel de Prazos)
-        "venc-vencida": "#C4453A",
-        "venc-vencendo": "#C9821A",
+        "venc-vencida": "#A8332A",
+        "venc-vencendo": "#8A5608",
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
