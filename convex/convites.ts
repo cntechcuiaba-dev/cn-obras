@@ -40,14 +40,23 @@ export const convidar = action({
       // Erros lançados numa action chegam ao cliente como mensagem genérica
       // ("Server Error"), a menos que sejam ConvexError — por isso o throw
       // muda aqui (o resto do arquivo pode continuar usando Error comum).
-      if (codigo === "feature_requires_custom_domain") {
-        throw new ConvexError(
-          "Convites exigem domínio próprio no Clerk — o app roda hoje em " +
-            "*.vercel.app, que não é aceito para essa API. Configure um " +
-            "domínio personalizado no Clerk (Configure → Domínios) para " +
-            "habilitar. Enquanto isso, crie a conta manualmente no Clerk " +
-            "Dashboard → Users → Create user.",
-        );
+      //
+      // O Clerk responde em inglês e para desenvolvedor ("That email address
+      // is taken"), mas quem lê isto é a liderança do ministério, no meio de
+      // uma tarefa. Os casos que acontecem de verdade viram instrução.
+      const TRADUZIDOS: Record<string, string> = {
+        form_identifier_exists:
+          "Esse e-mail já tem conta no sistema. Não precisa de convite: " +
+          "peça para a pessoa entrar pelo endereço do app usando este mesmo " +
+          "e-mail. Se ela aparecer aqui na lista depois de entrar, você " +
+          "promove o acesso.",
+        duplicate_record:
+          "Já existe um convite pendente para esse e-mail. Peça para a " +
+          "pessoa procurar a mensagem na caixa de entrada e no spam.",
+        form_param_format_invalid: "E-mail inválido.",
+      };
+      if (codigo && TRADUZIDOS[codigo]) {
+        throw new ConvexError(TRADUZIDOS[codigo]);
       }
       throw new ConvexError(msg ?? "Falha ao enviar convite.");
     }
