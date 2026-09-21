@@ -2,11 +2,7 @@
   "buildCommand": "npx convex deploy && npm run build",
   "rewrites": [
     {
-      "source": "/__clerk/:path*",
-      "destination": "/api/clerk-proxy?path=:path*"
-    },
-    {
-      "source": "/((?!api/|__clerk/).*)",
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ]

@@ -21,11 +21,11 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "favicon-16.png", "favicon-32.png", "apple-touch-icon.png"],
       workbox: {
-        // Sem isso, o service worker intercepta QUALQUER navegação (inclusive o
-        // callback do OAuth do Clerk em /__clerk/...) e devolve o index.html do
-        // cache em vez de deixar a requisição seguir pra rede — o login com
-        // Google nunca completava porque a troca de código nunca saía do navegador.
-        navigateFallbackDenylist: [/^\/__clerk\//, /^\/api\//],
+        // O service worker intercepta QUALQUER navegação e devolve o index.html
+        // do cache; o que for função de servidor precisa seguir pra rede.
+        // (O Clerk saiu daqui: com domínio próprio, o callback do OAuth vai
+        // para clerk.<dominio>, outra origem, fora do alcance deste worker.)
+        navigateFallbackDenylist: [/^\/api\//],
       },
       manifest: {
         name: marca.nome,
